@@ -1,0 +1,19 @@
+<component name="libraryTable">
+  <library name="lib">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/jfx.incubator.richtext.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/javafx.media.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/jfx.incubator.input.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/javafx.fxml.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/javafx.swing.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/javafx.web.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/javafx.controls.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/jdk.jsobject.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/javafx-swt.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/javafx.graphics.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/javafx.base.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
