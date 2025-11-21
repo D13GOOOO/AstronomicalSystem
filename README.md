@@ -5,7 +5,7 @@ This application features a custom N-Body physics engine, accurate orbital mecha
 
 ![Solar System Preview](src/main/resources/project_screen.png)
 
-## 🚀 Features
+## Features:
 
 * **Custom Physics Engine**: Real-time N-Body simulation calculating gravitational forces between all celestial bodies.
 * **Scientific Accuracy**: Planets are initialized with real orbital inclinations and eccentricities based on NASA data.
@@ -17,7 +17,7 @@ This application features a custom N-Body physics engine, accurate orbital mecha
 * **Collision System**: Bodies can collide and merge, conserving momentum.
 * **Free-Roam Camera**: Full control over the 3D view.
 
-## 🎮 Controls
+## Controls:
 
 | Action | Input |
 | :--- | :--- |
@@ -29,13 +29,13 @@ This application features a custom N-Body physics engine, accurate orbital mecha
 | **Reset View** | R Key |
 | **Pause/Play** | Spacebar |
 
-## 🛠️ Technologies Used
+## Technologies Used:
 
 * **Language**: Java 17+
 * **GUI Framework**: JavaFX
 * **Graphics**: JavaFX 3D (MeshView, PhongMaterial, PointLight)
 
-## 📦 Installation & Run
+## Installation & Run:
 
 1.  Ensure you have **JDK 17** or higher installed.
 2.  Ensure you have the **JavaFX SDK** configured in your IDE or classpath.
@@ -44,7 +44,7 @@ This application features a custom N-Body physics engine, accurate orbital mecha
 
 ---
 
-## ⚠️ License & Copyright
+## License & Copyright:
 
 **Copyright © 2025 [D13GOOOO]. All Rights Reserved.**
 
