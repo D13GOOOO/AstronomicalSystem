@@ -1,4 +1,4 @@
-# Interactive 3D Solar System Simulator (V2)
+# Interactive 3D Solar System Simulator
 
 A physics-based 3D Solar System simulation built from scratch using **Java** and **JavaFX**. This project combines a custom N-Body physics engine with accurate orbital mechanics and a dynamic "God Mode" sandbox to create a professional and interactive space environment.
 
