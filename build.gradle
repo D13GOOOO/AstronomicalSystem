@@ -5,12 +5,11 @@ plugins {
 }
 
 group = 'astronomicalsystem'
-version = '1.0-SNAPSHOT'
+version = '1.0'
 
 java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(25)
-    }
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }
 
 javafx {
@@ -28,9 +27,25 @@ dependencies {
 }
 
 application {
-    mainClass = 'astronomicalsystem.SolarSystem3D'
+    mainClass = 'astronomicalsystem.Launcher'
 }
 
-test {
-    useJUnitPlatform()
+tasks.register('customFatJar', Jar) {
+    group = "build"
+    description = "Crea un Fat JAR con tutte le dipendenze"
+
+    archiveFileName = 'SolarSystem3D-all.jar'
+
+    manifest {
+        attributes(
+                'Main-Class': 'astronomicalsystem.Launcher'
+        )
+    }
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    with jar
 }
