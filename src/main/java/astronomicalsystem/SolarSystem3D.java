@@ -4,7 +4,12 @@ import astronomicalsystem.controller.InputHandler;
 import astronomicalsystem.factory.UniverseFactory;
 import astronomicalsystem.model.AstronomicalSystem;
 import astronomicalsystem.model.CelestialBody;
+import astronomicalsystem.model.CelestialBody.BodyMetadata;
+import astronomicalsystem.model.Planet;
+import astronomicalsystem.model.Point3D;
+import astronomicalsystem.view.CreatorPanel;
 import astronomicalsystem.view.InfoPanel;
+import astronomicalsystem.view.PauseMenu;
 import astronomicalsystem.view.SimulationRenderer;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
@@ -24,9 +29,12 @@ import javafx.scene.shape.CullFace;
 import javafx.scene.shape.Sphere;
 import javafx.scene.transform.Rotate;
 import javafx.stage.Stage;
-import javafx.scene.effect.ColorAdjust;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 
 /**
  * The primary JavaFX entry point and orchestration layer for the astronomical simulation.
@@ -43,7 +51,11 @@ public class SolarSystem3D extends Application {
 
     private AstronomicalSystem system;
     private InfoPanel infoPanel;
+    private PauseMenu pauseMenu;
+    private CreatorPanel creatorPanel;
+    private SimulationRenderer renderer;
     private boolean isPaused = false;
+    private int customPlanetCount = 1;
 
     private final Rotate rotateX = new Rotate(20, Rotate.X_AXIS);
     private final Rotate rotateY = new Rotate(0, Rotate.Y_AXIS);
@@ -65,8 +77,8 @@ public class SolarSystem3D extends Application {
 
         createSkybox(root3D);
 
-        SimulationRenderer renderer = new SimulationRenderer(world);
-        this.system.addObserver(renderer);
+        this.renderer = new SimulationRenderer(world);
+        this.system.addObserver(this.renderer);
 
         SubScene subScene = new SubScene(root3D, WIDTH, HEIGHT, true, SceneAntialiasing.BALANCED);
         subScene.setFill(Color.BLACK);
@@ -78,10 +90,22 @@ public class SolarSystem3D extends Application {
         subScene.setCamera(camera);
 
         this.infoPanel = new InfoPanel();
-        StackPane rootLayout = new StackPane();
-        rootLayout.getChildren().addAll(subScene, infoPanel);
-        StackPane.setAlignment(infoPanel, Pos.TOP_LEFT);
         this.infoPanel.setMouseTransparent(true);
+
+        this.pauseMenu = new PauseMenu(
+                this::togglePauseMenu,
+                this::handleQuickSave,
+                this::handleQuickLoad,
+                () -> System.exit(0)
+        );
+
+        this.creatorPanel = new CreatorPanel(this::spawnCustomPlanet);
+
+        StackPane rootLayout = new StackPane();
+        rootLayout.getChildren().addAll(subScene, infoPanel, pauseMenu, creatorPanel);
+        StackPane.setAlignment(infoPanel, Pos.TOP_LEFT);
+        StackPane.setAlignment(pauseMenu, Pos.CENTER);
+        StackPane.setAlignment(creatorPanel, Pos.CENTER_RIGHT);
 
         subScene.widthProperty().bind(rootLayout.widthProperty());
         subScene.heightProperty().bind(rootLayout.heightProperty());
@@ -131,6 +155,28 @@ public class SolarSystem3D extends Application {
     }
 
     /**
+     * Intercepts the pause command to render the overlay UI.
+     */
+    public void togglePauseMenu() {
+        if (this.pauseMenu.isVisible()) {
+            this.pauseMenu.setVisible(false);
+            this.pauseMenu.clearStatus();
+            this.isPaused = false;
+        } else {
+            hideInfoPanel();
+            this.pauseMenu.setVisible(true);
+            this.isPaused = true;
+        }
+    }
+
+    /**
+     * Triggers the sliding animation for the creation HUD.
+     */
+    public void toggleCreatorPanel() {
+        this.creatorPanel.toggle();
+    }
+
+    /**
      * Halts the simulation and exposes the metadata HUD for a targeted entity.
      *
      * @param body the domain entity subject to inspection.
@@ -149,10 +195,57 @@ public class SolarSystem3D extends Application {
     }
 
     /**
+     * Serializes the simulation state with visual UI feedback.
+     */
+    private void handleQuickSave() {
+        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream("quicksave.dat"))) {
+            out.writeObject(this.system);
+            this.pauseMenu.showStatus("Game saved successfully!", Color.LIGHTGREEN);
+        } catch (Exception e) {
+            this.pauseMenu.showStatus("Save failed: " + e.getMessage(), Color.SALMON);
+        }
+    }
+
+    /**
+     * Deserializes the simulation state with visual UI feedback.
+     */
+    private void handleQuickLoad() {
+        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream("quicksave.dat"))) {
+            AstronomicalSystem loadedSystem = (AstronomicalSystem) in.readObject();
+            if (loadedSystem != null) {
+                this.system = loadedSystem;
+                this.system.addObserver(this.renderer);
+                this.pauseMenu.showStatus("Game loaded successfully!", Color.LIGHTGREEN);
+            }
+        } catch (Exception e) {
+            this.pauseMenu.showStatus("No save found or load failed!", Color.SALMON);
+        }
+    }
+
+    /**
+     * Injects a dynamically instantiated celestial body into the active physics engine.
+     *
+     * @param massMultiplier the mass coefficient relative to Earth simulation mass.
+     * @param distance       the initial spatial offset from the origin.
+     * @param velocity       the initial tangential orbital velocity.
+     */
+    private void spawnCustomPlanet(double massMultiplier, double distance, double velocity) {
+        String name = "Custom Planet X-" + (customPlanetCount++);
+        double mass = 50.0 * massMultiplier;
+
+        Planet customPlanet = new Planet(name, mass, 1.0, new Point3D(distance, 0, 0));
+        customPlanet.setVelocity(new Point3D(0, 0, velocity));
+
+        customPlanet.setMetadata(new BodyMetadata(
+                String.format("%.1f Earth Masses", massMultiplier),
+                "Unknown", "Dynamic", "Unknown", "Unknown"
+        ));
+
+        this.system.addBody(customPlanet);
+    }
+
+    /**
      * Provisions the static background environment mapping (Skybox).
-     * <p>
-     * Gracefully falls back to a solid background color if texture resources are unavailable.
-     * </p>
      *
      * @param root3D the root structural node of the scene graph.
      */
@@ -175,7 +268,6 @@ public class SolarSystem3D extends Application {
                 mat.setDiffuseColor(Color.web("#050510"));
             }
         } catch (Exception e) {
-            System.err.println("Skybox texture failed to load: " + e.getMessage());
             mat.setDiffuseColor(Color.web("#050510"));
         }
 

@@ -3,6 +3,7 @@ package astronomicalsystem.factory;
 import astronomicalsystem.model.AstronomicalSystem;
 import astronomicalsystem.model.CelestialBody.BodyMetadata;
 import astronomicalsystem.model.Interactions;
+import astronomicalsystem.model.Moon;
 import astronomicalsystem.model.Planet;
 import astronomicalsystem.model.Point3D;
 import astronomicalsystem.model.Star;
@@ -18,22 +19,8 @@ import astronomicalsystem.model.Star;
  */
 public final class UniverseFactory {
 
-    /**
-     * The base simulation mass value for Earth.
-     * Used as a reference scalar to calculate the relative masses of other celestial bodies.
-     */
     private static final double M_EARTH_SIM = 50.0;
-
-    /**
-     * The base simulation mass value for the central star (the Sun).
-     * Calculated proportionally relative to the Earth's simulation mass.
-     */
     private static final double M_SUN_SIM = M_EARTH_SIM * 200.0;
-
-    /**
-     * The Standard Gravitational Parameter (μ) for the simulation's central body.
-     * Calculated as the product of the universal gravitational constant and the Sun's mass.
-     */
     private static final double GM = M_SUN_SIM * Interactions.G;
 
     /**
@@ -45,7 +32,7 @@ public final class UniverseFactory {
 
     /**
      * Constructs a fully populated solar system with accurate relative masses,
-     * eccentricities, and inclinations.
+     * eccentricities, and inclinations, including host-bound satellite bodies.
      *
      * @return an initialized {@link AstronomicalSystem} ready for simulation.
      */
@@ -62,8 +49,13 @@ public final class UniverseFactory {
         system.addBody(createPlanet("Venus", M_EARTH_SIM * 0.815, 500,
                 new BodyMetadata("4.867 × 10^24 kg", "6,051 km", "462°C (Avg)", "243 Days", "225 Days")));
 
-        system.addBody(createPlanet("Earth", M_EARTH_SIM, 700,
-                new BodyMetadata("5.972 × 10^24 kg", "6,371 km", "15°C (Avg)", "24 Hours", "365.25 Days")));
+        Planet earth = createPlanet("Earth", M_EARTH_SIM, 700,
+                new BodyMetadata("5.972 × 10^24 kg", "6,371 km", "15°C (Avg)", "24 Hours", "365.25 Days"));
+        system.addBody(earth);
+
+        Moon moon = createMoon("Moon", M_EARTH_SIM * 0.0123, 60.0, 0.04, earth,
+                new BodyMetadata("7.342 × 10^22 kg", "1,737 km", "-23°C (Avg)", "27.3 Days", "27.3 Days"));
+        system.addBody(moon);
 
         system.addBody(createPlanet("Mars", M_EARTH_SIM * 0.107, 950,
                 new BodyMetadata("6.39 × 10^23 kg", "3,389 km", "-65°C (Avg)", "24h 37m", "687 Days")));
@@ -84,13 +76,8 @@ public final class UniverseFactory {
     }
 
     /**
-     * Instantiates a new planetary body and calculates its initial kinematic state.
-     * <p>
-     * Determines the initial perihelion position and orbital velocity vector based
-     * on the provided semi-major axis, eccentricity, and inclination. The velocity
-     * is derived from the vis-viva equation evaluated at periapsis:
-     * $v = \sqrt{\frac{GM}{a} \frac{1+e}{1-e}}$
-     * </p>
+     * Instantiates a new planetary body and calculates its initial kinematic state
+     * relative to the central coordinate system origin (the Sun).
      *
      * @param name          the unique identifier of the planet.
      * @param mass          the mass of the planet in simulation units.
@@ -103,13 +90,10 @@ public final class UniverseFactory {
         double iDeg = getInclination(name);
         double iRad = Math.toRadians(iDeg);
 
-        // Position at perihelion on the X-axis
         double rp = semiMajorAxis * (1.0 - e);
 
-        // Orbital velocity magnitude at perihelion (Vis-viva equation)
         double vTotal = Math.sqrt((GM / semiMajorAxis) * ((1.0 + e) / (1.0 - e)));
 
-        // Apply orbital inclination to the velocity vector (rotating around X-axis)
         double vy = vTotal * Math.sin(iRad);
         double vz = vTotal * Math.cos(iRad);
 
@@ -118,6 +102,23 @@ public final class UniverseFactory {
         planet.setMetadata(metadata);
 
         return planet;
+    }
+
+    /**
+     * Instantiates a parametric natural satellite locked to a host body.
+     *
+     * @param name     the identifier of the moon.
+     * @param mass     the mass in simulation units.
+     * @param distance the fixed orbital radius.
+     * @param speed    the angular velocity per integration step.
+     * @param host     the central entity.
+     * @param metadata the UI data record.
+     * @return a fully initialized {@link Moon}.
+     */
+    private static Moon createMoon(String name, double mass, double distance, double speed, Planet host, BodyMetadata metadata) {
+        Moon moon = new Moon(name, mass, 1.0, host, distance, speed);
+        moon.setMetadata(metadata);
+        return moon;
     }
 
     /**
@@ -131,6 +132,7 @@ public final class UniverseFactory {
             case "mercury" -> 0.205;
             case "venus" -> 0.007;
             case "earth" -> 0.017;
+            case "moon" -> 0.0;
             case "mars" -> 0.094;
             case "jupiter" -> 0.049;
             case "saturn" -> 0.057;
@@ -151,6 +153,7 @@ public final class UniverseFactory {
             case "mercury" -> 7.0;
             case "venus" -> 3.39;
             case "earth" -> 0.0;
+            case "moon" -> 5.14;
             case "mars" -> 1.85;
             case "jupiter" -> 1.3;
             case "saturn" -> 2.48;

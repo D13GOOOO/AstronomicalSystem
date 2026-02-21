@@ -21,7 +21,7 @@ import javafx.scene.transform.Rotate;
  */
 public class InputHandler {
 
-    private static final double MOUSE_PAN_SPEED = 5.0;
+    private static final double MOUSE_PAN_SPEED = 1.5;
     private static final double MOUSE_ROT_SPEED = 0.2;
     private static final double SCROLL_ZOOM_SPEED = 10.0;
 
@@ -143,6 +143,8 @@ public class InputHandler {
                     rotateY.setAngle(DEFAULT_ROT_Y);
                 }
                 case SPACE -> mainApp.togglePause();
+                case P -> mainApp.togglePauseMenu();
+                case C -> mainApp.toggleCreatorPanel();
                 default -> {}
             }
         });

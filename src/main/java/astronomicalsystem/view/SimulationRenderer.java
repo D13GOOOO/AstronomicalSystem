@@ -3,6 +3,7 @@ package astronomicalsystem.view;
 import astronomicalsystem.factory.UniverseFactory;
 import astronomicalsystem.model.CelestialBody;
 import astronomicalsystem.model.Kinematic;
+import astronomicalsystem.model.Moon;
 import astronomicalsystem.model.SimulationObserver;
 import astronomicalsystem.model.Star;
 import javafx.scene.Group;
@@ -33,9 +34,6 @@ import java.util.Set;
  */
 public class SimulationRenderer implements SimulationObserver {
 
-    /**
-     * Scaling factor mapping simulation distance units to JavaFX pixel coordinates.
-     */
     private static final double POS_SCALE = 0.4;
 
     private final Group worldGroup;
@@ -69,7 +67,6 @@ public class SimulationRenderer implements SimulationObserver {
     public void onSimulationStep(int step, List<CelestialBody> bodies, double totalEnergy) {
         Set<CelestialBody> activeBodies = new HashSet<>(bodies);
 
-        // O(N) Cleanup: Identify destroyed bodies and surgically remove their 3D meshes
         Iterator<Map.Entry<CelestialBody, Sphere>> it = this.visualObjects.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry<CelestialBody, Sphere> entry = it.next();
@@ -79,7 +76,6 @@ public class SimulationRenderer implements SimulationObserver {
                 this.worldGroup.getChildren().remove(entry.getValue());
                 it.remove();
 
-                // Safely destroy Saturn's ring if Saturn was consumed in a collision
                 if (body.equals(this.saturnBody) && this.saturnRingVisual != null) {
                     this.worldGroup.getChildren().remove(this.saturnRingVisual);
                     this.saturnRingVisual = null;
@@ -88,7 +84,6 @@ public class SimulationRenderer implements SimulationObserver {
             }
         }
 
-        // Render and update surviving/new bodies
         for (CelestialBody body : bodies) {
             if (!this.visualObjects.containsKey(body)) {
                 createVisualsFor(body);
@@ -99,7 +94,6 @@ public class SimulationRenderer implements SimulationObserver {
             sphere.setTranslateY(body.getPosition().y() * POS_SCALE);
             sphere.setTranslateZ(body.getPosition().z() * POS_SCALE);
 
-            // Apply decorative axial rotation
             if (body instanceof Star) {
                 sphere.setRotate(sphere.getRotate() + 0.05);
             } else {
@@ -111,7 +105,6 @@ public class SimulationRenderer implements SimulationObserver {
             }
         }
 
-        // Synchronize ring position with Saturn's physical translation
         if (this.saturnBody != null && this.saturnRingVisual != null) {
             this.saturnRingVisual.setTranslateX(this.saturnBody.getPosition().x() * POS_SCALE);
             this.saturnRingVisual.setTranslateY(this.saturnBody.getPosition().y() * POS_SCALE);
@@ -125,11 +118,10 @@ public class SimulationRenderer implements SimulationObserver {
      * @param body the physical entity requiring visual representation.
      */
     private void createVisualsFor(CelestialBody body) {
-        if (body instanceof Kinematic) {
+        if (body instanceof Kinematic && !(body instanceof Moon)) {
             double e = UniverseFactory.getEccentricity(body.getName());
             double iDeg = UniverseFactory.getInclination(body.getName());
 
-            // Mathematical Fix: using magnitude() instead of the removed norm() method
             double currentDistScaled = body.getPosition().magnitude() * POS_SCALE;
             double a = currentDistScaled / (1.0 - e);
             double b = a * Math.sqrt(1 - (e * e));
@@ -166,7 +158,6 @@ public class SimulationRenderer implements SimulationObserver {
                 material.setDiffuseColor(getFallbackColor(name));
             }
         } catch (Exception e) {
-            System.err.println("Texture missing for: " + name);
             material.setDiffuseColor(getFallbackColor(name));
         }
 
@@ -201,6 +192,7 @@ public class SimulationRenderer implements SimulationObserver {
         if (name.contains("venus"))   return 11;
         if (name.contains("mars"))    return 8;
         if (name.contains("mercury")) return 6;
+        if (name.contains("moon"))    return 3;
         return 5;
     }
 
@@ -221,6 +213,7 @@ public class SimulationRenderer implements SimulationObserver {
             case "saturn" -> Color.GOLD;
             case "uranus" -> Color.LIGHTBLUE;
             case "neptune" -> Color.DARKBLUE;
+            case "moon" -> Color.LIGHTGRAY;
             default -> Color.GRAY;
         };
     }
