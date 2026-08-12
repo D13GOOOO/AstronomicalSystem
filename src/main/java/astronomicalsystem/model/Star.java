@@ -12,7 +12,7 @@ import java.io.Serial;
  * of implementing empty or dummy methods that violate architectural contracts.
  * </p>
  */
-public class Star extends CelestialBody {
+public class Star extends CelestialBody implements AnchoredBody {
 
     /**
      * The serialization identifier ensuring version compatibility during file I/O operations.

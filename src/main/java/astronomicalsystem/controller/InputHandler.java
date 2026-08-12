@@ -1,12 +1,12 @@
 package astronomicalsystem.controller;
 
+import astronomicalsystem.config.SimulationSettings;
 import astronomicalsystem.SolarSystem3D;
 import astronomicalsystem.model.CelestialBody;
 import javafx.scene.Node;
 import javafx.scene.PerspectiveCamera;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseButton;
 import javafx.scene.input.PickResult;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.transform.Rotate;
@@ -21,19 +21,7 @@ import javafx.scene.transform.Rotate;
  */
 public class InputHandler {
 
-    private static final double MOUSE_PAN_SPEED = 1.5;
-    private static final double MOUSE_ROT_SPEED = 0.2;
-    private static final double SCROLL_ZOOM_SPEED = 10.0;
-
-    private static final double KEYBOARD_PAN_SPEED = 100.0;
-    private static final double KEYBOARD_ZOOM_SPEED = 200.0;
-
-    private static final double MIN_CAMERA_Z = -200.0;
-    private static final double MAX_CAMERA_Z = -100000.0;
-
-    private static final double DEFAULT_CAMERA_Z = -3000.0;
-    private static final double DEFAULT_ROT_X = 20.0;
-    private static final double DEFAULT_ROT_Y = 0.0;
+    private static final SimulationSettings SETTINGS = SimulationSettings.defaults();
 
     private final PerspectiveCamera camera;
     private final Rotate rotateX;
@@ -63,11 +51,6 @@ public class InputHandler {
         initKeyboardControl(scene);
     }
 
-    /**
-     * Binds mouse press, drag, release, and scroll events.
-     *
-     * @param scene the active JavaFX scene.
-     */
     private void initMouseControl(Scene scene) {
         scene.setOnMousePressed(event -> {
             this.mouseOldX = event.getSceneX();
@@ -82,12 +65,12 @@ public class InputHandler {
             double deltaX = mousePosX - mouseOldX;
             double deltaY = mousePosY - mouseOldY;
 
-            if (event.getButton() == MouseButton.SECONDARY || (event.getButton() == MouseButton.PRIMARY && event.isShiftDown())) {
-                camera.setTranslateX(camera.getTranslateX() - deltaX * MOUSE_PAN_SPEED);
-                camera.setTranslateY(camera.getTranslateY() - deltaY * MOUSE_PAN_SPEED);
-            } else if (event.getButton() == MouseButton.PRIMARY) {
-                rotateX.setAngle(rotateX.getAngle() + deltaY * MOUSE_ROT_SPEED);
-                rotateY.setAngle(rotateY.getAngle() - deltaX * MOUSE_ROT_SPEED);
+            if (event.isSecondaryButtonDown() || (event.isPrimaryButtonDown() && event.isShiftDown())) {
+                camera.setTranslateX(camera.getTranslateX() - deltaX * SETTINGS.input().mousePanSpeed());
+                camera.setTranslateY(camera.getTranslateY() - deltaY * SETTINGS.input().mousePanSpeed());
+            } else if (event.isPrimaryButtonDown()) {
+                rotateX.setAngle(rotateX.getAngle() + deltaY * SETTINGS.input().mouseRotSpeed());
+                rotateY.setAngle(rotateY.getAngle() - deltaX * SETTINGS.input().mouseRotSpeed());
             }
 
             this.mouseOldX = mousePosX;
@@ -113,34 +96,26 @@ public class InputHandler {
 
         scene.setOnScroll((ScrollEvent event) -> {
             double zoomDelta = event.getDeltaY();
-            double newZ = camera.getTranslateZ() + zoomDelta * SCROLL_ZOOM_SPEED;
-
-            if (newZ < MIN_CAMERA_Z && newZ > MAX_CAMERA_Z) {
-                camera.setTranslateZ(newZ);
-            }
+            double newZ = camera.getTranslateZ() + zoomDelta * SETTINGS.input().scrollZoomSpeed();
+            camera.setTranslateZ(clamp(newZ, SETTINGS.input().maxCameraZ(), SETTINGS.input().minCameraZ()));
         });
     }
 
-    /**
-     * Binds keyboard shortcuts for camera manipulation and simulation control.
-     *
-     * @param scene the active JavaFX scene.
-     */
     private void initKeyboardControl(Scene scene) {
         scene.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
             switch (event.getCode()) {
-                case W -> camera.setTranslateZ(camera.getTranslateZ() + KEYBOARD_ZOOM_SPEED);
-                case S -> camera.setTranslateZ(camera.getTranslateZ() - KEYBOARD_ZOOM_SPEED);
-                case LEFT -> camera.setTranslateX(camera.getTranslateX() - KEYBOARD_PAN_SPEED);
-                case RIGHT -> camera.setTranslateX(camera.getTranslateX() + KEYBOARD_PAN_SPEED);
-                case UP -> camera.setTranslateY(camera.getTranslateY() - KEYBOARD_PAN_SPEED);
-                case DOWN -> camera.setTranslateY(camera.getTranslateY() + KEYBOARD_PAN_SPEED);
+                case W -> camera.setTranslateZ(camera.getTranslateZ() + SETTINGS.input().keyboardZoomSpeed());
+                case S -> camera.setTranslateZ(camera.getTranslateZ() - SETTINGS.input().keyboardZoomSpeed());
+                case LEFT -> camera.setTranslateX(camera.getTranslateX() - SETTINGS.input().keyboardPanSpeed());
+                case RIGHT -> camera.setTranslateX(camera.getTranslateX() + SETTINGS.input().keyboardPanSpeed());
+                case UP -> camera.setTranslateY(camera.getTranslateY() - SETTINGS.input().keyboardPanSpeed());
+                case DOWN -> camera.setTranslateY(camera.getTranslateY() + SETTINGS.input().keyboardPanSpeed());
                 case R -> {
-                    camera.setTranslateZ(DEFAULT_CAMERA_Z);
+                    camera.setTranslateZ(SETTINGS.input().defaultCameraZ());
                     camera.setTranslateX(0);
                     camera.setTranslateY(0);
-                    rotateX.setAngle(DEFAULT_ROT_X);
-                    rotateY.setAngle(DEFAULT_ROT_Y);
+                    rotateX.setAngle(SETTINGS.input().defaultRotX());
+                    rotateY.setAngle(SETTINGS.input().defaultRotY());
                 }
                 case SPACE -> mainApp.togglePause();
                 case P -> mainApp.togglePauseMenu();
@@ -148,5 +123,9 @@ public class InputHandler {
                 default -> {}
             }
         });
+    }
+
+    static double clamp(double value, double min, double max) {
+        return Math.max(min, Math.min(max, value));
     }
 }

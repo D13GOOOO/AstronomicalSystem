@@ -1,48 +1,73 @@
 # Interactive 3D Solar System Simulator
 
-A physics-based 3D Solar System simulation built from scratch using **Java** and **JavaFX**. This project combines a custom N-Body physics engine with accurate orbital mechanics and a dynamic "God Mode" sandbox to create a professional and interactive space environment.
+A physics-based 3D Solar System simulation built from scratch using **Java** and **JavaFX**. The project combines a custom gravitational engine with deterministic orbital motion and an interactive "God Mode" sandbox.
 
 ![Solar System Preview](src/main/resources/project_screen.png)
 
-## What's inside
+## Overview & Features
 
-* **N-Body Physics Engine**: A custom-coded engine that calculates real-time gravitational forces between all objects.
-* **Mixed Kinematic Model**:
-  * **Planets**: Fully dynamic gravity-based movement.
-  * **Moons**: Parametric deterministic orbits to ensure infinite stability around moving hosts, eliminating numerical drift.
-* **God Mode (Creator Panel)**: A slide-out HUD that allows the real-time injection of custom celestial bodies with adjustable mass, distance, and velocity.
-* **Quick Save/Load System**: Full state serialization to disk. Save your orbital configuration and resume it at any time.
+* **N-Body Physics Engine**: Custom gravity calculations between all physical bodies with an iterative collision resolution system.
+* **Mixed Motion Model**:
+  * **Planets**: Fully dynamic, gravity-driven movement implementing `Kinematic`.
+  * **Moons**: Host-centric parametric orbits for stable satellite motion (`OrbitingBody`).
+  * **Stars**: Static, high-mass entities (`AnchoredBody`) that preserve their role even after collisions.
+* **God Mode (Creator Panel)**: A slide-out HUD for spawning custom celestial bodies with adjustable mass, distance, and velocity.
+* **Complete Session Management**: Full state serialization to disk using a dedicated `SessionPersistenceService`. It captures the physical simulation state, camera transforms, and pause state, restoring everything perfectly on load.
 * **Realistic Visuals**:
-  * Unified **Deep-Space HUD** design (NASA-inspired) with a minimalist, non-intrusive aesthetic.
-  * Procedurally generated Saturn's rings and immersive skybox.
-  * Real-time orbit trails to visualize complex gravitational interactions.
-* **Collision Physics**: Conservation of momentum applied when bodies collide and merge.
+  * Deep-space HUD styling with a minimal, non-intrusive aesthetic.
+  * Procedurally generated Saturn rings (with strict mesh validation) and a skybox background.
+  * Real-time orbit trails for visual feedback.
 
-## How to use it
+## Architecture & Modules
 
-| Goal | Input |
+The project is built on a clean MVC architecture with strong adherence to SOLID and Liskov Substitution principles:
+
+* **Model (`astronomicalsystem.model`)**: Handles N-body physics, iterative perfectly inelastic collisions (conserving momentum), and structural interfaces (`Kinematic`, `OrbitingBody`, `AnchoredBody`).
+* **View & Controller (`astronomicalsystem.view` / `controller`)**: Driven by `SimulationRenderer` and `InputHandler`. Implements strict parameter validations (e.g., camera zoom clamping, ring mesh integrity) and uses the Observer pattern for state updates.
+* **Session Services (`astronomicalsystem.session`)**: Separated persistence layer (`SessionPersistenceService`, `SessionState`, `CameraState`) ensuring the main simulation loop remains lightweight. Backward compatible with legacy physical-only payloads.
+* **Configuration (`astronomicalsystem.config`)**: Centralized `SimulationSettings` acts as the single source of truth for camera limits, render scales, visual radiuses, and physical constants.
+
+## Testing & Quality Assurance
+
+The project is covered by a JUnit Platform test suite that guarantees structural integrity and prevents regressions:
+* **Physics & Kinematics**: Covered by `MoonTest` (Liskov-safe orbits) and `AstronomicalSystemCollisionTest` (iterative resolution and anchored body preservation).
+* **Persistence**: Covered by `SessionPersistenceServiceTest` and `AstronomicalSystemPersistenceTest` for full state round-tripping.
+* **UI & Validation**: Covered by `InputHandlerTest` and `SaturnRingTest`.
+
+Run the suite using Gradle:
+./gradlew test
+
+## Performance Profiling
+
+A built-in `SimulationPerformanceMonitor` is available to track frame times and rendering costs. This is an opt-in feature designed for debugging and optimizing large simulations. 
+To enable lightweight profiling, run the application with the following system property:
+-Dastronomicalsystem.profile=true
+
+## How to Use It
+
+| Action | Input |
 | :--- | :--- |
 | **Rotate the view** | Left Click + Drag |
-| **Move the camera** | Right Click + Drag (or Arrow Keys) |
-| **Zoom in/out** | Scroll Wheel (or W / S keys) |
-| **System Menu** | **P** Key (Resume, Save, Load, Quit) |
-| **God Mode HUD** | **C** Key (Spawn custom planets) |
-| **Inspect a planet** | Left Click on it (Opens Telemetry) |
+| **Move the camera** | Right Click + Drag or Arrow Keys |
+| **Zoom in/out** | Scroll Wheel or W / S |
+| **System Menu** | P key (Resume, Save, Load, Quit) |
+| **God Mode HUD** | C key (Spawn custom planets) |
+| **Inspect a planet** | Left Click on it |
 | **Play/Pause** | Spacebar |
 | **Reset camera** | R key |
 
-## Tech Stack
+## Tech Stack & Execution
 
-* **Language**: Java 17+
-* **Framework**: JavaFX (3D API)
-* **Core Concepts**: MVC Architecture, Observer Pattern, Binary Serialization, and N-Body Gravity Algorithms.
+* **Language**: Java 21+
+* **Framework**: JavaFX 21
+* **Build Tool**: Gradle
 
-## Getting Started
+### Getting Started
 
-1. Ensure you have **JDK 17** (or newer) installed.
-2. Configure the **JavaFX SDK** in your IDE or project structure.
-3. Clone the repository.
-4. Run the main class: `SolarSystem3D.java`.
+1. Ensure you have **JDK 21** or newer installed.
+2. Clone the repository.
+3. Build and test the project: `./gradlew build`
+4. Run the main class: `astronomicalsystem.Launcher` (or `astronomicalsystem.SolarSystem3D` depending on your IDE setup).
 
 ---
 
@@ -55,4 +80,4 @@ This is a **proprietary** project.
 * You are not allowed to copy, distribute, or modify this code for commercial use without explicit written permission from the author.
 * This code is shared here for demonstration and portfolio purposes.
 
-**Contact**: [diego.guerini.it@gmail.com]
+**Contact**: diego.guerini.it@gmail.com

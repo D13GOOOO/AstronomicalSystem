@@ -33,14 +33,15 @@ public class SaturnRing extends MeshView {
      * @param texturePath the classpath-relative string path to the texture image resource.
      */
     public SaturnRing(double innerRadius, double outerRadius, int divisions, String texturePath) {
+        validateParameters(innerRadius, outerRadius, divisions);
+
         PhongMaterial material = new PhongMaterial();
 
-        try {
-            InputStream stream = getClass().getResourceAsStream(texturePath);
+        try (InputStream stream = getClass().getResourceAsStream(texturePath)) {
             if (stream != null) {
                 Image texture = new Image(stream);
                 material.setDiffuseMap(texture);
-                material.setSelfIlluminationMap(texture); // Eliminates shading anomalies on the flat mesh
+                material.setSelfIlluminationMap(texture);
             } else {
                 throw new IllegalArgumentException("Texture resource stream returned null.");
             }
@@ -54,6 +55,15 @@ public class SaturnRing extends MeshView {
         this.setMesh(createRingMesh(innerRadius, outerRadius, divisions));
     }
 
+    static void validateParameters(double innerRadius, double outerRadius, int divisions) {
+        if (divisions < 3) {
+            throw new IllegalArgumentException("divisions must be at least 3");
+        }
+        if (innerRadius <= 0 || outerRadius <= innerRadius) {
+            throw new IllegalArgumentException("outerRadius must be greater than innerRadius and both must be positive");
+        }
+    }
+
     /**
      * Algorithmically generates the topology for a 2D annulus (ring) in 3D space.
      *
@@ -65,8 +75,6 @@ public class SaturnRing extends MeshView {
     private TriangleMesh createRingMesh(double innerRadius, double outerRadius, int divisions) {
         TriangleMesh mesh = new TriangleMesh();
 
-        // 1D UV Mapping: Maps the inner radius to the left edge of the texture (0f)
-        // and the outer radius to the right edge (1f).
         float[] texCoords = {
                 0f, 0.5f,
                 1f, 0.5f
@@ -86,12 +94,10 @@ public class SaturnRing extends MeshView {
             float cos = (float) Math.cos(angle);
             float sin = (float) Math.sin(angle);
 
-            // Inner vertex calculation
             points[pIndex++] = (float) (innerRadius * cos);
             points[pIndex++] = 0;
             points[pIndex++] = (float) (innerRadius * sin);
 
-            // Outer vertex calculation
             points[pIndex++] = (float) (outerRadius * cos);
             points[pIndex++] = 0;
             points[pIndex++] = (float) (outerRadius * sin);
@@ -101,12 +107,10 @@ public class SaturnRing extends MeshView {
             int nextInner = (i + 1 == divisions) ? 0 : (i + 1) * 2;
             int nextOuter = (i + 1 == divisions) ? 1 : (i + 1) * 2 + 1;
 
-            // First triangle of the quad segment
             faces[fIndex++] = currentInner; faces[fIndex++] = 0;
             faces[fIndex++] = currentOuter; faces[fIndex++] = 1;
             faces[fIndex++] = nextInner;    faces[fIndex++] = 0;
 
-            // Second triangle of the quad segment
             faces[fIndex++] = currentOuter; faces[fIndex++] = 1;
             faces[fIndex++] = nextOuter;    faces[fIndex++] = 1;
             faces[fIndex++] = nextInner;    faces[fIndex++] = 0;

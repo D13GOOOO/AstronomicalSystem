@@ -15,6 +15,23 @@ import java.util.Set;
  * static bodies from dynamic ones, ensuring strict compliance with the Liskov
  * Substitution Principle (LSP) during the parallel execution of physics integration steps.
  * </p>
+package astronomicalsystem.model;
+
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+/**
+ * The core simulation engine responsible for orchestrating the physics loop,
+ * managing celestial entities, and broadcasting state changes to observers.
+ * <p>
+ * This class leverages the {@link Kinematic} interface to safely segregate
+ * static bodies from dynamic ones, ensuring strict compliance with the Liskov
+ * Substitution Principle (LSP) during the parallel execution of physics integration steps.
+ * </p>
  */
 public class AstronomicalSystem implements Serializable {
 
@@ -97,7 +114,13 @@ public class AstronomicalSystem implements Serializable {
                 .map(b -> (Kinematic) b)
                 .forEach(Kinematic::updatePosition);
 
-        // Step 3: Resolve physical intersections
+        // Step 3: Advance host-centric orbital bodies after the main bodies moved.
+        this.bodies.parallelStream()
+            .filter(b -> b instanceof OrbitingBody)
+            .map(b -> (OrbitingBody) b)
+            .forEach(OrbitingBody::updateOrbit);
+
+        // Step 4: Resolve physical intersections
         handleCollisions();
     }
 
@@ -109,32 +132,42 @@ public class AstronomicalSystem implements Serializable {
      * </p>
      */
     private void handleCollisions() {
-        List<CelestialBody> toAdd = new ArrayList<>();
-        Set<CelestialBody> toRemove = new HashSet<>(); // Optimization: O(1) lookup
+        boolean mergedThisPass;
 
-        for (int i = 0; i < this.bodies.size(); i++) {
-            CelestialBody b1 = this.bodies.get(i);
-            if (toRemove.contains(b1)) continue;
+        do {
+            mergedThisPass = false;
+            List<CelestialBody> toAdd = new ArrayList<>();
+            Set<CelestialBody> toRemove = new HashSet<>(); // Optimization: O(1) lookup
 
-            for (int j = i + 1; j < this.bodies.size(); j++) {
-                CelestialBody b2 = this.bodies.get(j);
-                if (toRemove.contains(b2)) continue;
+            for (int i = 0; i < this.bodies.size(); i++) {
+                CelestialBody b1 = this.bodies.get(i);
+                if (toRemove.contains(b1)) continue;
 
-                CelestialBody merged = Interactions.checkCollision(b1, b2);
+                for (int j = i + 1; j < this.bodies.size(); j++) {
+                    CelestialBody b2 = this.bodies.get(j);
+                    if (toRemove.contains(b2)) continue;
 
-                if (merged != null) {
-                    toAdd.add(merged);
-                    toRemove.add(b1);
-                    toRemove.add(b2);
-                    break; // b1 is destroyed, break inner loop to evaluate next surviving body
+                    CelestialBody merged = Interactions.checkCollision(b1, b2);
+
+                    if (merged != null) {
+                        toAdd.add(merged);
+                        toRemove.add(b1);
+                        toRemove.add(b2);
+                        mergedThisPass = true;
+                        break;
+                    }
+                }
+
+                if (mergedThisPass) {
+                    break;
                 }
             }
-        }
 
-        if (!toRemove.isEmpty() || !toAdd.isEmpty()) {
-            this.bodies.removeAll(toRemove);
-            this.bodies.addAll(toAdd);
-        }
+            if (mergedThisPass) {
+                this.bodies.removeAll(toRemove);
+                this.bodies.addAll(toAdd);
+            }
+        } while (mergedThisPass);
     }
 
     /**
@@ -167,7 +200,7 @@ public class AstronomicalSystem implements Serializable {
         if (this.observers == null || this.observers.isEmpty()) return;
 
         double energy = calculateTotalEnergy();
-        List<CelestialBody> safeList = Collections.unmodifiableList(this.bodies);
+        List<CelestialBody> safeList = Collections.unmodifiableList(new ArrayList<>(this.bodies));
 
         for (SimulationObserver obs : this.observers) {
             obs.onSimulationStep(step, safeList, energy);

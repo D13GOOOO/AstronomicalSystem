@@ -1,5 +1,6 @@
 package astronomicalsystem.factory;
 
+import astronomicalsystem.config.SimulationSettings;
 import astronomicalsystem.model.AstronomicalSystem;
 import astronomicalsystem.model.CelestialBody.BodyMetadata;
 import astronomicalsystem.model.Interactions;
@@ -21,7 +22,7 @@ public final class UniverseFactory {
 
     private static final double M_EARTH_SIM = 50.0;
     private static final double M_SUN_SIM = M_EARTH_SIM * 200.0;
-    private static final double GM = M_SUN_SIM * Interactions.G;
+    private static final double GM = M_SUN_SIM * SimulationSettings.defaults().physics().gravitationalConstant();
 
     /**
      * Private constructor to prevent instantiation of this factory class.

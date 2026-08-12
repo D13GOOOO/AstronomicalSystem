@@ -1,5 +1,6 @@
 package astronomicalsystem;
 
+import astronomicalsystem.config.SimulationSettings;
 import astronomicalsystem.controller.InputHandler;
 import astronomicalsystem.factory.UniverseFactory;
 import astronomicalsystem.model.AstronomicalSystem;
@@ -7,6 +8,10 @@ import astronomicalsystem.model.CelestialBody;
 import astronomicalsystem.model.CelestialBody.BodyMetadata;
 import astronomicalsystem.model.Planet;
 import astronomicalsystem.model.Point3D;
+import astronomicalsystem.session.CameraState;
+import astronomicalsystem.session.SessionPersistenceService;
+import astronomicalsystem.session.SessionState;
+import astronomicalsystem.performance.SimulationPerformanceMonitor;
 import astronomicalsystem.view.CreatorPanel;
 import astronomicalsystem.view.InfoPanel;
 import astronomicalsystem.view.PauseMenu;
@@ -30,11 +35,7 @@ import javafx.scene.shape.Sphere;
 import javafx.scene.transform.Rotate;
 import javafx.stage.Stage;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 
 /**
  * The primary JavaFX entry point and orchestration layer for the astronomical simulation.
@@ -48,23 +49,22 @@ public class SolarSystem3D extends Application {
 
     private static final int WIDTH = 1280;
     private static final int HEIGHT = 800;
+    private static final SimulationSettings SETTINGS = SimulationSettings.defaults();
 
     private AstronomicalSystem system;
     private InfoPanel infoPanel;
     private PauseMenu pauseMenu;
     private CreatorPanel creatorPanel;
     private SimulationRenderer renderer;
+    private SimulationPerformanceMonitor performanceMonitor;
+    private PerspectiveCamera camera;
+    private final SessionPersistenceService sessionPersistenceService = new SessionPersistenceService();
     private boolean isPaused = false;
     private int customPlanetCount = 1;
 
     private final Rotate rotateX = new Rotate(20, Rotate.X_AXIS);
     private final Rotate rotateY = new Rotate(0, Rotate.Y_AXIS);
 
-    /**
-     * Bootstraps the JavaFX application lifecycle.
-     *
-     * @param primaryStage the primary window hosting the application scene.
-     */
     @Override
     public void start(Stage primaryStage) {
         this.system = UniverseFactory.createSolarSystem();
@@ -77,17 +77,22 @@ public class SolarSystem3D extends Application {
 
         createSkybox(root3D);
 
-        this.renderer = new SimulationRenderer(world);
+        this.renderer = new SimulationRenderer(world, this.performanceMonitor);
         this.system.addObserver(this.renderer);
 
         SubScene subScene = new SubScene(root3D, WIDTH, HEIGHT, true, SceneAntialiasing.BALANCED);
         subScene.setFill(Color.BLACK);
 
-        PerspectiveCamera camera = new PerspectiveCamera(true);
-        camera.setTranslateZ(-3000);
-        camera.setNearClip(1);
-        camera.setFarClip(50000.0);
-        subScene.setCamera(camera);
+        this.camera = new PerspectiveCamera(true);
+        this.camera.setTranslateZ(SETTINGS.camera().initialTranslateZ());
+        this.camera.setNearClip(SETTINGS.camera().nearClip());
+        this.camera.setFarClip(SETTINGS.camera().farClip());
+        subScene.setCamera(this.camera);
+
+        this.performanceMonitor = new SimulationPerformanceMonitor(
+            SETTINGS.performance().enabled(),
+            SETTINGS.performance().reportEveryFrames()
+        );
 
         this.infoPanel = new InfoPanel();
         this.infoPanel.setMouseTransparent(true);
@@ -112,7 +117,7 @@ public class SolarSystem3D extends Application {
 
         Scene mainScene = new Scene(rootLayout, WIDTH, HEIGHT);
 
-        new InputHandler(this, mainScene, camera, rotateX, rotateY);
+        new InputHandler(this, mainScene, this.camera, rotateX, rotateY);
 
         PointLight sunLight = new PointLight(Color.WHITE);
         world.getChildren().add(sunLight);
@@ -124,7 +129,9 @@ public class SolarSystem3D extends Application {
             @Override
             public void handle(long now) {
                 if (!isPaused) {
+                    long frameStart = System.nanoTime();
                     system.simulate(1);
+                    performanceMonitor.recordFrame(System.nanoTime() - frameStart);
                 }
             }
         };
@@ -138,25 +145,14 @@ public class SolarSystem3D extends Application {
         rootLayout.requestFocus();
     }
 
-    /**
-     * Modifies the runtime state of the integration loop.
-     *
-     * @param paused {@code true} to halt physics processing, {@code false} to resume.
-     */
     public void setPaused(boolean paused) {
         this.isPaused = paused;
     }
 
-    /**
-     * Inverts the current runtime state of the integration loop.
-     */
     public void togglePause() {
         this.isPaused = !this.isPaused;
     }
 
-    /**
-     * Intercepts the pause command to render the overlay UI.
-     */
     public void togglePauseMenu() {
         if (this.pauseMenu.isVisible()) {
             this.pauseMenu.setVisible(false);
@@ -169,37 +165,26 @@ public class SolarSystem3D extends Application {
         }
     }
 
-    /**
-     * Triggers the sliding animation for the creation HUD.
-     */
     public void toggleCreatorPanel() {
         this.creatorPanel.toggle();
     }
 
-    /**
-     * Halts the simulation and exposes the metadata HUD for a targeted entity.
-     *
-     * @param body the domain entity subject to inspection.
-     */
     public void showInfoPanel(CelestialBody body) {
         this.infoPanel.showPlanet(body);
         this.isPaused = true;
     }
 
-    /**
-     * Dismisses the metadata HUD and resumes the physical simulation.
-     */
     public void hideInfoPanel() {
         this.infoPanel.hide();
         this.isPaused = false;
     }
 
     /**
-     * Serializes the simulation state with visual UI feedback.
+     * Serializes the full interactive session with visual UI feedback.
      */
     private void handleQuickSave() {
-        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream("quicksave.dat"))) {
-            out.writeObject(this.system);
+        try {
+            this.sessionPersistenceService.save("quicksave.dat", captureSessionState());
             this.pauseMenu.showStatus("Game saved successfully!", Color.LIGHTGREEN);
         } catch (Exception e) {
             this.pauseMenu.showStatus("Save failed: " + e.getMessage(), Color.SALMON);
@@ -207,14 +192,17 @@ public class SolarSystem3D extends Application {
     }
 
     /**
-     * Deserializes the simulation state with visual UI feedback.
+     * Deserializes the full interactive session with visual UI feedback.
      */
     private void handleQuickLoad() {
-        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream("quicksave.dat"))) {
-            AstronomicalSystem loadedSystem = (AstronomicalSystem) in.readObject();
-            if (loadedSystem != null) {
-                this.system = loadedSystem;
-                this.system.addObserver(this.renderer);
+        try {
+            SessionState sessionState = this.sessionPersistenceService.load("quicksave.dat");
+
+            if (sessionState.legacyPhysicsOnly()) {
+                restoreLegacySession(sessionState.system());
+                this.pauseMenu.showStatus("Legacy save loaded successfully!", Color.LIGHTGREEN);
+            } else {
+                restoreSessionState(sessionState);
                 this.pauseMenu.showStatus("Game loaded successfully!", Color.LIGHTGREEN);
             }
         } catch (Exception e) {
@@ -222,16 +210,9 @@ public class SolarSystem3D extends Application {
         }
     }
 
-    /**
-     * Injects a dynamically instantiated celestial body into the active physics engine.
-     *
-     * @param massMultiplier the mass coefficient relative to Earth simulation mass.
-     * @param distance       the initial spatial offset from the origin.
-     * @param velocity       the initial tangential orbital velocity.
-     */
     private void spawnCustomPlanet(double massMultiplier, double distance, double velocity) {
         String name = "Custom Planet X-" + (customPlanetCount++);
-        double mass = 50.0 * massMultiplier;
+        double mass = SETTINGS.creator().baseEarthMasses() * massMultiplier;
 
         Planet customPlanet = new Planet(name, mass, 1.0, new Point3D(distance, 0, 0));
         customPlanet.setVelocity(new Point3D(0, 0, velocity));
@@ -244,23 +225,13 @@ public class SolarSystem3D extends Application {
         this.system.addBody(customPlanet);
     }
 
-    /**
-     * Provisions the static background environment mapping (Skybox).
-     *
-     * @param root3D the root structural node of the scene graph.
-     */
     private void createSkybox(Group root3D) {
         Sphere skybox = new Sphere(25000);
         skybox.setId("skybox");
         skybox.setCullFace(CullFace.NONE);
 
         PhongMaterial mat = new PhongMaterial();
-        try {
-            InputStream stream = getClass().getResourceAsStream("/milky_way.jpg");
-            if (stream == null) {
-                stream = getClass().getResourceAsStream("/stars.jpg");
-            }
-
+        try (InputStream stream = openSkyboxTexture()) {
             if (stream != null) {
                 Image stars = new Image(stream, 0, 0, true, true);
                 mat.setDiffuseMap(stars);
@@ -275,17 +246,59 @@ public class SolarSystem3D extends Application {
         root3D.getChildren().add(skybox);
     }
 
-    /**
-     * A lightweight, internally-scoped extension of {@link Group} utilized to
-     * semantically isolate the transformable world space from the static camera/skybox space.
-     */
+    private InputStream openSkyboxTexture() {
+        InputStream milkyWay = getClass().getResourceAsStream("/milky_way.jpg");
+        if (milkyWay != null) {
+            return milkyWay;
+        }
+        return getClass().getResourceAsStream("/stars.jpg");
+    }
+
+    private SessionState captureSessionState() {
+        return SessionState.current(
+                this.system,
+                this.isPaused,
+                this.customPlanetCount,
+                new CameraState(
+                        this.camera.getTranslateX(),
+                        this.camera.getTranslateY(),
+                        this.camera.getTranslateZ(),
+                        this.rotateX.getAngle(),
+                        this.rotateY.getAngle()
+                )
+        );
+    }
+
+    private void restoreSessionState(SessionState sessionState) {
+        this.system = sessionState.system();
+        this.system.addObserver(this.renderer);
+        this.isPaused = sessionState.paused();
+        this.customPlanetCount = sessionState.customPlanetCount();
+
+        CameraState cameraState = sessionState.cameraState();
+        this.camera.setTranslateX(cameraState.translateX());
+        this.camera.setTranslateY(cameraState.translateY());
+        this.camera.setTranslateZ(cameraState.translateZ());
+        this.rotateX.setAngle(cameraState.rotateX());
+        this.rotateY.setAngle(cameraState.rotateY());
+
+        this.pauseMenu.setVisible(this.isPaused);
+        this.infoPanel.hide();
+        this.pauseMenu.clearStatus();
+    }
+
+    private void restoreLegacySession(AstronomicalSystem loadedSystem) {
+        this.system = loadedSystem;
+        this.system.addObserver(this.renderer);
+        this.isPaused = false;
+        this.customPlanetCount = 1;
+        this.infoPanel.hide();
+        this.pauseMenu.setVisible(false);
+        this.pauseMenu.clearStatus();
+    }
+
     private static class SmartGroup extends Group { }
 
-    /**
-     * The runtime entry point invoked by the JVM.
-     *
-     * @param args command-line arguments passed to the application.
-     */
     public static void main(String[] args) {
         launch(args);
     }

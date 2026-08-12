@@ -1,11 +1,13 @@
 package astronomicalsystem.view;
 
+import astronomicalsystem.config.SimulationSettings;
 import astronomicalsystem.factory.UniverseFactory;
 import astronomicalsystem.model.CelestialBody;
 import astronomicalsystem.model.Kinematic;
 import astronomicalsystem.model.Moon;
 import astronomicalsystem.model.SimulationObserver;
 import astronomicalsystem.model.Star;
+import astronomicalsystem.performance.SimulationPerformanceMonitor;
 import javafx.scene.Group;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
@@ -34,10 +36,11 @@ import java.util.Set;
  */
 public class SimulationRenderer implements SimulationObserver {
 
-    private static final double POS_SCALE = 0.4;
+    private static final SimulationSettings SETTINGS = SimulationSettings.defaults();
 
     private final Group worldGroup;
     private final Map<CelestialBody, Sphere> visualObjects;
+    private final SimulationPerformanceMonitor performanceMonitor;
 
     private CelestialBody saturnBody;
     private SaturnRing saturnRingVisual;
@@ -48,7 +51,12 @@ public class SimulationRenderer implements SimulationObserver {
      * @param worldGroup the JavaFX group node acting as the coordinate system root.
      */
     public SimulationRenderer(Group worldGroup) {
+        this(worldGroup, null);
+    }
+
+    public SimulationRenderer(Group worldGroup, SimulationPerformanceMonitor performanceMonitor) {
         this.worldGroup = worldGroup;
+        this.performanceMonitor = performanceMonitor;
         this.visualObjects = new HashMap<>();
     }
 
@@ -65,6 +73,8 @@ public class SimulationRenderer implements SimulationObserver {
      */
     @Override
     public void onSimulationStep(int step, List<CelestialBody> bodies, double totalEnergy) {
+        long renderStart = System.nanoTime();
+
         Set<CelestialBody> activeBodies = new HashSet<>(bodies);
 
         Iterator<Map.Entry<CelestialBody, Sphere>> it = this.visualObjects.entrySet().iterator();
@@ -90,14 +100,14 @@ public class SimulationRenderer implements SimulationObserver {
             }
 
             Sphere sphere = this.visualObjects.get(body);
-            sphere.setTranslateX(body.getPosition().x() * POS_SCALE);
-            sphere.setTranslateY(body.getPosition().y() * POS_SCALE);
-            sphere.setTranslateZ(body.getPosition().z() * POS_SCALE);
+            sphere.setTranslateX(body.getPosition().x() * SETTINGS.render().positionScale());
+            sphere.setTranslateY(body.getPosition().y() * SETTINGS.render().positionScale());
+            sphere.setTranslateZ(body.getPosition().z() * SETTINGS.render().positionScale());
 
             if (body instanceof Star) {
-                sphere.setRotate(sphere.getRotate() + 0.05);
+                sphere.setRotate(sphere.getRotate() + SETTINGS.render().starSpinSpeed());
             } else {
-                sphere.setRotate(sphere.getRotate() + 0.5);
+                sphere.setRotate(sphere.getRotate() + SETTINGS.render().bodySpinSpeed());
             }
 
             if (body.getName().equalsIgnoreCase("Saturn")) {
@@ -106,9 +116,13 @@ public class SimulationRenderer implements SimulationObserver {
         }
 
         if (this.saturnBody != null && this.saturnRingVisual != null) {
-            this.saturnRingVisual.setTranslateX(this.saturnBody.getPosition().x() * POS_SCALE);
-            this.saturnRingVisual.setTranslateY(this.saturnBody.getPosition().y() * POS_SCALE);
-            this.saturnRingVisual.setTranslateZ(this.saturnBody.getPosition().z() * POS_SCALE);
+            this.saturnRingVisual.setTranslateX(this.saturnBody.getPosition().x() * SETTINGS.render().positionScale());
+            this.saturnRingVisual.setTranslateY(this.saturnBody.getPosition().y() * SETTINGS.render().positionScale());
+            this.saturnRingVisual.setTranslateZ(this.saturnBody.getPosition().z() * SETTINGS.render().positionScale());
+        }
+
+        if (this.performanceMonitor != null) {
+            this.performanceMonitor.recordRender(System.nanoTime() - renderStart);
         }
     }
 
@@ -122,7 +136,7 @@ public class SimulationRenderer implements SimulationObserver {
             double e = UniverseFactory.getEccentricity(body.getName());
             double iDeg = UniverseFactory.getInclination(body.getName());
 
-            double currentDistScaled = body.getPosition().magnitude() * POS_SCALE;
+            double currentDistScaled = body.getPosition().magnitude() * SETTINGS.render().positionScale();
             double a = currentDistScaled / (1.0 - e);
             double b = a * Math.sqrt(1 - (e * e));
             double c = a * e;
@@ -168,9 +182,14 @@ public class SimulationRenderer implements SimulationObserver {
         this.worldGroup.getChildren().add(sphere);
 
         if (name.equals("saturn")) {
-            this.saturnRingVisual = new SaturnRing(42, 80, 100, "/saturn_ring.png");
+            this.saturnRingVisual = new SaturnRing(
+                    SETTINGS.render().saturnRingInnerRadius(),
+                    SETTINGS.render().saturnRingOuterRadius(),
+                    SETTINGS.render().saturnRingDivisions(),
+                    SETTINGS.render().saturnRingTexturePath()
+            );
             this.saturnRingVisual.setRotationAxis(Rotate.X_AXIS);
-            this.saturnRingVisual.setRotate(25);
+            this.saturnRingVisual.setRotate(SETTINGS.render().saturnRingRotationDegrees());
             this.worldGroup.getChildren().add(this.saturnRingVisual);
         }
     }
@@ -183,17 +202,17 @@ public class SimulationRenderer implements SimulationObserver {
      */
     private double getVisualRadius(CelestialBody body) {
         String name = body.getName().toLowerCase();
-        if (body instanceof Star) return 80;
-        if (name.contains("jupiter")) return 35;
-        if (name.contains("saturn"))  return 30;
-        if (name.contains("uranus"))  return 20;
-        if (name.contains("neptune")) return 20;
-        if (name.contains("earth"))   return 12;
-        if (name.contains("venus"))   return 11;
-        if (name.contains("mars"))    return 8;
-        if (name.contains("mercury")) return 6;
-        if (name.contains("moon"))    return 3;
-        return 5;
+        if (body instanceof Star) return SETTINGS.render().starRadius();
+        if (name.contains("jupiter")) return SETTINGS.render().jupiterRadius();
+        if (name.contains("saturn"))  return SETTINGS.render().saturnRadius();
+        if (name.contains("uranus"))  return SETTINGS.render().uranusRadius();
+        if (name.contains("neptune")) return SETTINGS.render().neptuneRadius();
+        if (name.contains("earth"))   return SETTINGS.render().earthRadius();
+        if (name.contains("venus"))   return SETTINGS.render().venusRadius();
+        if (name.contains("mars"))    return SETTINGS.render().marsRadius();
+        if (name.contains("mercury")) return SETTINGS.render().mercuryRadius();
+        if (name.contains("moon"))    return SETTINGS.render().moonRadius();
+        return SETTINGS.render().defaultBodyRadius();
     }
 
     /**

@@ -1,5 +1,19 @@
 package astronomicalsystem.model;
 
+import astronomicalsystem.config.SimulationSettings;
+import java.util.List;
+
+/**
+ * A utility class handling all physical interactions between celestial entities,
+ * including N-body gravitational integration and perfectly inelastic collisions.
+ * <p>
+ * By centralizing these physics calculations, this class enforces the Single
+ * Responsibility Principle (SRP). It replaces concrete type checking with
+ * capability checking (e.g., {@code instanceof Kinematic}) to comply with the
+ * Open/Closed Principle (OCP).
+ * </p>
+package astronomicalsystem.model;
+
 import java.util.List;
 
 /**
@@ -21,7 +35,11 @@ public final class Interactions {
     /**
      * The universal gravitational constant customized for the simulation's scale.
      */
-    public static final double G = 0.1;
+    public static final double G = SimulationSettings.defaults().physics().gravitationalConstant();
+
+    private static final double SOFTENING_RADIUS_FACTOR = SimulationSettings.defaults().physics().softeningRadiusFactor();
+    private static final double ANCHORED_COLLISION_THRESHOLD_FACTOR = SimulationSettings.defaults().physics().anchoredCollisionThresholdFactor();
+    private static final double DYNAMIC_COLLISION_THRESHOLD_FACTOR = SimulationSettings.defaults().physics().dynamicCollisionThresholdFactor();
 
     /**
      * Private constructor to prevent instantiation of this utility class.
@@ -57,15 +75,12 @@ public final class Interactions {
             double distSq = dx * dx + dy * dy + dz * dz;
 
             // Softening radius to prevent singularity explosions at near-zero distances
-            double softeningLimit = (targetBody.getRadius() + other.getRadius()) * 0.5;
+            double softeningLimit = (targetBody.getRadius() + other.getRadius()) * SOFTENING_RADIUS_FACTOR;
             if (distSq < softeningLimit * softeningLimit) continue;
-
-            // OCP: Differentiating gravitational authority by capability (Kinematic), not concrete class
-            double interactionFactor = (other instanceof Kinematic) ? 0.0001 : 1.0;
 
             // Optimization: avoiding 3 separate divisions for the unit vector
             double dist = Math.sqrt(distSq);
-            double forceMag = G * other.getMass() * interactionFactor;
+            double forceMag = G * other.getMass();
             double accMultiplier = forceMag / (distSq * dist); // GM / r^3
 
             accX += accMultiplier * dx;
@@ -88,8 +103,8 @@ public final class Interactions {
      * @return a new merged {@link CelestialBody} if a collision occurs, otherwise {@code null}.
      */
     public static CelestialBody checkCollision(CelestialBody b1, CelestialBody b2) {
-        boolean hasStaticAnchor = !(b1 instanceof Kinematic) || !(b2 instanceof Kinematic);
-        double thresholdFactor = hasStaticAnchor ? 0.8 : 0.01;
+        boolean hasStaticAnchor = (b1 instanceof AnchoredBody) || (b2 instanceof AnchoredBody);
+        double thresholdFactor = hasStaticAnchor ? ANCHORED_COLLISION_THRESHOLD_FACTOR : DYNAMIC_COLLISION_THRESHOLD_FACTOR;
 
         double combinedRadius = b1.getRadius() + b2.getRadius();
         double collisionThreshold = combinedRadius * thresholdFactor;
@@ -120,6 +135,7 @@ public final class Interactions {
      */
     private static CelestialBody mergeBodies(CelestialBody b1, CelestialBody b2) {
         double newMass = b1.getMass() + b2.getMass();
+        double mergedRadius = mergedRadius(b1, b2);
 
         // Weighted Center of Mass
         Point3D p1 = b1.getPosition().scale(b1.getMass());
@@ -135,12 +151,24 @@ public final class Interactions {
         Point3D wVel = wv1.add(wv2).scale(1.0 / newMass);
 
         String newName = b1.getMass() > b2.getMass() ? b1.getName() : b2.getName();
-        Planet merged = new Planet(newName + "+", newMass, 1.0, wPos);
-        merged.setVelocity(wVel);
+        boolean anchored = (b1 instanceof AnchoredBody) || (b2 instanceof AnchoredBody);
+
+        CelestialBody merged = anchored
+                ? new Star(newName + "+", newMass, mergedRadius, wPos)
+                : new Planet(newName + "+", newMass, mergedRadius, wPos);
+
+        if (merged instanceof Kinematic kinematicMerged) {
+            kinematicMerged.setVelocity(wVel);
+        }
 
         // Inherit metadata from the most massive parent body
         merged.setMetadata(b1.getMass() > b2.getMass() ? b1.getMetadata() : b2.getMetadata());
 
         return merged;
+    }
+
+    private static double mergedRadius(CelestialBody b1, CelestialBody b2) {
+        double volume = Math.pow(b1.getRadius(), 3) + Math.pow(b2.getRadius(), 3);
+        return Math.cbrt(volume);
     }
 }
