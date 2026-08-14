@@ -7,11 +7,15 @@ import java.util.Objects;
 /**
  * Represents the fundamental physical properties of a celestial entity.
  * <p>
- * This class adheres to the Single Responsibility Principle (SRP) by isolating
+ * This abstract base class adheres to the Single Responsibility Principle (SRP) by isolating
  * core physical attributes (mass, radius, position) from UI-specific metadata.
  * It strictly adheres to the Liskov Substitution Principle (LSP) by omitting
  * kinetic behaviors (velocity, positional updates), ensuring that both static
- * and dynamic subclasses can inherit without violating contracts.
+ * and dynamic subclasses can inherit without violating system contracts.
+ * </p>
+ * <p>
+ * <b>Note on Equality:</b> The {@code name} field acts as the primary key for the entity.
+ * Equality and hashing are strictly evaluated against this unique identifier.
  * </p>
  */
 public abstract class CelestialBody implements Comparable<CelestialBody>, Serializable {
@@ -32,35 +36,49 @@ public abstract class CelestialBody implements Comparable<CelestialBody>, Serial
     /**
      * Constructs the base physical representation of a celestial body.
      *
-     * @param name     the unique identifier of the body.
-     * @param mass     the mass in simulation units.
-     * @param radius   the radius in simulation units.
-     * @param position the initial spatial coordinates as an immutable point.
+     * @param name     the unique identifier of the body (must not be null).
+     * @param mass     the mass in simulation units (must be >= 0).
+     * @param radius   the physical/visual radius in simulation units (must be >= 0).
+     * @param position the initial spatial coordinates as an immutable {@link Point3D} (must not be null).
+     * @throws NullPointerException     if {@code name} or {@code position} is null.
+     * @throws IllegalArgumentException if {@code mass} or {@code radius} is strictly negative.
      */
     public CelestialBody(String name, double mass, double radius, Point3D position) {
-        this.name = name;
+        this.name = Objects.requireNonNull(name, "Celestial body name cannot be null");
+        
+        if (mass < 0.0) {
+            throw new IllegalArgumentException("Mass cannot be negative: " + mass);
+        }
+        if (radius < 0.0) {
+            throw new IllegalArgumentException("Radius cannot be negative: " + radius);
+        }
+        
         this.mass = mass;
         this.radius = radius;
-        this.position = position;
-        this.metadata = new BodyMetadata("N/A", "N/A", "N/A", "N/A", "N/A");
+        this.position = Objects.requireNonNull(position, "Initial position cannot be null");
+        
+        // Memory Optimization: Reusing the singleton EMPTY instance instead of creating new ones.
+        this.metadata = BodyMetadata.EMPTY;
     }
 
     /**
      * Updates the spatial coordinates of this body.
      *
-     * @param newPosition the new immutable 3D coordinates.
+     * @param newPosition the new immutable 3D coordinates (must not be null).
+     * @throws NullPointerException if {@code newPosition} is null.
      */
     public void setPosition(Point3D newPosition) {
-        this.position = newPosition;
+        this.position = Objects.requireNonNull(newPosition, "New position cannot be null");
     }
 
     /**
      * Assigns non-physical, descriptive data for UI representation.
      *
-     * @param metadata the record containing descriptive strings.
+     * @param metadata the record containing descriptive strings (must not be null).
+     * @throws NullPointerException if {@code metadata} is null.
      */
     public void setMetadata(BodyMetadata metadata) {
-        this.metadata = metadata;
+        this.metadata = Objects.requireNonNull(metadata, "Metadata cannot be null");
     }
 
     /**
@@ -113,7 +131,7 @@ public abstract class CelestialBody implements Comparable<CelestialBody>, Serial
      *
      * @param other the object to be compared.
      * @return a negative integer, zero, or a positive integer as this body's name
-     * is lexicographically less than, equal to, or greater than the specified body's name.
+     *         is lexicographically less than, equal to, or greater than the specified body's name.
      */
     @Override
     public int compareTo(CelestialBody other) {
@@ -147,6 +165,7 @@ public abstract class CelestialBody implements Comparable<CelestialBody>, Serial
 
     /**
      * Encapsulates purely descriptive UI data, fulfilling the Single Responsibility Principle.
+     * 
      * @param displayMass      the formatted string representation of the real-world mass.
      * @param displayRadius    the formatted string representation of the real-world radius.
      * @param temperature      the formatted string representation of the surface temperature.
@@ -160,7 +179,14 @@ public abstract class CelestialBody implements Comparable<CelestialBody>, Serial
             String rotationPeriod,
             String revolutionPeriod
     ) implements Serializable {
+        
         @Serial
         private static final long serialVersionUID = 1L;
+
+        /**
+         * A reusable constant representing empty or uninitialized metadata.
+         * Used to avoid unnecessary object allocations.
+         */
+        public static final BodyMetadata EMPTY = new BodyMetadata("N/A", "N/A", "N/A", "N/A", "N/A");
     }
 }

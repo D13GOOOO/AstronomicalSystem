@@ -1,17 +1,21 @@
 package astronomicalsystem;
 
+import java.io.InputStream;
+
 import astronomicalsystem.config.SimulationSettings;
 import astronomicalsystem.controller.InputHandler;
 import astronomicalsystem.factory.UniverseFactory;
 import astronomicalsystem.model.AstronomicalSystem;
 import astronomicalsystem.model.CelestialBody;
 import astronomicalsystem.model.CelestialBody.BodyMetadata;
+import astronomicalsystem.model.Interactions;
 import astronomicalsystem.model.Planet;
 import astronomicalsystem.model.Point3D;
+import astronomicalsystem.model.Star;
+import astronomicalsystem.performance.SimulationPerformanceMonitor;
 import astronomicalsystem.session.CameraState;
 import astronomicalsystem.session.SessionPersistenceService;
 import astronomicalsystem.session.SessionState;
-import astronomicalsystem.performance.SimulationPerformanceMonitor;
 import astronomicalsystem.view.CreatorPanel;
 import astronomicalsystem.view.InfoPanel;
 import astronomicalsystem.view.PauseMenu;
@@ -35,14 +39,17 @@ import javafx.scene.shape.Sphere;
 import javafx.scene.transform.Rotate;
 import javafx.stage.Stage;
 
-import java.io.InputStream;
-
 /**
  * The primary JavaFX entry point and orchestration layer for the astronomical simulation.
  * <p>
  * Acting as the Application Composition Root, this class provisions the 3D scene graph,
  * instantiates the core physics engine via the {@link UniverseFactory}, and bridges
  * the domain model with the visual rendering pipeline utilizing the Observer pattern.
+ * </p>
+ * <p>
+ * <b>Architecture Note:</b> Uses a layered rendering approach. The 3D universe is rendered 
+ * within a hardware-accelerated {@link SubScene}, while 2D UI overlays (HUD, Menus) are 
+ * stacked on top using a {@link StackPane}.
  * </p>
  */
 public class SolarSystem3D extends Application {
@@ -59,12 +66,18 @@ public class SolarSystem3D extends Application {
     private SimulationPerformanceMonitor performanceMonitor;
     private PerspectiveCamera camera;
     private final SessionPersistenceService sessionPersistenceService = new SessionPersistenceService();
+    
     private boolean isPaused = false;
     private int customPlanetCount = 1;
 
     private final Rotate rotateX = new Rotate(20, Rotate.X_AXIS);
     private final Rotate rotateY = new Rotate(0, Rotate.Y_AXIS);
 
+    /**
+     * Bootstraps the application, assembling the MVC triad and starting the physics loop.
+     *
+     * @param primaryStage the primary JavaFX window provided by the runtime.
+     */
     @Override
     public void start(Stage primaryStage) {
         this.system = UniverseFactory.createSolarSystem();
@@ -74,9 +87,12 @@ public class SolarSystem3D extends Application {
 
         Group root3D = new Group();
         root3D.getChildren().add(world);
-
         createSkybox(root3D);
 
+        this.performanceMonitor = new SimulationPerformanceMonitor(
+            SETTINGS.performance().enabled(),
+            SETTINGS.performance().reportEveryFrames()
+        );
         this.renderer = new SimulationRenderer(world, this.performanceMonitor);
         this.system.addObserver(this.renderer);
 
@@ -88,11 +104,6 @@ public class SolarSystem3D extends Application {
         this.camera.setNearClip(SETTINGS.camera().nearClip());
         this.camera.setFarClip(SETTINGS.camera().farClip());
         subScene.setCamera(this.camera);
-
-        this.performanceMonitor = new SimulationPerformanceMonitor(
-            SETTINGS.performance().enabled(),
-            SETTINGS.performance().reportEveryFrames()
-        );
 
         this.infoPanel = new InfoPanel();
         this.infoPanel.setMouseTransparent(true);
@@ -129,9 +140,13 @@ public class SolarSystem3D extends Application {
             @Override
             public void handle(long now) {
                 if (!isPaused) {
-                    long frameStart = System.nanoTime();
-                    system.simulate(1);
-                    performanceMonitor.recordFrame(System.nanoTime() - frameStart);
+                    try {
+                        long frameStart = System.nanoTime();
+                        system.simulate(1);
+                        performanceMonitor.recordFrame(System.nanoTime() - frameStart);
+                    } catch (Throwable t) {
+                        System.err.println("Physics Engine Guard caught an error: " + t.getMessage());
+                    }
                 }
             }
         };
@@ -145,14 +160,25 @@ public class SolarSystem3D extends Application {
         rootLayout.requestFocus();
     }
 
+    /**
+     * Explicitly overrides the pause state of the simulation.
+     *
+     * @param paused true to halt the physics engine, false to resume.
+     */
     public void setPaused(boolean paused) {
         this.isPaused = paused;
     }
 
+    /**
+     * Toggles the current pause state of the simulation.
+     */
     public void togglePause() {
         this.isPaused = !this.isPaused;
     }
 
+    /**
+     * Toggles the visibility of the central pause menu, automatically pausing/resuming physics.
+     */
     public void togglePauseMenu() {
         if (this.pauseMenu.isVisible()) {
             this.pauseMenu.setVisible(false);
@@ -165,15 +191,26 @@ public class SolarSystem3D extends Application {
         }
     }
 
+    /**
+     * Toggles the slide-out animation of the entity Creator Panel.
+     */
     public void toggleCreatorPanel() {
         this.creatorPanel.toggle();
     }
 
+    /**
+     * Displays the telemetry readout for a specific celestial body and pauses the simulation.
+     *
+     * @param body the entity to inspect.
+     */
     public void showInfoPanel(CelestialBody body) {
         this.infoPanel.showPlanet(body);
         this.isPaused = true;
     }
 
+    /**
+     * Hides the telemetry readout and resumes the simulation.
+     */
     public void hideInfoPanel() {
         this.infoPanel.hide();
         this.isPaused = false;
@@ -210,12 +247,41 @@ public class SolarSystem3D extends Application {
         }
     }
 
-    private void spawnCustomPlanet(double massMultiplier, double distance, double velocity) {
+    /**
+     * Instantiates and registers a new dynamic planetary body via the Creator Panel.
+     * Calculates perfect orbital velocity dynamically and allows scalar modifications.
+     *
+     * @param massMultiplier     the mass coefficient relative to Earth.
+     * @param distance           the spawn distance from the system anchor.
+     * @param velocityMultiplier the scalar to alter the perfect circular orbit.
+     */
+    private void spawnCustomPlanet(double massMultiplier, double distance, double velocityMultiplier) {
         String name = "Custom Planet X-" + (customPlanetCount++);
         double mass = SETTINGS.creator().baseEarthMasses() * massMultiplier;
 
-        Planet customPlanet = new Planet(name, mass, 1.0, new Point3D(distance, 0, 0));
-        customPlanet.setVelocity(new Point3D(0, 0, velocity));
+        double calculatedRadius = Math.cbrt(massMultiplier);
+        if (calculatedRadius < 0.5) {
+            calculatedRadius = 0.5;
+        }
+
+        double angleOffset = (customPlanetCount * 0.37) % (2 * Math.PI);
+        double actualDistance = distance + (customPlanetCount % 5) * 15.0;
+
+        double posX = actualDistance * Math.cos(angleOffset);
+        double posZ = actualDistance * Math.sin(angleOffset);
+
+        Planet customPlanet = new Planet(name, mass, calculatedRadius, new Point3D(posX, 0, posZ));
+
+        double sunMass = this.system.getBodies().stream()
+                .filter(b -> b instanceof Star)
+                .mapToDouble(CelestialBody::getMass)
+                .findFirst()
+                .orElse(100000.0);
+
+        double perfectVelocity = Math.sqrt((Interactions.G * sunMass) / actualDistance);
+        double actualVelocity = perfectVelocity * velocityMultiplier;
+
+        customPlanet.setVelocity(new Point3D(-actualVelocity * Math.sin(angleOffset), 0, actualVelocity * Math.cos(angleOffset)));
 
         customPlanet.setMetadata(new BodyMetadata(
                 String.format("%.1f Earth Masses", massMultiplier),
@@ -225,6 +291,11 @@ public class SolarSystem3D extends Application {
         this.system.addBody(customPlanet);
     }
 
+    /**
+     * Generates an immense background sphere textured with a starfield to simulate deep space.
+     *
+     * @param root3D the root group of the 3D subscene.
+     */
     private void createSkybox(Group root3D) {
         Sphere skybox = new Sphere(25000);
         skybox.setId("skybox");
@@ -246,6 +317,11 @@ public class SolarSystem3D extends Application {
         root3D.getChildren().add(skybox);
     }
 
+    /**
+     * Attempts to resolve the primary or fallback skybox texture streams.
+     *
+     * @return the resolved {@link InputStream}, or null if neither exists.
+     */
     private InputStream openSkyboxTexture() {
         InputStream milkyWay = getClass().getResourceAsStream("/milky_way.jpg");
         if (milkyWay != null) {
@@ -254,6 +330,11 @@ public class SolarSystem3D extends Application {
         return getClass().getResourceAsStream("/stars.jpg");
     }
 
+    /**
+     * Captures the volatile current state of the application for serialization.
+     *
+     * @return a populated {@link SessionState} snapshot.
+     */
     private SessionState captureSessionState() {
         return SessionState.current(
                 this.system,
@@ -269,6 +350,11 @@ public class SolarSystem3D extends Application {
         );
     }
 
+    /**
+     * Reconstructs the application state from a modern session snapshot.
+     *
+     * @param sessionState the deserialized data transfer object.
+     */
     private void restoreSessionState(SessionState sessionState) {
         this.system = sessionState.system();
         this.system.addObserver(this.renderer);
@@ -287,6 +373,11 @@ public class SolarSystem3D extends Application {
         this.pauseMenu.clearStatus();
     }
 
+    /**
+     * Reconstructs the application state gracefully when loading a legacy, physics-only payload.
+     *
+     * @param loadedSystem the deserialized physics engine.
+     */
     private void restoreLegacySession(AstronomicalSystem loadedSystem) {
         this.system = loadedSystem;
         this.system.addObserver(this.renderer);
@@ -297,8 +388,16 @@ public class SolarSystem3D extends Application {
         this.pauseMenu.clearStatus();
     }
 
+    /**
+     * Semantic wrapper for the 3D world group, acting as the pivot origin for camera orbits.
+     */
     private static class SmartGroup extends Group { }
 
+    /**
+     * Application entry point delegated by {@link Launcher}.
+     *
+     * @param args command-line arguments.
+     */
     public static void main(String[] args) {
         launch(args);
     }

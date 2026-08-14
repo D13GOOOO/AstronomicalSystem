@@ -41,14 +41,17 @@ class SessionPersistenceServiceTest {
         assertEquals(1, restored.system().getBodies().size());
         assertEquals("Earth", restored.system().getBodies().get(0).getName());
         assertEquals(10.0, restored.cameraState().translateX(), 1e-9);
+        assertEquals(20.0, restored.cameraState().translateY(), 1e-9);
         assertEquals(-3000.0, restored.cameraState().translateZ(), 1e-9);
+        assertEquals(15.0, restored.cameraState().rotateX(), 1e-9);
+        assertEquals(25.0, restored.cameraState().rotateY(), 1e-9);
     }
 
     @Test
     void loadWrapsLegacyPhysicsOnlySave() throws Exception {
         SessionPersistenceService service = new SessionPersistenceService();
         AstronomicalSystem system = new AstronomicalSystem();
-        system.addBody(new Planet("Sun", 1000.0, 1.0, new Point3D(0.0, 0.0, 0.0)));
+        system.addBody(new Planet("Sun", 1000.0, 1.0, Point3D.ZERO));
 
         Path saveFile = tempDir.resolve("legacy.dat");
         system.saveToFile(saveFile.toString());

@@ -25,6 +25,16 @@ public record Point3D(double x, double y, double z) implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
+     * A reusable constant representing the origin (0, 0, 0) or a zero-vector.
+     * <p>
+     * <b>Optimization:</b> Use this constant instead of instantiating new zero points
+     * to reduce Garbage Collection overhead during high-frequency physics ticks
+     * (e.g., resetting accumulated forces or velocities).
+     * </p>
+     */
+    public static final Point3D ZERO = new Point3D(0.0, 0.0, 0.0);
+
+    /**
      * Computes the vector addition of this vector and another.
      *
      * @param other the vector to add.
@@ -55,14 +65,25 @@ public record Point3D(double x, double y, double z) implements Serializable {
     }
 
     /**
+     * Computes the dot product (scalar product) of this vector and another.
+     * Useful for calculating projection, angles between vectors, or directional checks.
+     *
+     * @param other the target vector.
+     * @return the scalar result of the dot product.
+     */
+    public double dotProduct(Point3D other) {
+        return this.x * other.x() + this.y * other.y() + this.z * other.z();
+    }
+
+    /**
      * Calculates the exact Euclidean distance between this point and another.
      * <p>
-     * Note: For simple proximity checks, prefer {@link #distanceSq(Point3D)}
+     * Note: For simple proximity checks or threshold comparisons, prefer {@link #distanceSq(Point3D)}
      * to avoid the computational overhead of {@code Math.sqrt()}.
      * </p>
      *
      * @param other the target point.
-     * @return the Euclidean distance.
+     * @return the exact Euclidean distance.
      */
     public double distance(Point3D other) {
         return Math.sqrt(distanceSq(other));
@@ -70,7 +91,7 @@ public record Point3D(double x, double y, double z) implements Serializable {
 
     /**
      * Calculates the squared Euclidean distance between this point and another.
-     * Highly efficient for collision detection thresholds.
+     * Highly efficient for collision detection thresholds and gravity drop-off checks.
      *
      * @param other the target point.
      * @return the squared distance.
@@ -98,6 +119,24 @@ public record Point3D(double x, double y, double z) implements Serializable {
      */
     public double magnitudeSq() {
         return x * x + y * y + z * z;
+    }
+
+    /**
+     * Returns a new normalized vector (a unit vector with a magnitude of 1) 
+     * pointing in the same direction as this vector.
+     * <p>
+     * <b>Note:</b> If this vector is exactly {@link #ZERO}, it returns {@link #ZERO}
+     * to safely handle potential division by zero.
+     * </p>
+     *
+     * @return a normalized {@code Point3D}, or {@code ZERO} if the magnitude is zero.
+     */
+    public Point3D normalize() {
+        double mag = magnitude();
+        if (mag == 0.0) {
+            return ZERO;
+        }
+        return new Point3D(x / mag, y / mag, z / mag);
     }
 
     /**

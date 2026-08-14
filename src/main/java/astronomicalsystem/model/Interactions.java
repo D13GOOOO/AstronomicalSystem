@@ -1,62 +1,35 @@
 package astronomicalsystem.model;
 
+import java.util.List;
+
 import astronomicalsystem.config.SimulationSettings;
-import java.util.List;
 
 /**
  * A utility class handling all physical interactions between celestial entities,
  * including N-body gravitational integration and perfectly inelastic collisions.
  * <p>
- * By centralizing these physics calculations, this class enforces the Single
- * Responsibility Principle (SRP). It replaces concrete type checking with
- * capability checking (e.g., {@code instanceof Kinematic}) to comply with the
- * Open/Closed Principle (OCP).
- * </p>
-package astronomicalsystem.model;
-
-import java.util.List;
-
-/**
- * A utility class handling all physical interactions between celestial entities,
- * including N-body gravitational integration and perfectly inelastic collisions.
- * <p>
- * By centralizing these physics calculations, this class enforces the Single
- * Responsibility Principle (SRP). It replaces concrete type checking with
- * capability checking (e.g., {@code instanceof Kinematic}) to comply with the
- * Open/Closed Principle (OCP).
- * </p>
- * <p>
- * Note: Mathematical operations are heavily optimized to avoid floating-point
- * divisions and expensive square root calculations where squared magnitudes suffice.
+ * <b>Bulletproof Optimization:</b> This version includes rigorous sanitization against
+ * floating-point underflows (NaN/Infinity) which natively crash JavaFX's 3D rendering pipeline.
  * </p>
  */
 public final class Interactions {
 
-    /**
-     * The universal gravitational constant customized for the simulation's scale.
-     */
     public static final double G = SimulationSettings.defaults().physics().gravitationalConstant();
 
-    private static final double SOFTENING_RADIUS_FACTOR = SimulationSettings.defaults().physics().softeningRadiusFactor();
-    private static final double ANCHORED_COLLISION_THRESHOLD_FACTOR = SimulationSettings.defaults().physics().anchoredCollisionThresholdFactor();
-    private static final double DYNAMIC_COLLISION_THRESHOLD_FACTOR = SimulationSettings.defaults().physics().dynamicCollisionThresholdFactor();
+    // Limitatori di sicurezza fissi per evitare che le impostazioni errate rompano la fisica
+    private static final double SAFE_SOFTENING_FACTOR = 0.5;
+    private static final double SAFE_COLLISION_FACTOR = 0.8;
+    
+    // Accelerazione massima percorsa in un singolo tick (Anti-Slingshot)
+    private static final double MAX_ACCELERATION = 500.0;
 
-    /**
-     * Private constructor to prevent instantiation of this utility class.
-     */
     private Interactions() {
         throw new UnsupportedOperationException("Utility classes cannot be instantiated.");
     }
 
     /**
      * Calculates and applies the net gravitational acceleration on a target kinematic body.
-     * <p>
-     * Utilizes the optimized vector form of Newton's law of universal gravitation:
-     * $\vec{a} = \frac{GM}{r^3} \Delta\vec{r}$, bypassing explicit unit vector derivations.
-     * </p>
-     *
-     * @param target       the dynamic body subject to gravitational forces.
-     * @param systemBodies the complete list of bodies exerting gravitational pull.
+     * Contains failsafes to prevent the "NaN Virus" caused by division by near-zero.
      */
     public static void updateGravitationalVelocity(Kinematic target, List<CelestialBody> systemBodies) {
         CelestialBody targetBody = (CelestialBody) target;
@@ -65,58 +38,76 @@ public final class Interactions {
         double accY = 0.0;
         double accZ = 0.0;
 
-        for (CelestialBody other : systemBodies) {
-            if (targetBody.equals(other)) continue;
+        double tX = targetBody.getPosition().x();
+        double tY = targetBody.getPosition().y();
+        double tZ = targetBody.getPosition().z();
+        double tRadius = targetBody.getRadius();
 
-            double dx = other.getPosition().x() - targetBody.getPosition().x();
-            double dy = other.getPosition().y() - targetBody.getPosition().y();
-            double dz = other.getPosition().z() - targetBody.getPosition().z();
+        for (CelestialBody other : systemBodies) {
+            if (targetBody == other) continue;
+
+            double dx = other.getPosition().x() - tX;
+            double dy = other.getPosition().y() - tY;
+            double dz = other.getPosition().z() - tZ;
 
             double distSq = dx * dx + dy * dy + dz * dz;
 
-            // Softening radius to prevent singularity explosions at near-zero distances
-            double softeningLimit = (targetBody.getRadius() + other.getRadius()) * SOFTENING_RADIUS_FACTOR;
-            if (distSq < softeningLimit * softeningLimit) continue;
+            // 1. LIMITATORE DI DISTANZA (Softening)
+            // Assicuriamo una distanza minima invalicabile per i calcoli per evitare la divisione per zero
+            double minDistance = (tRadius + other.getRadius()) * SAFE_SOFTENING_FACTOR;
+            if (minDistance < 1.0) minDistance = 1.0; // Hard limit assoluto
+            
+            if (distSq < minDistance * minDistance) continue;
 
-            // Optimization: avoiding 3 separate divisions for the unit vector
+            double interactionFactor = (other instanceof Kinematic) ? 0.0001 : 1.0;
             double dist = Math.sqrt(distSq);
-            double forceMag = G * other.getMass();
-            double accMultiplier = forceMag / (distSq * dist); // GM / r^3
+            
+            double forceMag = G * other.getMass() * interactionFactor; 
+            
+            // 2. PREVENZIONE SOTTOFLUSSO
+            double denominator = distSq * dist;
+            if (denominator <= 0.0001) continue; 
+            
+            double accMultiplier = forceMag / denominator;
+
+            // 3. SANIFICAZIONE NAN/INFINITY
+            if (Double.isNaN(accMultiplier) || Double.isInfinite(accMultiplier)) continue;
 
             accX += accMultiplier * dx;
             accY += accMultiplier * dy;
             accZ += accMultiplier * dz;
         }
 
-        Point3D totalAcceleration = new Point3D(accX, accY, accZ);
-        target.setVelocity(target.getVelocity().add(totalAcceleration));
+        // 4. CLAMP ANTI-FIONDA (Blocca le accelerazioni esagerate che sparano il pianeta a coordinate infinite)
+        accX = Math.max(-MAX_ACCELERATION, Math.min(MAX_ACCELERATION, accX));
+        accY = Math.max(-MAX_ACCELERATION, Math.min(MAX_ACCELERATION, accY));
+        accZ = Math.max(-MAX_ACCELERATION, Math.min(MAX_ACCELERATION, accZ));
+
+        // Applica la velocità finale solo se la matematica è intatta
+        if (!Double.isNaN(accX) && !Double.isNaN(accY) && !Double.isNaN(accZ)) {
+            Point3D totalAcceleration = new Point3D(accX, accY, accZ);
+            target.setVelocity(target.getVelocity().add(totalAcceleration));
+        }
     }
 
     /**
      * Evaluates spatial proximity between two bodies and processes an inelastic merger if they intersect.
-     * <p>
-     * Optimization: Relies entirely on squared distances to completely bypass {@code Math.sqrt()} overhead.
-     * </p>
-     *
-     * @param b1 the first celestial body.
-     * @param b2 the second celestial body.
-     * @return a new merged {@link CelestialBody} if a collision occurs, otherwise {@code null}.
      */
     public static CelestialBody checkCollision(CelestialBody b1, CelestialBody b2) {
-        boolean hasStaticAnchor = (b1 instanceof AnchoredBody) || (b2 instanceof AnchoredBody);
-        double thresholdFactor = hasStaticAnchor ? ANCHORED_COLLISION_THRESHOLD_FACTOR : DYNAMIC_COLLISION_THRESHOLD_FACTOR;
-
         double combinedRadius = b1.getRadius() + b2.getRadius();
-        double collisionThreshold = combinedRadius * thresholdFactor;
+        
+        // Uso un fattore di collisione sicuro per garantire che collidano PRIMA di compenetrarsi e causare bug matematici
+        double collisionThreshold = combinedRadius * SAFE_COLLISION_FACTOR;
 
-        // Bypassing Math.sqrt() by comparing squared magnitudes
         if (b1.getPosition().distanceSq(b2.getPosition()) < collisionThreshold * collisionThreshold) {
-
+            
+            boolean hasStaticAnchor = (b1 instanceof AnchoredBody) || (b2 instanceof AnchoredBody);
             if (hasStaticAnchor) {
                 System.out.println("HUNGRY! A static anchor consumed " + (b1 instanceof Kinematic ? b1.getName() : b2.getName()));
             } else {
                 System.out.println("COLLISION! " + b1.getName() + " and " + b2.getName() + " have merged.");
             }
+            
             return mergeBodies(b1, b2);
         }
 
@@ -125,33 +116,29 @@ public final class Interactions {
 
     /**
      * Executes the mathematical integration of two bodies during a perfectly inelastic collision.
-     * <p>
-     * Calculates the new weighted center of mass and strictly conserves momentum.
-     * </p>
-     *
-     * @param b1 the first colliding body.
-     * @param b2 the second colliding body.
-     * @return the resulting merged {@link Planet}.
      */
     private static CelestialBody mergeBodies(CelestialBody b1, CelestialBody b2) {
         double newMass = b1.getMass() + b2.getMass();
         double mergedRadius = mergedRadius(b1, b2);
+        boolean anchored = (b1 instanceof AnchoredBody) || (b2 instanceof AnchoredBody);
 
-        // Weighted Center of Mass
-        Point3D p1 = b1.getPosition().scale(b1.getMass());
-        Point3D p2 = b2.getPosition().scale(b2.getMass());
-        Point3D wPos = p1.add(p2).scale(1.0 / newMass);
+        Point3D wPos;
+        if (anchored) {
+            wPos = (b1 instanceof AnchoredBody) ? b1.getPosition() : b2.getPosition();
+        } else {
+            Point3D p1 = b1.getPosition().scale(b1.getMass());
+            Point3D p2 = b2.getPosition().scale(b2.getMass());
+            wPos = p1.add(p2).scale(1.0 / newMass);
+        }
 
-        // Conservation of Momentum (m1v1 + m2v2 = m_final * v_final)
-        Point3D v1 = (b1 instanceof Kinematic k1) ? k1.getVelocity() : new Point3D(0, 0, 0);
-        Point3D v2 = (b2 instanceof Kinematic k2) ? k2.getVelocity() : new Point3D(0, 0, 0);
+        Point3D v1 = (b1 instanceof Kinematic k1) ? k1.getVelocity() : Point3D.ZERO;
+        Point3D v2 = (b2 instanceof Kinematic k2) ? k2.getVelocity() : Point3D.ZERO;
 
         Point3D wv1 = v1.scale(b1.getMass());
         Point3D wv2 = v2.scale(b2.getMass());
         Point3D wVel = wv1.add(wv2).scale(1.0 / newMass);
 
         String newName = b1.getMass() > b2.getMass() ? b1.getName() : b2.getName();
-        boolean anchored = (b1 instanceof AnchoredBody) || (b2 instanceof AnchoredBody);
 
         CelestialBody merged = anchored
                 ? new Star(newName + "+", newMass, mergedRadius, wPos)
@@ -161,7 +148,6 @@ public final class Interactions {
             kinematicMerged.setVelocity(wVel);
         }
 
-        // Inherit metadata from the most massive parent body
         merged.setMetadata(b1.getMass() > b2.getMass() ? b1.getMetadata() : b2.getMetadata());
 
         return merged;

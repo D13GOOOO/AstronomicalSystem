@@ -9,6 +9,8 @@ import astronomicalsystem.model.Planet;
 import astronomicalsystem.model.Point3D;
 import astronomicalsystem.model.Star;
 
+import java.util.Objects;
+
 /**
  * A creational factory responsible for assembling and initializing the physical
  * and informational state of the astronomical simulation.
@@ -22,6 +24,10 @@ public final class UniverseFactory {
 
     private static final double M_EARTH_SIM = 50.0;
     private static final double M_SUN_SIM = M_EARTH_SIM * 200.0;
+    
+    /**
+     * The Standard Gravitational Parameter (mu = G * M) for the central anchor (the Sun).
+     */
     private static final double GM = M_SUN_SIM * SimulationSettings.defaults().physics().gravitationalConstant();
 
     /**
@@ -40,7 +46,8 @@ public final class UniverseFactory {
     public static AstronomicalSystem createSolarSystem() {
         AstronomicalSystem system = new AstronomicalSystem();
 
-        Star sun = new Star("Sun", M_SUN_SIM, 20.0, new Point3D(0, 0, 0));
+        // The Sun acts as the AnchoredBody at the exact center of the coordinate system.
+        Star sun = new Star("Sun", M_SUN_SIM, 20.0, Point3D.ZERO);
         sun.setMetadata(new BodyMetadata("1.989 × 10^30 kg", "696,340 km", "5,500°C (Surface)", "25 Days", "N/A"));
         system.addBody(sun);
 
@@ -79,10 +86,15 @@ public final class UniverseFactory {
     /**
      * Instantiates a new planetary body and calculates its initial kinematic state
      * relative to the central coordinate system origin (the Sun).
+     * <p>
+     * <b>Physics Note:</b> The initial velocity is calculated at the periapsis (closest approach) 
+     * using the Vis-viva equation. The components are then rotated by the orbital inclination 
+     * to accurately place the planet in 3D space.
+     * </p>
      *
      * @param name          the unique identifier of the planet.
      * @param mass          the mass of the planet in simulation units.
-     * @param semiMajorAxis the semi-major axis of the planet's orbit.
+     * @param semiMajorAxis the semi-major axis (average distance) of the planet's orbit.
      * @param metadata      the immutable record containing descriptive UI data.
      * @return a fully initialized {@link Planet} instance.
      */
@@ -91,10 +103,13 @@ public final class UniverseFactory {
         double iDeg = getInclination(name);
         double iRad = Math.toRadians(iDeg);
 
+        // Distance at periapsis: r_p = a * (1 - e)
         double rp = semiMajorAxis * (1.0 - e);
 
+        // Velocity at periapsis derived from the Vis-viva equation
         double vTotal = Math.sqrt((GM / semiMajorAxis) * ((1.0 + e) / (1.0 - e)));
 
+        // Distribute the total velocity vector across the Y and Z axes based on inclination
         double vy = vTotal * Math.sin(iRad);
         double vz = vTotal * Math.cos(iRad);
 
@@ -125,42 +140,44 @@ public final class UniverseFactory {
     /**
      * Provides the orbital eccentricity for known celestial bodies.
      *
-     * @param planetName the name of the entity.
+     * @param planetName the name of the entity (must not be null).
      * @return the scalar eccentricity value.
      */
     public static double getEccentricity(String planetName) {
+        Objects.requireNonNull(planetName, "Planet name cannot be null");
         return switch (planetName.toLowerCase()) {
             case "mercury" -> 0.205;
-            case "venus" -> 0.007;
-            case "earth" -> 0.017;
-            case "moon" -> 0.0;
-            case "mars" -> 0.094;
+            case "venus"   -> 0.007;
+            case "earth"   -> 0.017;
+            case "moon"    -> 0.0;
+            case "mars"    -> 0.094;
             case "jupiter" -> 0.049;
-            case "saturn" -> 0.057;
-            case "uranus" -> 0.046;
+            case "saturn"  -> 0.057;
+            case "uranus"  -> 0.046;
             case "neptune" -> 0.011;
-            default -> 0.0;
+            default        -> 0.0;
         };
     }
 
     /**
      * Provides the orbital inclination relative to the ecliptic plane.
      *
-     * @param planetName the name of the entity.
+     * @param planetName the name of the entity (must not be null).
      * @return the inclination in degrees.
      */
     public static double getInclination(String planetName) {
+        Objects.requireNonNull(planetName, "Planet name cannot be null");
         return switch (planetName.toLowerCase()) {
             case "mercury" -> 7.0;
-            case "venus" -> 3.39;
-            case "earth" -> 0.0;
-            case "moon" -> 5.14;
-            case "mars" -> 1.85;
+            case "venus"   -> 3.39;
+            case "earth"   -> 0.0;
+            case "moon"    -> 5.14;
+            case "mars"    -> 1.85;
             case "jupiter" -> 1.3;
-            case "saturn" -> 2.48;
-            case "uranus" -> 0.77;
+            case "saturn"  -> 2.48;
+            case "uranus"  -> 0.77;
             case "neptune" -> 1.77;
-            default -> 0.0;
+            default        -> 0.0;
         };
     }
 }

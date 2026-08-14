@@ -8,8 +8,13 @@ class InputHandlerTest {
 
     @Test
     void clampKeepsValuesWithinBounds() {
+
         assertEquals(-500.0, InputHandler.clamp(-500.0, -100000.0, -200.0), 1e-9);
         assertEquals(-3000.0, InputHandler.clamp(-3000.0, -100000.0, -200.0), 1e-9);
+        
         assertEquals(-100000.0, InputHandler.clamp(-150000.0, -100000.0, -200.0), 1e-9);
+
+        assertEquals(-200.0, InputHandler.clamp(-100.0, -100000.0, -200.0), 1e-9);
+        assertEquals(-200.0, InputHandler.clamp(5000.0, -100000.0, -200.0), 1e-9);
     }
 }

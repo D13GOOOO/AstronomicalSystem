@@ -33,6 +33,10 @@ tasks.named('test') {
 
 application {
     mainClass = 'astronomicalsystem.Launcher'
+    applicationDefaultJvmArgs = [
+        '--enable-native-access=javafx.graphics',
+        '--enable-native-access=ALL-UNNAMED'
+    ]
 }
 
 tasks.register('customFatJar', Jar) {
@@ -43,7 +47,7 @@ tasks.register('customFatJar', Jar) {
 
     manifest {
         attributes(
-                'Main-Class': 'astronomicalsystem.Launcher'
+            'Main-Class': 'astronomicalsystem.Launcher'
         )
     }
 

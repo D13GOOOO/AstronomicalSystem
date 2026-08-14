@@ -2,6 +2,7 @@ package astronomicalsystem.model;
 
 import java.io.Serial;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Represents a dynamic celestial body that orbits within the astronomical system.
@@ -25,24 +26,26 @@ public class Planet extends CelestialBody implements Kinematic {
     /**
      * Constructs a new dynamic planetary body.
      *
-     * @param name     the unique identifier of the planet.
-     * @param mass     the mass in simulation units.
-     * @param radius   the visual and physical simulation radius.
-     * @param position the initial spatial coordinates represented by an immutable {@link Point3D}.
+     * @param name     the unique identifier of the planet (must not be null).
+     * @param mass     the mass in simulation units (must be >= 0).
+     * @param radius   the visual and physical simulation radius (must be >= 0).
+     * @param position the initial spatial coordinates represented by an immutable {@link Point3D} (must not be null).
      */
     public Planet(String name, double mass, double radius, Point3D position) {
         super(name, mass, radius, position);
-        this.velocity = new Point3D(0.0, 0.0, 0.0);
+        // Optimization: Reuse the ZERO constant instead of allocating a new object
+        this.velocity = Point3D.ZERO;
     }
 
     /**
      * Explicitly overwrites the current velocity vector.
      *
-     * @param velocity the new immutable {@link Point3D} velocity vector.
+     * @param velocity the new immutable {@link Point3D} velocity vector (must not be null).
+     * @throws NullPointerException if {@code velocity} is null.
      */
     @Override
     public void setVelocity(Point3D velocity) {
-        this.velocity = velocity;
+        this.velocity = Objects.requireNonNull(velocity, "Velocity vector cannot be null");
     }
 
     /**
@@ -83,10 +86,13 @@ public class Planet extends CelestialBody implements Kinematic {
     }
 
     /**
-     * Calculates the total kinetic energy of this planetary body.
+     * Calculates the kinetic energy of this planetary body.
      * <p>
+     * <b>Physics Note:</b> As the body lacks context of the entire system here, 
+     * this returns only the kinetic component ($E_k = \frac{1}{2}mv^2$). System-wide 
+     * potential energy must be calculated externally. 
      * Utilizes the highly optimized {@link Point3D#magnitudeSq()} to bypass
-     * expensive square root calculations during the $E_k = \frac{1}{2}mv^2$ derivation.
+     * expensive square root calculations during the derivation.
      * </p>
      *
      * @return the kinetic energy scalar.

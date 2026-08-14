@@ -9,10 +9,13 @@ class SaturnRingTest {
     @Test
     void validateParametersRejectsTooFewDivisions() {
         assertThrows(IllegalArgumentException.class, () -> SaturnRing.validateParameters(1.0, 2.0, 2));
+        assertThrows(IllegalArgumentException.class, () -> SaturnRing.validateParameters(1.0, 2.0, 0));
+        assertThrows(IllegalArgumentException.class, () -> SaturnRing.validateParameters(1.0, 2.0, -5));
     }
 
     @Test
     void validateParametersRejectsInvalidRadii() {
+        assertThrows(IllegalArgumentException.class, () -> SaturnRing.validateParameters(-1.0, 2.0, 8));
         assertThrows(IllegalArgumentException.class, () -> SaturnRing.validateParameters(0.0, 2.0, 8));
         assertThrows(IllegalArgumentException.class, () -> SaturnRing.validateParameters(5.0, 5.0, 8));
         assertThrows(IllegalArgumentException.class, () -> SaturnRing.validateParameters(6.0, 5.0, 8));
