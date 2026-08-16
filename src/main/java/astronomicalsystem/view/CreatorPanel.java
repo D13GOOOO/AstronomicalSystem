@@ -16,41 +16,61 @@ import javafx.scene.text.Text;
 import javafx.util.Duration;
 
 /**
- * A dynamic HUD overlay for runtime instantiation of celestial bodies.
- * <p>
- * Implements a sliding drawer interface with a constrained layout and a minimalist,
- * deep-space aesthetic. Collects physical parameters via analog sliders and passes
- * them to an injected callback for execution within the physics engine context.
- * This class acts strictly as a View, delegating all domain logic to the {@link PlanetSpawner}.
- * </p>
+ * A graphical user interface component that functions as a slide-out control drawer, 
+ * allowing the user to dynamically inject newly created planets into the running simulation.
+ * 
+ * This class strictly adheres to the Model-View-Controller architecture. It acts entirely as 
+ * a "View", concerning itself only with how sliders look and feel, capturing the user's input, 
+ * and animating the drawer in and out of the screen. It contains absolutely zero physics logic. 
+ * When the user clicks the launch button, this panel simply packages the slider values and passes 
+ * them blindly to the delegated spawner callback, forcing the core application logic to handle the 
+ * actual math of creating the planet.
  */
 public class CreatorPanel extends VBox {
 
+    /**
+     * The fixed horizontal width of the control panel in pixels. This value is also used to 
+     * calculate exactly how far off-screen the panel needs to slide to hide itself completely.
+     */
     private static final double PANEL_WIDTH = 300.0;
     
+    /**
+     * An internal tracking flag indicating whether the drawer is currently extended onto the screen 
+     * or hidden away out of bounds.
+     */
     private boolean isVisible = false;
+
+    /**
+     * The JavaFX animation object responsible for smoothly sliding the panel horizontally 
+     * across the screen rather than having it instantly appear or disappear.
+     */
     private final TranslateTransition transition;
 
     /**
-     * Functional interface for delegating the physical creation logic back to the Controller or Model.
+     * A strict contract that must be fulfilled by the main application controller. It dictates exactly 
+     * how the graphical interface hands over the user's creation parameters to the physics engine.
      */
     @FunctionalInterface
     public interface PlanetSpawner {
         /**
-         * Invoked when the user confirms the creation of a new celestial body.
+         * Triggered the exact moment the user clicks the initialization button on the interface.
          *
-         * @param massMultiplier the mass coefficient relative to a base value.
-         * @param distance       the absolute spawn distance from the system anchor.
-         * @param velocity       the initial orbital velocity scalar.
+         * @param massMultiplier the mathematical weight of the new planet relative to the Earth.
+         * @param distance       the physical starting distance from the center of the universe.
+         * @param velocity       a multiplier applied to the planet's starting speed, allowing the user 
+         *                       to create perfectly stable circular orbits or chaotic elliptical ones.
          */
         void spawn(double massMultiplier, double distance, double velocity);
     }
 
     /**
-     * Initializes the slide-out creation interface with strict size constraints and styling.
+     * Constructs the graphical creation panel, configuring all internal sliders, text labels, 
+     * styling colors, and animation settings. It automatically positions itself completely 
+     * off-screen to the right upon creation, waiting for a toggle command to slide into view.
      *
-     * @param spawner the functional callback invoked upon user submission (must not be null).
-     * @throws NullPointerException if the spawner callback is null.
+     * @param spawner the functional callback that will receive the user's input data when they 
+     *                attempt to create a new planet. Must not be null.
+     * @throws NullPointerException if the provided spawner callback is missing.
      */
     public CreatorPanel(PlanetSpawner spawner) {
         Objects.requireNonNull(spawner, "PlanetSpawner callback cannot be null");
@@ -110,7 +130,9 @@ public class CreatorPanel extends VBox {
     }
 
     /**
-     * Toggles the visibility state and executes the sliding drawer animation.
+     * Reverses the current visibility state of the panel and triggers the sliding animation. 
+     * If the panel is hidden, it slides into view. If it is already visible, it slides back 
+     * out of the screen bounds.
      */
     public void toggle() {
         this.isVisible = !this.isVisible;
@@ -119,7 +141,13 @@ public class CreatorPanel extends VBox {
     }
 
     /**
-     * Factory method for creating consistently styled parameter sliders.
+     * An internal factory helper that generates standard JavaFX sliders with consistent styling 
+     * to match the deep space aesthetic of the user interface.
+     *
+     * @param min   the absolute minimum numerical limit the user can drag the slider to.
+     * @param max   the absolute maximum numerical limit the user can drag the slider to.
+     * @param value the default numerical value the slider should rest at upon creation.
+     * @return a fully styled and configured JavaFX slider component.
      */
     private Slider createSlider(double min, double max, double value) {
         Slider slider = new Slider(min, max, value);
@@ -130,7 +158,13 @@ public class CreatorPanel extends VBox {
     }
 
     /**
-     * Assembles a vertically stacked control group featuring a label bound to the slider's value.
+     * An internal factory helper that pairs a slider with an interactive text label. 
+     * It automatically binds the slider's movement to the label, ensuring that the text 
+     * dynamically updates to show the exact number the user is currently selecting.
+     *
+     * @param labelText the static prefix text to display before the dynamically updating number.
+     * @param slider    the pre-configured slider component to bind to the label.
+     * @return a vertically stacked container holding both the dynamic label and the slider.
      */
     private VBox createControlGroup(String labelText, Slider slider) {
         Label label = new Label(labelText + String.format("%.1f", slider.getValue()));

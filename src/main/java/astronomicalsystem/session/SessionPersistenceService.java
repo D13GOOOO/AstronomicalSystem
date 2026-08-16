@@ -1,8 +1,5 @@
 package astronomicalsystem.session;
 
-import astronomicalsystem.model.AstronomicalSystem;
-import astronomicalsystem.model.CelestialBody;
-
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -10,21 +7,31 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.List;
 
+import astronomicalsystem.model.AstronomicalSystem;
+import astronomicalsystem.model.CelestialBody;
+
 /**
- * Handles the binary serialization and deserialization of application session snapshots.
- * <p>
- * This service ensures robust I/O operations and provides seamless backward compatibility 
- * for loading obsolete save file formats (e.g., loading just the raw body list or the naked system).
- * </p>
+ * A dedicated service responsible for handling all file operations related to saving and loading 
+ * the simulation. It manages the complex process of converting the entire living state of the universe, 
+ * including the physics engine, the camera angles, and the user interface settings, into a compact binary 
+ * format that can be stored securely on the computer's hard drive.
+ * 
+ * One of the most important features of this service is its intelligent backward compatibility. Software 
+ * evolves over time, and older versions of this application used entirely different formats to save their 
+ * progress. Instead of crashing when a user attempts to load an old save file, this service actively 
+ * inspects the loaded data, recognizes outdated formats, and seamlessly upgrades them into the modern 
+ * session structure before handing them over to the main application.
  */
 public class SessionPersistenceService {
 
     /**
-     * Serializes the entire session state to a binary file on disk.
+     * Packages a comprehensive snapshot of the entire simulation and writes it to a binary file on the disk. 
+     * This captures absolutely everything needed to perfectly resume the experience later, from the exact 
+     * mathematical coordinates of every planet to the angle the user was looking from.
      *
-     * @param filename     the target file path.
-     * @param sessionState the comprehensive snapshot to save.
-     * @throws IOException if the file cannot be created, opened, or written to.
+     * @param filename     the exact string path and name of the file to be created or overwritten on the hard drive.
+     * @param sessionState the complete bundled package containing the physics engine, camera data, and user interface state.
+     * @throws IOException if the system encounters a hardware error, such as lacking permission to write to the folder or running out of disk space.
      */
     public void save(String filename, SessionState sessionState) throws IOException {
         try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(filename))) {
@@ -33,34 +40,33 @@ public class SessionPersistenceService {
     }
 
     /**
-     * Reads and reconstructs a session state from a binary file.
-     * <p>
-     * <b>Backward Compatibility:</b> This method dynamically inspects the loaded object type.
-     * It natively supports the modern {@link SessionState}, but will intelligently wrap 
-     * older formats (like a bare {@link AstronomicalSystem} or a {@code List<CelestialBody>}) 
-     * into a new legacy snapshot to prevent application crashes on outdated saves.
-     * </p>
+     * Opens a previously saved binary file, reads its contents, and meticulously reconstructs the simulation 
+     * state so the user can resume exactly where they left off. 
+     * 
+     * This method contains an advanced safety net for backward compatibility. When it reads the file, it checks 
+     * the shape of the data. If it finds a modern, fully featured session state, it simply loads it. If it finds 
+     * a legacy save file from a previous software version that only contained the physics engine, or an even older 
+     * version that only contained a raw list of planets, it catches this discrepancy. Instead of crashing the 
+     * application, it automatically generates a modern session wrapper around the old physics data, supplying 
+     * safe default values for the missing camera and interface settings.
      *
-     * @param filename the source file path to read from.
-     * @return a valid, fully reconstructed {@link SessionState}.
-     * @throws IOException            if the file cannot be found or read, or if the format is fundamentally incompatible.
-     * @throws ClassNotFoundException if the serialized payload references classes that no longer exist.
+     * @param filename the exact string path and name of the file to open and read.
+     * @return a fully reconstructed, modern session state ready to be injected directly into the main application loop.
+     * @throws IOException            if the file cannot be located, is corrupted, or contains an entirely alien data structure that cannot be translated.
+     * @throws ClassNotFoundException if the loaded file contains objects belonging to a version of the software that no longer exists and cannot be mapped to current code.
      */
     public SessionState load(String filename) throws IOException, ClassNotFoundException {
         try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(filename))) {
             Object snapshot = in.readObject();
 
-            // 1. Modern Format: The full session container
             if (snapshot instanceof SessionState sessionState) {
                 return sessionState;
             }
 
-            // 2. Legacy Format A: Only the AstronomicalSystem was saved
             if (snapshot instanceof AstronomicalSystem loadedSystem) {
                 return SessionState.legacy(loadedSystem);
             }
 
-            // 3. Legacy Format B: Only the raw list of celestial bodies was saved
             if (snapshot instanceof List<?> rawBodies) {
                 AstronomicalSystem loadedSystem = new AstronomicalSystem();
 
@@ -74,7 +80,6 @@ public class SessionPersistenceService {
                 return SessionState.legacy(loadedSystem);
             }
 
-            // Fallback for completely unrecognized payloads
             throw new IOException("Unsupported save format. Root object type: " + snapshot.getClass().getName());
         }
     }

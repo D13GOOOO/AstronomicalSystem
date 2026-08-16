@@ -1,26 +1,29 @@
 package astronomicalsystem.model;
 
 /**
- * Represents a celestial entity whose motion is governed by a parametric or Keplerian orbital model,
- * rather than dynamic N-body gravitational integration.
- * <p>
- * <b>Architecture Note:</b> This contract is intentionally separated from {@link Kinematic}. 
- * Orbiting bodies (such as Moons) are typically tightly bound to a massive host (like a Planet). 
- * Simulating them using standard discrete N-body physics often leads to numerical instability or requires 
- * extremely small computational time-steps. By isolating them behind this interface, they can advance along 
- * mathematically perfect orbital paths without polluting the physics engine with artificial velocity 
- * semantics or violating the Liskov Substitution Principle (LSP).
- * </p>
+ * Defines a specific architectural contract for celestial bodies that follow a mathematically perfect, 
+ * fixed orbital path rather than being dragged around by the dynamic, chaotic gravitational pulls of 
+ * the entire universe.
+ * 
+ * By keeping this behavior entirely separate from standard moving objects, the simulation successfully 
+ * avoids numerical instability and mathematical glitches. For example, trying to simulate a tiny moon 
+ * orbiting very close to a massive planet using standard physics calculations often causes severe errors, 
+ * flinging the moon away unless the simulation calculations are slowed down drastically. This interface 
+ * cleverly bypasses that problem by allowing the object to simply update its position along a perfectly 
+ * calculated, unbreakable curve. This ensures absolute stability for satellites without bending or breaking 
+ * the rules of the core physics engine.
  */
 public interface OrbitingBody {
 
     /**
-     * Advances the orbital state of the body by one discrete simulation step.
-     * <p>
-     * Implementations of this method should incrementally update the body's internal orbital phase 
-     * (e.g., mean anomaly or orbital angle) and recalculate its absolute spatial {@link Point3D} position 
-     * based on the current position of its host anchor.
-     * </p>
+     * Moves the celestial body forward along its predefined mathematical orbital path by one single 
+     * unit of time in the simulation.
+     * 
+     * When this action is triggered, the orbiting body calculates its next step along its track, usually 
+     * by updating an internal rotation angle. It then looks at exactly where its central host, such as 
+     * a planet, is currently located in the three dimensional universe. Finally, it recalculates and 
+     * updates its own exact coordinates to place itself at the correct distance and angle relative to 
+     * that host, ensuring it remains perfectly tethered to it as the host travels through space.
      */
     void updateOrbit();
 }

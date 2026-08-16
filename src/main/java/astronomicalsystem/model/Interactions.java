@@ -5,31 +5,49 @@ import java.util.List;
 import astronomicalsystem.config.SimulationSettings;
 
 /**
- * A utility class handling all physical interactions between celestial entities,
- * including N-body gravitational integration and perfectly inelastic collisions.
- * <p>
- * <b>Bulletproof Optimization:</b> This version includes rigorous sanitization against
- * floating-point underflows (NaN/Infinity) which natively crash JavaFX's 3D rendering pipeline.
- * </p>
+ * A critical utility class that acts as the mathematical core of the physics engine.
+ * This class is strictly responsible for processing the interactions between celestial bodies,
+ * specifically calculating gravitational attraction across the N-body system and resolving
+ * physical collisions when objects intersect.
+ * 
+ * To ensure maximum stability during the simulation, this class includes built-in protective
+ * measures. It actively prevents "division by zero" errors when bodies get extremely close,
+ * clamps extreme accelerations to stop bodies from being shot out of the universe at impossible
+ * speeds (the slingshot effect), and sanitizes all coordinate outputs to prevent the graphical
+ * rendering pipeline from crashing due to invalid numbers.
  */
 public final class Interactions {
 
+    /**
+     * The universal gravitational constant retrieved from the central configuration file.
+     * This multiplier dictates the overall strength of gravity within the simulated universe.
+     */
     public static final double G = SimulationSettings.defaults().physics().gravitationalConstant();
 
-    // Limitatori di sicurezza fissi per evitare che le impostazioni errate rompano la fisica
     private static final double SAFE_SOFTENING_FACTOR = 0.5;
     private static final double SAFE_COLLISION_FACTOR = 0.8;
-    
-    // Accelerazione massima percorsa in un singolo tick (Anti-Slingshot)
     private static final double MAX_ACCELERATION = 500.0;
 
+    /**
+     * Private constructor to prevent the instantiation of this utility class.
+     * All physical interaction methods are static and should be accessed directly through the class name.
+     */
     private Interactions() {
         throw new UnsupportedOperationException("Utility classes cannot be instantiated.");
     }
 
     /**
-     * Calculates and applies the net gravitational acceleration on a target kinematic body.
-     * Contains failsafes to prevent the "NaN Virus" caused by division by near-zero.
+     * Calculates the total gravitational pull exerted on a specific moving body by every other
+     * body currently existing in the system, and applies that acceleration to its velocity.
+     * 
+     * The method calculates the exact distance between the target body and the interacting body.
+     * If the distance is dangerously close to zero, a softening limit is enforced to prevent
+     * mathematical underflow. Once the pure gravitational force is determined, it is distributed
+     * across the X, Y, and Z axes. Finally, the total acceleration is capped at a maximum limit
+     * to prevent physics glitches, and only applied if the resulting numbers are mathematically valid.
+     *
+     * @param target       the moving celestial entity whose velocity is currently being updated.
+     * @param systemBodies the complete list of all celestial bodies present in the simulation universe.
      */
     public static void updateGravitationalVelocity(Kinematic target, List<CelestialBody> systemBodies) {
         CelestialBody targetBody = (CelestialBody) target;
@@ -52,10 +70,8 @@ public final class Interactions {
 
             double distSq = dx * dx + dy * dy + dz * dz;
 
-            // 1. LIMITATORE DI DISTANZA (Softening)
-            // Assicuriamo una distanza minima invalicabile per i calcoli per evitare la divisione per zero
             double minDistance = (tRadius + other.getRadius()) * SAFE_SOFTENING_FACTOR;
-            if (minDistance < 1.0) minDistance = 1.0; // Hard limit assoluto
+            if (minDistance < 1.0) minDistance = 1.0; 
             
             if (distSq < minDistance * minDistance) continue;
 
@@ -64,13 +80,11 @@ public final class Interactions {
             
             double forceMag = G * other.getMass() * interactionFactor; 
             
-            // 2. PREVENZIONE SOTTOFLUSSO
             double denominator = distSq * dist;
             if (denominator <= 0.0001) continue; 
             
             double accMultiplier = forceMag / denominator;
 
-            // 3. SANIFICAZIONE NAN/INFINITY
             if (Double.isNaN(accMultiplier) || Double.isInfinite(accMultiplier)) continue;
 
             accX += accMultiplier * dx;
@@ -78,12 +92,10 @@ public final class Interactions {
             accZ += accMultiplier * dz;
         }
 
-        // 4. CLAMP ANTI-FIONDA (Blocca le accelerazioni esagerate che sparano il pianeta a coordinate infinite)
         accX = Math.max(-MAX_ACCELERATION, Math.min(MAX_ACCELERATION, accX));
         accY = Math.max(-MAX_ACCELERATION, Math.min(MAX_ACCELERATION, accY));
         accZ = Math.max(-MAX_ACCELERATION, Math.min(MAX_ACCELERATION, accZ));
 
-        // Applica la velocità finale solo se la matematica è intatta
         if (!Double.isNaN(accX) && !Double.isNaN(accY) && !Double.isNaN(accZ)) {
             Point3D totalAcceleration = new Point3D(accX, accY, accZ);
             target.setVelocity(target.getVelocity().add(totalAcceleration));
@@ -91,12 +103,21 @@ public final class Interactions {
     }
 
     /**
-     * Evaluates spatial proximity between two bodies and processes an inelastic merger if they intersect.
+     * Inspects the spatial distance between two celestial entities to determine if their physical
+     * boundaries are overlapping. If an overlap is detected, it processes a perfectly inelastic
+     * collision, destroying both original bodies and returning a single, newly formed merged entity.
+     * 
+     * To ensure stability, a slightly reduced collision threshold is used. This guarantees that
+     * bodies register as collided right before they deeply intersect, preventing the physics engine
+     * from executing extreme gravitational calculations on bodies that are essentially inside one another.
+     *
+     * @param b1 the first celestial body involved in the proximity check.
+     * @param b2 the second celestial body involved in the proximity check.
+     * @return a new merged celestial body if a collision occurred, or null if the bodies remain separated.
      */
     public static CelestialBody checkCollision(CelestialBody b1, CelestialBody b2) {
         double combinedRadius = b1.getRadius() + b2.getRadius();
         
-        // Uso un fattore di collisione sicuro per garantire che collidano PRIMA di compenetrarsi e causare bug matematici
         double collisionThreshold = combinedRadius * SAFE_COLLISION_FACTOR;
 
         if (b1.getPosition().distanceSq(b2.getPosition()) < collisionThreshold * collisionThreshold) {
@@ -115,7 +136,17 @@ public final class Interactions {
     }
 
     /**
-     * Executes the mathematical integration of two bodies during a perfectly inelastic collision.
+     * Executes the mathematical integration necessary to combine two colliding celestial bodies into one.
+     * 
+     * The resulting entity absorbs the mass of both original bodies. Its physical radius is recalculated
+     * based on the combined volume of the two spheres. To respect the conservation of momentum, the new
+     * velocity and spatial coordinates are calculated using a weighted average based on the masses of the
+     * original objects. If one of the bodies is a fixed anchor (like a star), the resulting merged body
+     * will remain fixed exactly at the anchor's original coordinates.
+     *
+     * @param b1 the first celestial body involved in the collision.
+     * @param b2 the second celestial body involved in the collision.
+     * @return the newly formed composite celestial body containing the combined mass and momentum.
      */
     private static CelestialBody mergeBodies(CelestialBody b1, CelestialBody b2) {
         double newMass = b1.getMass() + b2.getMass();
@@ -153,6 +184,14 @@ public final class Interactions {
         return merged;
     }
 
+    /**
+     * Calculates the physical radius of a newly merged celestial body by adding the volumes of the two
+     * original bodies and deriving the new radius from that total combined volume.
+     *
+     * @param b1 the first celestial body.
+     * @param b2 the second celestial body.
+     * @return the derived radius for the resulting merged sphere.
+     */
     private static double mergedRadius(CelestialBody b1, CelestialBody b2) {
         double volume = Math.pow(b1.getRadius(), 3) + Math.pow(b2.getRadius(), 3);
         return Math.cbrt(volume);

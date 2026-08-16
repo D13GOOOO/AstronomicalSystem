@@ -3,69 +3,69 @@ package astronomicalsystem.model;
 import java.util.List;
 
 /**
- * Defines the contract for celestial entities subject to physical forces, kinematics, and dynamic orbital motion.
- * <p>
- * <b>Architecture Note:</b> Segregating this behavior from the base {@link CelestialBody} class ensures strict 
- * adherence to the Liskov Substitution Principle (LSP) and the Interface Segregation Principle (ISP).
- * Static bodies (e.g., central stars) or bodies with parametric orbits (e.g., moons) are no longer forced 
- * to implement or mock kinetic behaviors, preventing fragile code and maintaining clean inheritance hierarchies.
- * </p>
+ * Defines a strict architectural contract for any celestial entity that travels through space
+ * dynamically by calculating physical forces.
+ * 
+ * By isolating moving, force-driven behaviors into this specific interface, the system adheres 
+ * to modern software design principles. It ensures that stationary objects (like central stars) 
+ * or objects that follow strict mathematical paths without calculating gravity (like moons) 
+ * do not have to write fake or empty methods just to fit into the simulation. Only objects that 
+ * actually calculate their own speed and respond to gravity will implement this interface.
  */
 public interface Kinematic {
 
     /**
-     * Retrieves the current velocity vector of the kinematic entity.
+     * Retrieves the exact direction and speed at which the celestial entity is currently traveling.
      *
-     * @return the immutable {@link Point3D} representing the velocity vector in 3D space.
+     * @return an immutable 3D point containing the current speed and direction of the entity.
      */
     Point3D getVelocity();
 
     /**
-     * Explicitly overwrites the current velocity vector.
-     * <p>
-     * Typically used during initial spawning (e.g., from the Creator Panel) or to resolve 
-     * immediate physical reactions such as perfectly inelastic collisions where momentum is conserved.
-     * </p>
+     * Instantly forces the celestial entity to adopt a new speed and direction of travel.
+     * This is typically executed when an object is first created by the user and needs an 
+     * initial push, or immediately after a physical collision when two bodies merge and 
+     * share their combined momentum.
      *
-     * @param velocity the new immutable {@link Point3D} velocity vector.
+     * @param velocity the new immutable 3D point dictating the exact speed and direction.
      */
     void setVelocity(Point3D velocity);
 
     /**
-     * Calculates the net gravitational acceleration exerted by all other bodies in the system
-     * and updates the internal velocity vector accordingly.
-     * <p>
-     * <b>Physics Engine Detail:</b> This method represents the first half of a discrete symplectic 
-     * integration step (e.g., Semi-implicit Euler integration). It must be invoked for all bodies 
-     * <i>before</i> any body updates its position.
-     * </p>
+     * Calculates the immense gravitational pull exerted by every single celestial body in the 
+     * universe and alters the current speed and trajectory of this specific entity accordingly.
+     * 
+     * To prevent mathematical chaos and ensure the simulation remains stable, this step is 
+     * executed for every single moving object in the universe before any object is actually 
+     * allowed to change its physical location.
      *
-     * @param systemBodies the complete {@link List} of celestial bodies in the simulation exerting gravitational pull. 
-     *                     Using a {@code List} (specifically {@code ArrayList}) ensures optimal CPU cache locality 
-     *                     during $O(N^2)$ N-body interactions.
+     * @param systemBodies the complete list containing every celestial body currently existing 
+     *                     in the simulation universe.
      */
     void updateVelocity(List<CelestialBody> systemBodies);
 
     /**
-     * Integrates the current velocity vector into the spatial position.
-     * <p>
-     * <b>Physics Engine Detail:</b> This represents the second half of the discrete integration step. 
-     * It relies on the velocity previously calculated by {@link #updateVelocity(List)}. 
-     * Implementations should guarantee thread safety, typically by yielding a new immutable position 
-     * instance rather than mutating state directly if processed in parallel streams.
-     * </p>
+     * Takes the velocity that was previously calculated by the physics engine and uses it to 
+     * physically move the celestial entity to its new coordinates in 3D space.
+     * 
+     * This represents the second and final phase of a single physics frame. It executes only 
+     * after all the gravitational forces in the universe have been fully computed and applied 
+     * to the velocities of the moving objects.
      */
     void updatePosition();
 
     /**
-     * Calculates the total mechanical energy (Kinetic Energy + Gravitational Potential Energy) 
-     * of the kinematic body relative to the system.
-     * <p>
-     * This metric is extremely useful for profiling the stability of the numerical integrator: 
-     * in a closed system without external forces, the sum of total energies should remain constant.
-     * </p>
+     * Calculates the total amount of mechanical energy this moving body currently possesses.
+     * This involves analyzing how fast the object is moving combined with how intensely it is 
+     * being pulled by the gravity of the surrounding system.
+     * 
+     * This calculation serves as an essential diagnostic tool. In a perfect, isolated universe, 
+     * the total combined energy of all moving objects should remain perfectly steady over time.
+     * Tracking this number allows the system to verify that the physics engine is calculating 
+     * the passage of time accurately without generating artificial energy or slowing down due 
+     * to mathematical errors.
      *
-     * @return the total mechanical energy scalar value (Joules or simulation-scaled equivalent).
+     * @return a single number representing the overall energy value of the moving body.
      */
     double totalEnergy();
 }

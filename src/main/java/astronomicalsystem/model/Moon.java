@@ -4,45 +4,70 @@ import java.io.Serial;
 import java.util.Objects;
 
 /**
- * Represents a natural satellite strictly bound to a host planet.
- * <p>
- * Employs a deterministic parametric orbital model driven by the host body's
- * current position. The moon does not participate in the velocity-based N-body
- * contract, which keeps the API honest and avoids dummy physics methods.
- * By implementing {@link OrbitingBody}, it cleanly separates Keplerian kinematics
- * from Newtonian dynamics, guaranteeing mathematical stability.
- * </p>
+ * Represents a natural satellite that is permanently bound to a host planet by gravitational forces.
+ * Unlike free roaming planets, a moon follows a strict, predictable mathematical path around its central 
+ * host rather than calculating complex gravitational pulls from every other body in the universe. 
+ * By separating this fixed orbital behavior from the general physics engine, the simulation avoids 
+ * unnecessary calculations and guarantees that the moon will remain perfectly stable in its orbit 
+ * without gradually drifting away or crashing into its host.
  */
 public class Moon extends CelestialBody implements OrbitingBody {
 
     /**
-     * The serialization identifier ensuring version compatibility during file I/O operations.
+     * The serialization identifier ensuring that saved simulation files containing moon objects 
+     * remain fully compatible with the current version of the application code when they are loaded 
+     * back into memory.
      */
     @Serial
     private static final long serialVersionUID = 1L;
 
     /**
-     * Precomputed constant for a full circle in radians ($2\pi$), used to prevent 
-     * multiplication overhead during normalization.
+     * A precalculated mathematical constant representing a complete full circle. This is used 
+     * internally to quickly reset the moon's orbital angle once it completes a full revolution, 
+     * saving the processor from having to calculate the multiplication repeatedly during every 
+     * single frame of the simulation.
      */
     private static final double TWO_PI = 2.0 * Math.PI;
 
+    /**
+     * The central planetary body that this moon orbits around. The moon will continuously track 
+     * this host planet's position and update its own location to stay nearby.
+     */
     private final Planet host;
+
+    /**
+     * The fixed spatial distance maintained between the center of the moon and the center 
+     * of its host planet.
+     */
     private final double orbitalDistance;
+
+    /**
+     * The speed at which the moon travels along its circular path around the host planet, 
+     * measured as an angle change per simulation step. A positive value means it travels in a 
+     * standard forward direction, while a negative value makes it travel backward in a retrograde orbit.
+     */
     private final double orbitalSpeed;
+
+    /**
+     * The current position of the moon along its circular orbital path, tracked as an angle. 
+     * This value steadily increases or decreases over time to create the smooth circular motion 
+     * around the host planet.
+     */
     private double currentAngle;
 
     /**
-     * Initializes a host-locked satellite.
+     * Constructs a new moon object and locks it into a stable orbit around a specific host planet. 
+     * The starting position of the moon is automatically calculated by taking the host planet's 
+     * current location and shifting it outward by the specified orbital distance along the horizontal axis.
      *
-     * @param name            the unique identifier of the moon (must not be null).
-     * @param mass            the mass in simulation units (must be >= 0).
-     * @param visualRadius    the scalar radius for rendering (must be >= 0).
-     * @param host            the central planetary body to orbit (must not be null).
-     * @param orbitalDistance the fixed scalar distance from the host (must be >= 0).
-     * @param orbitalSpeed    the angular velocity in radians per tick. Can be negative for retrograde orbits.
-     * @throws NullPointerException     if {@code name} or {@code host} is null.
-     * @throws IllegalArgumentException if {@code orbitalDistance} is strictly negative.
+     * @param name            the unique, human readable identifier assigned to this moon.
+     * @param mass            the physical mass of the moon in internal simulation units. Must be zero or greater.
+     * @param visualRadius    the size of the moon used for graphical rendering in the simulation. Must be zero or greater.
+     * @param host            the specific planet that acts as the gravitational center for this moon's orbit. Must not be null.
+     * @param orbitalDistance the exact radius of the circular path this moon will carve around its host planet. Must be zero or greater.
+     * @param orbitalSpeed    the rate at which the moon rotates around the host planet at every step of time.
+     * @throws NullPointerException     if either the given name or the target host planet is missing or null.
+     * @throws IllegalArgumentException if the provided orbital distance is a negative number, as physical distances cannot be negative.
      */
     public Moon(String name, double mass, double visualRadius, Planet host, double orbitalDistance, double orbitalSpeed) {
         super(name, mass, visualRadius, new Point3D(
@@ -62,23 +87,16 @@ public class Moon extends CelestialBody implements OrbitingBody {
     }
 
     /**
-     * Advances the orbital state of the moon by one discrete simulation step.
-     * <p>
-     * The position is calculated using standard 2D circular parametric equations 
-     * aligned to the X-Z plane:
-     * <ul>
-     *   <li>$x = x_{host} + r \cos(\theta)$</li>
-     *   <li>$z = z_{host} + r \sin(\theta)$</li>
-     * </ul>
-     * where $r$ is the {@code orbitalDistance} and $\theta$ is the {@code currentAngle}.
-     * </p>
+     * Calculates the next physical position of the moon along its orbital path and physically moves it there. 
+     * This method updates the current tracking angle by adding the orbital speed, ensuring the angle stays 
+     * within the boundaries of a single circle to prevent mathematical precision issues over very long simulations. 
+     * It then determines the exact horizontal and depth coordinates by calculating the circular path relative to 
+     * the host planet's ever changing position, essentially dragging the moon along wherever the host planet travels.
      */
     @Override
     public void updateOrbit() {
         this.currentAngle += this.orbitalSpeed;
         
-        // Normalize the angle within [0, 2π] to prevent floating-point precision loss 
-        // over long simulation runtimes, handling both prograde and retrograde orbits.
         if (this.currentAngle > TWO_PI) {
             this.currentAngle -= TWO_PI;
         } else if (this.currentAngle < 0.0) {
@@ -92,9 +110,10 @@ public class Moon extends CelestialBody implements OrbitingBody {
     }
     
     /**
-     * Returns a formatted string representation of this moon.
+     * Creates and returns a readable text summary of this moon, which includes its unique name, 
+     * the name of the host planet it orbits, and its current exact coordinates in the three dimensional space.
      *
-     * @return a string containing the moon's name, host, and coordinates.
+     * @return a descriptive string detailing the identity and location of the moon.
      */
     @Override
     public String toString() {

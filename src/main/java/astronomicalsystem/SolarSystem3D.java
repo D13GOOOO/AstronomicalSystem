@@ -40,17 +40,18 @@ import javafx.scene.transform.Rotate;
 import javafx.stage.Stage;
 
 /**
- * The primary JavaFX entry point and orchestration layer for the astronomical simulation.
- * <p>
- * Acting as the Application Composition Root, this class provisions the 3D scene graph,
- * instantiates the core physics engine via the {@link UniverseFactory}, and bridges
- * the domain model with the visual rendering pipeline utilizing the Observer pattern.
- * </p>
- * <p>
- * <b>Architecture Note:</b> Uses a layered rendering approach. The 3D universe is rendered 
- * within a hardware-accelerated {@link SubScene}, while 2D UI overlays (HUD, Menus) are 
- * stacked on top using a {@link StackPane}.
- * </p>
+ * The master control center and graphical foundation of the entire astronomical simulation.
+ * 
+ * As the main JavaFX application class, this is where the mathematical physics engine and the 
+ * visual user interface finally meet. This class is responsible for initially creating the universe, 
+ * building the three dimensional space, setting up the lighting and cameras, and starting the 
+ * continuous loop that makes time flow forward.
+ * 
+ * To ensure everything looks beautiful and remains interactive, it uses a stacked visual architecture. 
+ * The deep space environment, planets, and orbits are drawn on a specialized, hardware accelerated 
+ * background layer. On top of that, it stacks a transparent foreground layer that holds all the 
+ * standard two dimensional menus, sliders, and text panels, allowing the user to click buttons 
+ * without accidentally dragging the 3D camera.
  */
 public class SolarSystem3D extends Application {
 
@@ -74,9 +75,17 @@ public class SolarSystem3D extends Application {
     private final Rotate rotateY = new Rotate(0, Rotate.Y_AXIS);
 
     /**
-     * Bootstraps the application, assembling the MVC triad and starting the physics loop.
+     * The primary assembly line where the entire application is constructed right before appearing 
+     * on the user's screen.
+     * 
+     * It begins by asking the factory to construct the mathematical solar system. It then builds the 
+     * 3D environment, injecting the stars, ambient lighting, and the brilliant light emitting from the 
+     * sun. Next, it wires up the telemetry panels, the pause menu, and the planet creation drawer. 
+     * Finally, it creates the massive, unending heartbeat of the application: the animation timer. 
+     * This timer fires constantly, telling the physics engine to calculate the next frame and telling 
+     * the performance monitor to record how long it took.
      *
-     * @param primaryStage the primary JavaFX window provided by the runtime.
+     * @param primaryStage the main window container provided by the operating system to hold the application.
      */
     @Override
     public void start(Stage primaryStage) {
@@ -161,23 +170,28 @@ public class SolarSystem3D extends Application {
     }
 
     /**
-     * Explicitly overrides the pause state of the simulation.
+     * Instantly forces the physics engine to either freeze entirely or resume running. When frozen, 
+     * gravity stops calculating and the planets hang motionless in space, though the camera can still 
+     * be moved freely.
      *
-     * @param paused true to halt the physics engine, false to resume.
+     * @param paused true to completely halt the physics engine, false to resume the flow of time.
      */
     public void setPaused(boolean paused) {
         this.isPaused = paused;
     }
 
     /**
-     * Toggles the current pause state of the simulation.
+     * Simply flips the current state of time. If the simulation is running, it freezes it. If it is 
+     * already frozen, it resumes running.
      */
     public void togglePause() {
         this.isPaused = !this.isPaused;
     }
 
     /**
-     * Toggles the visibility of the central pause menu, automatically pausing/resuming physics.
+     * Controls the visibility of the central pause menu while automatically managing the flow of time. 
+     * If the menu is currently hidden, this method reveals the menu and instantly freezes the physics 
+     * engine. If the menu is already visible, it hides the menu and resumes the simulation.
      */
     public void togglePauseMenu() {
         if (this.pauseMenu.isVisible()) {
@@ -192,16 +206,18 @@ public class SolarSystem3D extends Application {
     }
 
     /**
-     * Toggles the slide-out animation of the entity Creator Panel.
+     * Commands the dynamic creator panel on the right side of the screen to slide in or out of view.
      */
     public void toggleCreatorPanel() {
         this.creatorPanel.toggle();
     }
 
     /**
-     * Displays the telemetry readout for a specific celestial body and pauses the simulation.
+     * Reveals the informational telemetry panel in the top left corner, populating it with data from 
+     * the specific celestial body the user just clicked on. It automatically pauses the simulation 
+     * so the user can easily read the data without the planet flying away.
      *
-     * @param body the entity to inspect.
+     * @param body the celestial entity the user wishes to inspect.
      */
     public void showInfoPanel(CelestialBody body) {
         this.infoPanel.showPlanet(body);
@@ -209,7 +225,7 @@ public class SolarSystem3D extends Application {
     }
 
     /**
-     * Hides the telemetry readout and resumes the simulation.
+     * Hides the informational telemetry panel and instantly resumes the flow of time.
      */
     public void hideInfoPanel() {
         this.infoPanel.hide();
@@ -217,7 +233,9 @@ public class SolarSystem3D extends Application {
     }
 
     /**
-     * Serializes the full interactive session with visual UI feedback.
+     * Gathers all the data about the current state of the universe and asks the persistence service 
+     * to save it to a file. It updates the pause menu text to inform the user whether the save was 
+     * successful or if an error occurred.
      */
     private void handleQuickSave() {
         try {
@@ -229,7 +247,10 @@ public class SolarSystem3D extends Application {
     }
 
     /**
-     * Deserializes the full interactive session with visual UI feedback.
+     * Asks the persistence service to read a saved file from the hard drive and attempts to reconstruct 
+     * the universe from that data. It intelligently checks if the loaded file is a modern save or an 
+     * outdated legacy save, routes the data to the correct reconstruction method, and updates the pause 
+     * menu text to confirm success or failure.
      */
     private void handleQuickLoad() {
         try {
@@ -248,12 +269,17 @@ public class SolarSystem3D extends Application {
     }
 
     /**
-     * Instantiates and registers a new dynamic planetary body via the Creator Panel.
-     * Calculates perfect orbital velocity dynamically and allows scalar modifications.
+     * Handles the complex physics and mathematics required to create a brand new planet exactly when 
+     * the user clicks the launch button in the creator panel. 
+     * 
+     * Instead of just dropping a planet randomly, this method actively calculates the perfect velocity 
+     * required for the new planet to establish a stable, circular orbit around the central sun based on 
+     * its exact starting distance. It then applies the user's velocity multiplier, allowing them to 
+     * either launch it perfectly or purposely create chaotic elliptical orbits.
      *
-     * @param massMultiplier     the mass coefficient relative to Earth.
-     * @param distance           the spawn distance from the system anchor.
-     * @param velocityMultiplier the scalar to alter the perfect circular orbit.
+     * @param massMultiplier     how much heavier or lighter the new planet should be compared to Earth.
+     * @param distance           how far away from the center of the universe the planet should spawn.
+     * @param velocityMultiplier a modifier allowing the user to increase or decrease the perfect orbital speed.
      */
     private void spawnCustomPlanet(double massMultiplier, double distance, double velocityMultiplier) {
         String name = "Custom Planet X-" + (customPlanetCount++);
@@ -292,9 +318,11 @@ public class SolarSystem3D extends Application {
     }
 
     /**
-     * Generates an immense background sphere textured with a starfield to simulate deep space.
+     * Creates an unimaginably massive, hollow sphere that completely surrounds the entire simulated 
+     * universe. By painting the inside of this sphere with a high resolution image of the Milky Way 
+     * galaxy, it creates a perfect optical illusion of deep, endless space surrounding the planets.
      *
-     * @param root3D the root group of the 3D subscene.
+     * @param root3D the primary graphical group where the massive sky sphere will be added.
      */
     private void createSkybox(Group root3D) {
         Sphere skybox = new Sphere(25000);
@@ -318,9 +346,11 @@ public class SolarSystem3D extends Application {
     }
 
     /**
-     * Attempts to resolve the primary or fallback skybox texture streams.
+     * Attempts to locate and open the image files used to create the background space illusion. 
+     * It looks for the high quality Milky Way texture first, and if that file is missing, it 
+     * safely falls back to a generic starfield texture.
      *
-     * @return the resolved {@link InputStream}, or null if neither exists.
+     * @return a data stream containing the image file, or null if neither image could be found.
      */
     private InputStream openSkyboxTexture() {
         InputStream milkyWay = getClass().getResourceAsStream("/milky_way.jpg");
@@ -331,9 +361,11 @@ public class SolarSystem3D extends Application {
     }
 
     /**
-     * Captures the volatile current state of the application for serialization.
+     * Gathers all the volatile, ever changing data from the running application—including the exact 
+     * physics engine state, whether the game is paused, and exactly how the user has angled the 
+     * camera—and packs it all into a single, immutable record ready to be saved to the hard drive.
      *
-     * @return a populated {@link SessionState} snapshot.
+     * @return a perfectly sealed snapshot of the exact current moment in the simulation.
      */
     private SessionState captureSessionState() {
         return SessionState.current(
@@ -351,9 +383,11 @@ public class SolarSystem3D extends Application {
     }
 
     /**
-     * Reconstructs the application state from a modern session snapshot.
+     * Carefully unpacks a modern session snapshot that was loaded from the hard drive and uses that 
+     * data to completely overwrite the current state of the application. It replaces the entire physics 
+     * engine, moves the camera back to the exact saved angle, and resets the interface menus.
      *
-     * @param sessionState the deserialized data transfer object.
+     * @param sessionState the sealed data package containing the loaded universe.
      */
     private void restoreSessionState(SessionState sessionState) {
         this.system = sessionState.system();
@@ -374,9 +408,12 @@ public class SolarSystem3D extends Application {
     }
 
     /**
-     * Reconstructs the application state gracefully when loading a legacy, physics-only payload.
+     * Safely reconstructs the application state when loading an old, outdated save file that only 
+     * contained planetary physics data. Because the old file has no camera or menu data, this method 
+     * replaces the physics engine but manually applies safe, default settings to the user interface 
+     * to prevent the modern application from breaking.
      *
-     * @param loadedSystem the deserialized physics engine.
+     * @param loadedSystem the pure physics engine extracted from the old save file.
      */
     private void restoreLegacySession(AstronomicalSystem loadedSystem) {
         this.system = loadedSystem;
@@ -389,14 +426,18 @@ public class SolarSystem3D extends Application {
     }
 
     /**
-     * Semantic wrapper for the 3D world group, acting as the pivot origin for camera orbits.
+     * A specialized grouping container used to hold all the planets and the sun in the very center 
+     * of the universe. This allows the camera mechanics to easily rotate the entire universe around 
+     * a central pivot point.
      */
     private static class SmartGroup extends Group { }
 
     /**
-     * Application entry point delegated by {@link Launcher}.
+     * The internal launch method required by the JavaFX framework. When the main launcher delegates 
+     * control to this class, this method triggers the internal engine that eventually calls the main 
+     * start method.
      *
-     * @param args command-line arguments.
+     * @param args command-line arguments passed through from the launcher.
      */
     public static void main(String[] args) {
         launch(args);

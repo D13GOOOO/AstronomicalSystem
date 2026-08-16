@@ -29,28 +29,36 @@ import javafx.scene.shape.TriangleMesh;
 import javafx.scene.transform.Rotate;
 
 /**
- * An observer implementation responsible for translating physical simulation
- * state into 3D visual representations.
- * <p>
- * This class maintains the mapping between backend domain models and frontend
- * JavaFX geometry. It receives periodic state updates and applies spatial
- * transformations, ensuring strict separation between physics processing
- * and the graphics pipeline.
- * </p>
- * <p>
- * <b>Performance Optimization:</b> Utilizes a static texture cache to prevent redundant 
- * disk I/O when spawning multiple identical bodies (e.g., custom planets).
- * </p>
+ * A graphical observer component responsible for translating the invisible mathematical calculations 
+ * of the physics engine into visible, three dimensional objects on the user's screen.
+ * 
+ * This class acts as the ultimate bridge between the raw physics data and the JavaFX rendering pipeline. 
+ * It continuously listens for updates from the physics engine. Whenever the engine completes a calculation 
+ * step, this renderer takes the exact coordinates of every planet, scales them down to fit inside the 
+ * visible screen area, and moves the corresponding 3D spheres to those new locations.
+ * 
+ * To ensure maximum performance and prevent the simulation from stuttering when the user creates dozens 
+ * of custom planets, this class utilizes a static memory cache for image textures. This guarantees that 
+ * the application only reads an image file from the hard drive once, reusing the same loaded image in 
+ * memory for every identical planet spawned thereafter.
  */
 public class SimulationRenderer implements SimulationObserver {
 
     private static final SimulationSettings SETTINGS = SimulationSettings.defaults();
     
     /**
-     * Cache for loaded textures to minimize memory footprint and disk I/O during runtime spawns.
+     * A high speed memory cache that permanently holds the loaded image files for planet textures. 
+     * This prevents the severe performance penalty of constantly reading from the hard drive every 
+     * time a new celestial body is created dynamically by the user.
      */
     private static final Map<String, Image> TEXTURE_CACHE = new HashMap<>();
 
+    /**
+     * An absolute safety boundary that acts as a virtual cage for the graphics engine. 
+     * If the physics engine calculates an explosive slingshot effect that shoots a planet out into 
+     * infinite space, the renderer will clamp the visual object to this maximum distance. This prevents 
+     * massive numbers from reaching the graphics card, completely avoiding a native overflow crash.
+     */
     private static final double MAX_RENDER_COORD = 500_000.0;
 
     private final Group worldGroup;
@@ -62,20 +70,22 @@ public class SimulationRenderer implements SimulationObserver {
     private SaturnRing saturnRingVisual;
 
     /**
-     * Initializes the rendering engine without performance telemetry.
+     * Initializes the rendering engine and attaches it to the main three dimensional space without 
+     * connecting an active performance tracking monitor.
      *
-     * @param worldGroup the JavaFX group node acting as the coordinate system root.
+     * @param worldGroup the primary JavaFX graphical container where all 3D objects will be placed and drawn.
      */
     public SimulationRenderer(Group worldGroup) {
         this(worldGroup, null);
     }
 
     /**
-     * Initializes the rendering engine and binds it to the primary 3D scene group.
+     * Initializes the rendering engine, attaches it to the main three dimensional space, and connects 
+     * a dedicated performance monitor to track exactly how long it takes to draw each visual frame.
      *
-     * @param worldGroup         the JavaFX group node acting as the coordinate system root (must not be null).
-     * @param performanceMonitor the telemetry tracker for rendering times (can be null).
-     * @throws NullPointerException if {@code worldGroup} is null.
+     * @param worldGroup         the primary JavaFX graphical container acting as the root of the universe. Must not be null.
+     * @param performanceMonitor the optional telemetry tracker used to log rendering speeds.
+     * @throws NullPointerException if the provided world group is completely missing or uninitialized.
      */
     public SimulationRenderer(Group worldGroup, SimulationPerformanceMonitor performanceMonitor) {
         this.worldGroup = Objects.requireNonNull(worldGroup, "World group cannot be null");
@@ -85,15 +95,19 @@ public class SimulationRenderer implements SimulationObserver {
     }
 
     /**
-     * Synchronizes the JavaFX 3D scene graph with the current physical state of the universe.
-     * <p>
-     * Optimizations applied: Uses {@link HashSet} for $O(1)$ presence validation and strictly
-     * removes deleted objects from the scene graph without iterating over the entire node tree.
-     * </p>
+     * The primary action triggered every single time the physics engine finishes calculating a moment in time.
+     * 
+     * This massive synchronization method performs three main tasks. First, it compares the current list of 
+     * living planets against its own list of drawn shapes. If a planet has been destroyed in a physical collision, 
+     * its 3D sphere and glowing orbit track are permanently erased from the screen. Second, if a brand new planet 
+     * has been spawned, it orders the creation of new 3D shapes for it. Third, it takes the mathematical 
+     * coordinates of every surviving planet, scales them to visual proportions, and safely moves the graphical 
+     * spheres. It heavily utilizes the maximum render coordinate safety net to ensure that no object can ever 
+     * fly far enough away to crash the underlying graphical matrices.
      *
-     * @param step        the current iteration index.
-     * @param bodies      the current active celestial entities.
-     * @param totalEnergy the current total energy (unused in rendering, but respects contract).
+     * @param step        the exact sequential frame number that the simulation just finished calculating.
+     * @param bodies      the complete list containing every celestial body currently existing in the physical universe.
+     * @param totalEnergy a diagnostic measurement of the total energy, ignored by the visual renderer but required by the contract.
      */
     @Override
     public void onSimulationStep(int step, List<CelestialBody> bodies, double totalEnergy) {
@@ -189,9 +203,16 @@ public class SimulationRenderer implements SimulationObserver {
     }
 
     /**
-     * Generates the 3D meshes, textures, and orbital paths for a newly introduced body.
+     * Constructs the physical three dimensional shapes, paints the image textures, and calculates the 
+     * orbital paths for a newly introduced celestial body.
+     * 
+     * This method looks at the name of the new body to find the corresponding image file. If the body 
+     * is a moving object and not a simple moon, it mathematically extracts its orbital shape from the 
+     * universe factory and draws a massive three dimensional ring in space to represent its trajectory. 
+     * Finally, if the newly spawned body happens to be Saturn, it triggers the generation of a specialized, 
+     * highly detailed procedural ring system and attaches it to the planet.
      *
-     * @param body the physical entity requiring visual representation.
+     * @param body the physical entity that has just entered the simulation and requires visual representation.
      */
     private void createVisualsFor(CelestialBody body) {
         String name = body.getName().toLowerCase();
@@ -277,6 +298,22 @@ public class SimulationRenderer implements SimulationObserver {
         }
     }
 
+    /**
+     * Mathematically generates a massive, incredibly thin three dimensional ring to visually represent 
+     * the orbital path of a planet. 
+     * 
+     * This specifically builds a three dimensional mesh of triangles rather than using a standard two 
+     * dimensional line shape. This is an extremely important architectural workaround. The standard two 
+     * dimensional line drawer inside JavaFX suffers from a fatal flaw that crashes the entire application 
+     * when asked to draw a shape that is too large. By using three dimensional triangles instead, this 
+     * method completely bypasses that broken engine and sends the orbital shape directly to the graphics 
+     * card, ensuring the application remains perfectly stable even when drawing orbits that are millions 
+     * of units wide.
+     *
+     * @param radiusA the primary horizontal radius of the elliptical orbital path.
+     * @param radiusB the secondary depth radius of the elliptical orbital path.
+     * @return a fully constructed, semi transparent three dimensional mesh representing the orbital track.
+     */
     private MeshView create3DOrbitMesh(double radiusA, double radiusB) {
         TriangleMesh mesh = new TriangleMesh();
         mesh.getTexCoords().addAll(0f, 0f);
@@ -337,10 +374,15 @@ public class SimulationRenderer implements SimulationObserver {
     }
 
     /**
-     * Maps physical domain models to arbitrary visual scalar radii.
+     * Translates the true physical mass or identity of a celestial body into a manageable graphical size. 
+     * 
+     * Because the real universe is mostly empty space, drawing planets to their true, exact scale would 
+     * make them microscopic and completely invisible on a computer screen compared to the sun. This method 
+     * acts as an aesthetic director, looking up the name of the planet and applying custom, artificially 
+     * inflated sizes so that every planet looks beautiful, distinct, and easily clickable within the simulation.
      *
-     * @param body the entity to scale.
-     * @return the visual radius scalar.
+     * @param body the physical entity whose visual size needs to be determined.
+     * @return the calculated numerical radius to be used exclusively for the graphical three dimensional sphere.
      */
     private double getVisualRadius(CelestialBody body) {
         String name = body.getName().toLowerCase();
@@ -364,10 +406,15 @@ public class SimulationRenderer implements SimulationObserver {
     }
 
     /**
-     * Resolves a flat fallback color if high-fidelity textures are unavailable.
+     * Operates as a visual safety net in the event of missing files. 
+     * 
+     * If the application attempts to load an image texture for a planet but the file has been deleted, 
+     * renamed, or corrupted, this method catches the error and provides a solid, thematic backup paint 
+     * color. This ensures the simulation can continue running smoothly and the planet remains clearly 
+     * visible to the user rather than becoming totally transparent.
      *
-     * @param name the lowercase identifier of the body.
-     * @return the corresponding JavaFX color.
+     * @param name the lowercase string name of the celestial body that failed to load an image.
+     * @return a solid JavaFX color roughly matching the real world visual identity of that specific planet.
      */
     private Color getFallbackColor(String name) {
         return switch (name) {

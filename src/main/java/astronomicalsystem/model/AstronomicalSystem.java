@@ -16,37 +16,45 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * The core simulation engine responsible for orchestrating the physics loop,
- * managing celestial entities, and broadcasting state changes to observers.
- * <p>
- * This class leverages the {@link Kinematic} and {@link OrbitingBody} interfaces to safely 
- * segregate behaviors, ensuring strict compliance with the Liskov Substitution Principle (LSP).
- * </p>
- * <p>
- * <b>Performance Update:</b> The integration steps have been optimized to run sequentially 
- * in standard iterative loops. This eliminates the immense thread-context-switching overhead 
- * caused by parallel streams executing at 60 FPS. Diagnostic calculations (like Total Energy) 
- * have been bypassed in the main loop to relieve O(N^2) pressure on the CPU.
- * </p>
+ * The central processing engine that manages the lifecycle of the entire astronomical simulation.
+ * This class acts as the primary orchestrator, maintaining the master list of all celestial entities
+ * and coordinating the execution of physical laws at each discrete time step.
+ * 
+ * It strictly separates physical calculations from graphical rendering. While it calculates the 
+ * exact spatial coordinates and velocities of planets and stars, it does not draw them. Instead, 
+ * it implements the Observer design pattern, broadcasting the updated universe state to any attached 
+ * visualizers or telemetry monitors only after all physics calculations for a frame are complete.
+ * 
+ * To ensure high performance and prevent graphical lag during rapid time acceleration, the integration 
+ * loop has been optimized to run sequentially. Thread-safe data structures are utilized to prevent 
+ * concurrency issues when the engine updates the positions of bodies while the interface attempts 
+ * to read them.
  */
 public class AstronomicalSystem implements Serializable {
 
     /**
-     * The serialization identifier ensuring version compatibility.
+     * The unique version identifier used during binary serialization to verify that a saved file 
+     * is compatible with the current version of the application.
      */
     @Serial
     private static final long serialVersionUID = 1L;
 
+    /**
+     * The thread-safe collection housing all active celestial entities currently existing within 
+     * the simulated universe.
+     */
     private List<CelestialBody> bodies;
 
     /**
-     * Observers are strictly view/controller layer components (e.g., JavaFX renderers) 
-     * and must not be serialized to disk.
+     * The list of external components listening for state changes. This is marked as transient 
+     * to prevent the serialization process from attempting to save graphical interface elements 
+     * into the binary save file.
      */
     private transient List<SimulationObserver> observers;
 
     /**
-     * Initializes a new, empty astronomical simulation system.
+     * Constructs a new, completely empty universe simulation engine, initializing the necessary 
+     * thread-safe collections for storing bodies and observers.
      */
     public AstronomicalSystem() {
         this.bodies = new CopyOnWriteArrayList<>();
@@ -54,23 +62,23 @@ public class AstronomicalSystem implements Serializable {
     }
 
     /**
-     * Registers a celestial body within the simulation.
+     * Injects a newly created celestial entity into the active simulation environment.
      *
-     * @param body the celestial entity to add (must not be null).
-     * @throws NullPointerException if the body is null.
+     * @param body the initialized planet, star, or moon to introduce into the system.
+     * @throws NullPointerException if the provided entity reference is null.
      */
     public void addBody(CelestialBody body) {
         this.bodies.add(Objects.requireNonNull(body, "Cannot add a null celestial body"));
     }
 
     /**
-     * Subscribes an observer to receive simulation step updates.
-     * <p>
-     * Reinitializes the transient observer list if the system was recently loaded from a file.
-     * </p>
+     * Connects an external listener, typically a graphical rendering engine, to the simulation.
+     * The attached observer will receive periodic updates containing the exact positions of all bodies.
+     * If the simulation was recently restored from a save file, this method also ensures the transient 
+     * listener list is safely reinitialized.
      *
-     * @param observer the listener to register (must not be null).
-     * @throws NullPointerException if the observer is null.
+     * @param observer the listener component to register.
+     * @throws NullPointerException if the provided listener reference is null.
      */
     public void addObserver(SimulationObserver observer) {
         if (this.observers == null) {
@@ -80,9 +88,12 @@ public class AstronomicalSystem implements Serializable {
     }
 
     /**
-     * Advances the simulation by a specified number of discrete integration steps.
+     * Drives the entire simulation forward in time by a specific number of computational cycles.
+     * To maximize performance and prevent the graphical interface from freezing during rapid execution, 
+     * the physics calculations are performed silently in a rapid loop, and the graphical observers 
+     * are notified only once the final future state has been reached.
      *
-     * @param steps the number of time steps to simulate.
+     * @param steps the exact number of discrete integration frames to compute before stopping.
      */
     public void simulate(int steps) {
         for (int i = 1; i <= steps; i++) {
@@ -92,16 +103,12 @@ public class AstronomicalSystem implements Serializable {
     }
 
     /**
-     * Executes a single discrete integration step for the entire system.
-     * <p>
-     * <b>Execution Order:</b>
-     * <ol>
-     *   <li>Gravitational velocities are calculated for all {@link Kinematic} bodies.</li>
-     *   <li>Positions are updated for all {@link Kinematic} bodies.</li>
-     *   <li>Parametric orbits are advanced for {@link OrbitingBody} entities.</li>
-     *   <li>Collisions and mergers are resolved iteratively until the system is spatially stable.</li>
-     * </ol>
-     * </p>
+     * Executes the foundational Newtonian physics calculations for a single moment in time.
+     * This method enforces a strict sequential order to maintain mathematical stability:
+     * First, the gravitational pull between all moving bodies is calculated to determine their new velocities.
+     * Second, those new velocities are applied to update their spatial coordinates.
+     * Third, objects on rigid, fixed orbital paths (like moons) are advanced.
+     * Finally, the system scans for and permanently resolves any overlapping physical intersections.
      */
     private void tick() {
         for (CelestialBody b : this.bodies) {
@@ -126,12 +133,11 @@ public class AstronomicalSystem implements Serializable {
     }
 
     /**
-     * Detects and resolves perfectly inelastic collisions between all entities in the system.
-     * <p>
-     * <b>Optimization:</b> This loop is iterative. If a merger happens, the lists are updated 
-     * and the check runs again within the same tick until no bodies intersect. 
-     * Uses atomic removeAll/addAll to maintain thread safety.
-     * </p>
+     * Scans the entire universe for overlapping physical boundaries and enforces perfectly inelastic mergers.
+     * When two entities occupy the same space, they are immediately removed from the active collection 
+     * and replaced by a single, larger composite entity. Because a multiple-body pileup could occur in a 
+     * single frame, this logic loops continuously until the entire spatial environment is confirmed to be 
+     * free of any intersecting objects.
      */
     private void handleCollisions() {
         boolean mergedThisPass;
@@ -174,14 +180,12 @@ public class AstronomicalSystem implements Serializable {
     }
 
     /**
-     * Calculates the aggregate mechanical energy of the system.
-     * <p>
-     * The total energy is the sum of the Kinetic Energy of all dynamic bodies 
-     * and the Gravitational Potential Energy between all pairs of bodies:
-     * $$ E = \sum E_k + \sum_{i<j} \left( -G \frac{m_i m_j}{r_{ij}} \right) $$
-     * </p>
+     * Computes the total mechanical energy currently present within the simulated universe.
+     * This metric combines the movement energy of every traveling object with the inherent gravitational 
+     * tension existing between every pair of masses. Monitoring this absolute value over time provides 
+     * a mathematical proof of the physics engine's stability and accuracy.
      *
-     * @return the total mechanical energy scalar.
+     * @return a single scalar value representing the combined total energy of the system.
      */
     public double calculateTotalEnergy() {
         double kinetic = this.bodies.parallelStream()
@@ -206,18 +210,18 @@ public class AstronomicalSystem implements Serializable {
     }
 
     /**
-     * Retrieves a defensive copy of the current celestial bodies to prevent external mutation.
+     * Provides external components with a safe, detached snapshot of the currently existing entities.
      *
-     * @return a new list containing the active entities.
+     * @return a newly allocated list containing references to all active bodies.
      */
     public List<CelestialBody> getBodies() {
         return new ArrayList<>(this.bodies);
     }
 
     /**
-     * Broadcasts the current immutable system state to all registered observers.
+     * Transmits the current, read-only configuration of the universe to all connected listeners.
      *
-     * @param step the current simulation iteration index.
+     * @param step the specific computational frame index currently being broadcast.
      */
     private void notifyObservers(int step) {
         if (this.observers == null || this.observers.isEmpty()) return;
@@ -230,10 +234,11 @@ public class AstronomicalSystem implements Serializable {
     }
 
     /**
-     * Serializes the current system state (legacy physical-only payload) to a persistent storage file.
+     * Packages the entire collection of active physical entities and writes them to a binary storage file.
+     * This creates a permanent snapshot of the universe's mathematical state that can be restored later.
      *
-     * @param filename the target file path.
-     * @throws IOException if an I/O error occurs during serialization.
+     * @param filename the specific string path and name of the file to create or overwrite.
+     * @throws IOException if the system encounters a hardware error while attempting to write the data to disk.
      */
     public void saveToFile(String filename) throws IOException {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filename))) {
@@ -242,11 +247,12 @@ public class AstronomicalSystem implements Serializable {
     }
 
     /**
-     * Deserializes and restores the system state from a persistent storage file.
+     * Reads a previously constructed binary storage file and reconstructs the mathematical state of the universe.
+     * All existing entities currently in the simulation will be immediately overwritten by the loaded data.
      *
-     * @param filename the source file path.
-     * @throws IOException            if an I/O error occurs during deserialization.
-     * @throws ClassNotFoundException if the serialized class definition is missing.
+     * @param filename the specific string path and name of the file to open and read.
+     * @throws IOException if the file cannot be located or accessed due to hardware or permission issues.
+     * @throws ClassNotFoundException if the application version reading the file lacks the definitions for the saved objects.
      */
     @SuppressWarnings("unchecked")
     public void loadFromFile(String filename) throws IOException, ClassNotFoundException {
