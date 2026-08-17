@@ -1,6 +1,7 @@
 package astronomicalsystem.view;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -8,15 +9,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import astronomicalsystem.config.SimulationSettings;
-import astronomicalsystem.factory.UniverseFactory;
+import astronomicalsystem.engine.TrajectoryPredictor;
 import astronomicalsystem.model.CelestialBody;
 import astronomicalsystem.model.Kinematic;
-import astronomicalsystem.model.Moon;
+import astronomicalsystem.model.Point3D;
 import astronomicalsystem.model.SimulationObserver;
 import astronomicalsystem.model.Star;
 import astronomicalsystem.performance.SimulationPerformanceMonitor;
+import javafx.application.Platform;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.image.Image;
@@ -37,10 +40,10 @@ import javafx.scene.transform.Rotate;
  * step, this renderer takes the exact coordinates of every planet, scales them down to fit inside the 
  * visible screen area, and moves the corresponding 3D spheres to those new locations.
  * 
- * To ensure maximum performance and prevent the simulation from stuttering when the user creates dozens 
- * of custom planets, this class utilizes a static memory cache for image textures. This guarantees that 
- * the application only reads an image file from the hard drive once, reusing the same loaded image in 
- * memory for every identical planet spawned thereafter.
+ * Furthermore, this renderer employs predictive trajectory tracking. Rather than drawing static mathematical 
+ * circles, it actively consults the physics engine to project the future paths of all moving bodies. To ensure 
+ * 60 FPS graphics, this predictive calculation is offloaded to a dedicated background thread, generating 
+ * dynamic 3D trails that warp and bend in real-time without causing interface lag.
  */
 public class SimulationRenderer implements SimulationObserver {
 
@@ -54,20 +57,72 @@ public class SimulationRenderer implements SimulationObserver {
     private static final Map<String, Image> TEXTURE_CACHE = new HashMap<>();
 
     /**
-     * An absolute safety boundary that acts as a virtual cage for the graphics engine. 
-     * If the physics engine calculates an explosive slingshot effect that shoots a planet out into 
-     * infinite space, the renderer will clamp the visual object to this maximum distance. This prevents 
-     * massive numbers from reaching the graphics card, completely avoiding a native overflow crash.
+     * An absolute safety boundary that acts as a virtual cage for the graphics engine to prevent 
+     * coordinate overflow crashes when objects are ejected into deep space.
      */
     private static final double MAX_RENDER_COORD = 500_000.0;
+    
+    /**
+     * Limits the frequency of predictive trajectory recalculations to conserve CPU resources 
+     * while maintaining a smooth and responsive graphical interface.
+     */
+    private static final int PREDICTION_REFRESH_RATE = 60; 
 
+    /**
+     * The primary container holding all three dimensional objects within the JavaFX scene graph.
+     */
     private final Group worldGroup;
+
+    /**
+     * A mapping linking each physical celestial body to its visual spherical representation.
+     */
     private final Map<CelestialBody, Sphere> visualObjects;
+
+    /**
+     * A mapping linking each physical celestial body to its dynamically generated orbital trail mesh.
+     */
     private final Map<CelestialBody, Node> orbitObjects;
+    
+    /**
+     * A mapping linking each physical celestial body to its personal velocity vector arrow.
+     */
+    private final Map<CelestialBody, VectorArrow3D> velocityArrows;
+
+    /**
+     * A mapping linking each physical celestial body to its personal gravitational vector arrow.
+     */
+    private final Map<CelestialBody, VectorArrow3D> gravityArrows;
+
+    /**
+     * The performance monitoring utility used to track and log rendering frame times.
+     */
     private final SimulationPerformanceMonitor performanceMonitor;
 
+    /**
+     * A reference to the specific celestial body acting as Saturn, used to correctly anchor its rings.
+     */
     private CelestialBody saturnBody;
+
+    /**
+     * The custom generated three dimensional ring system attached to the Saturn celestial body.
+     */
     private SaturnRing saturnRingVisual;
+
+    /**
+     * An internal counter tracking the number of rendered frames to schedule periodic asynchronous updates.
+     */
+    private int frameCounter = 0;
+
+    /**
+     * The specific celestial body currently selected for scientific HUD analysis.
+     */
+    private CelestialBody targetedBody;
+    
+    /**
+     * A concurrency lock ensuring that a new predictive calculation thread is not spawned 
+     * while an existing prediction is still being processed in the background.
+     */
+    private final AtomicBoolean isPredicting = new AtomicBoolean(false);
 
     /**
      * Initializes the rendering engine and attaches it to the main three dimensional space without 
@@ -92,18 +147,52 @@ public class SimulationRenderer implements SimulationObserver {
         this.performanceMonitor = performanceMonitor;
         this.visualObjects = new HashMap<>();
         this.orbitObjects = new HashMap<>();
+        this.velocityArrows = new HashMap<>();
+        this.gravityArrows = new HashMap<>();
+    }
+    
+    /**
+     * Commands the rendering engine to lock its scientific HUD instruments onto a specific celestial body.
+     * When a body is targeted, all tactical vector arrows across the universe are dynamically hidden 
+     * to provide a clean, cinematic observation view. Passing null restores the tactical overview.
+     *
+     * @param target the specific planet or moon to analyze, or null to return to tactical overview.
+     */
+    public void setTargetBody(CelestialBody target) {
+        this.targetedBody = target;
+        
+        Platform.runLater(() -> {
+            boolean showArrows = (target == null);
+            for (VectorArrow3D arrow : this.velocityArrows.values()) {
+                if (arrow != null) arrow.setVisible(showArrows);
+            }
+            for (VectorArrow3D arrow : this.gravityArrows.values()) {
+                if (arrow != null) arrow.setVisible(showArrows);
+            }
+        });
+    }
+
+    /**
+     * Scans the currently tracked visual objects to locate the primary gravitational anchor, typically a star.
+     *
+     * @return the central star if found, or null if no star exists in the simulation.
+     */
+    private Star findCentralStar() {
+        for (CelestialBody body : this.visualObjects.keySet()) {
+            if (body instanceof Star star) {
+                return star;
+            }
+        }
+        return null;
     }
 
     /**
      * The primary action triggered every single time the physics engine finishes calculating a moment in time.
      * 
-     * This massive synchronization method performs three main tasks. First, it compares the current list of 
-     * living planets against its own list of drawn shapes. If a planet has been destroyed in a physical collision, 
-     * its 3D sphere and glowing orbit track are permanently erased from the screen. Second, if a brand new planet 
-     * has been spawned, it orders the creation of new 3D shapes for it. Third, it takes the mathematical 
-     * coordinates of every surviving planet, scales them to visual proportions, and safely moves the graphical 
-     * spheres. It heavily utilizes the maximum render coordinate safety net to ensure that no object can ever 
-     * fly far enough away to crash the underlying graphical matrices.
+     * <b>Architecture Note:</b> Because the physics engine runs on an independent background thread, 
+     * this method immediately wraps all graphical modifications inside a {@code Platform.runLater} call. 
+     * This ensures the heavy mathematical calculations don't illegally touch the JavaFX scene graph, 
+     * passing the final coordinate data back to the primary UI thread for safe drawing.
      *
      * @param step        the exact sequential frame number that the simulation just finished calculating.
      * @param bodies      the complete list containing every celestial body currently existing in the physical universe.
@@ -111,144 +200,222 @@ public class SimulationRenderer implements SimulationObserver {
      */
     @Override
     public void onSimulationStep(int step, List<CelestialBody> bodies, double totalEnergy) {
-        try {
-            long renderStart = System.nanoTime();
+        
+        final List<CelestialBody> snapshotBodies = new ArrayList<>(bodies);
+        
+        Platform.runLater(() -> {
+            try {
+                long renderStart = System.nanoTime();
+                frameCounter++;
 
-            Set<CelestialBody> activeBodies = new HashSet<>(bodies);
+                Set<CelestialBody> activeBodies = new HashSet<>(snapshotBodies);
 
-            Iterator<Map.Entry<CelestialBody, Sphere>> it = this.visualObjects.entrySet().iterator();
-            while (it.hasNext()) {
-                Map.Entry<CelestialBody, Sphere> entry = it.next();
-                CelestialBody body = entry.getKey();
+                Iterator<Map.Entry<CelestialBody, Sphere>> it = this.visualObjects.entrySet().iterator();
+                while (it.hasNext()) {
+                    Map.Entry<CelestialBody, Sphere> entry = it.next();
+                    CelestialBody body = entry.getKey();
 
-                if (!activeBodies.contains(body)) {
-                    this.worldGroup.getChildren().remove(entry.getValue());
-                    
-                    Node orbit = this.orbitObjects.remove(body);
-                    if (orbit != null) {
-                        this.worldGroup.getChildren().remove(orbit);
-                    }
-                    
-                    it.remove();
+                    if (!activeBodies.contains(body)) {
+                        this.worldGroup.getChildren().remove(entry.getValue());
+                        
+                        Node orbit = this.orbitObjects.remove(body);
+                        if (orbit != null) {
+                            this.worldGroup.getChildren().remove(orbit);
+                        }
+                        
+                        VectorArrow3D vArrow = this.velocityArrows.remove(body);
+                        VectorArrow3D gArrow = this.gravityArrows.remove(body);
+                        if (vArrow != null) this.worldGroup.getChildren().remove(vArrow);
+                        if (gArrow != null) this.worldGroup.getChildren().remove(gArrow);
+                        
+                        if (body.equals(this.targetedBody)) {
+                            setTargetBody(null);
+                        }
+                        
+                        it.remove();
 
-                    if (body.equals(this.saturnBody) && this.saturnRingVisual != null) {
-                        this.worldGroup.getChildren().remove(this.saturnRingVisual);
-                        this.saturnRingVisual = null;
-                        this.saturnBody = null;
+                        if (body.equals(this.saturnBody) && this.saturnRingVisual != null) {
+                            this.worldGroup.getChildren().remove(this.saturnRingVisual);
+                            this.saturnRingVisual = null;
+                            this.saturnBody = null;
+                        }
                     }
                 }
-            }
 
-            for (CelestialBody body : bodies) {
-                if (!this.visualObjects.containsKey(body)) {
-                    createVisualsFor(body);
+                for (CelestialBody body : snapshotBodies) {
+                    if (!this.visualObjects.containsKey(body)) {
+                        createVisualsFor(body);
+                    }
+
+                    Sphere sphere = this.visualObjects.get(body);
+                    if (sphere != null) {
+                        double scale = SETTINGS.render().positionScale();
+                        double tx = body.getPosition().x() * scale;
+                        double ty = body.getPosition().y() * scale;
+                        double tz = body.getPosition().z() * scale;
+
+                        tx = Math.max(-MAX_RENDER_COORD, Math.min(MAX_RENDER_COORD, tx));
+                        ty = Math.max(-MAX_RENDER_COORD, Math.min(MAX_RENDER_COORD, ty));
+                        tz = Math.max(-MAX_RENDER_COORD, Math.min(MAX_RENDER_COORD, tz));
+
+                        sphere.setTranslateX(tx);
+                        sphere.setTranslateY(ty);
+                        sphere.setTranslateZ(tz);
+
+                        if (body instanceof Star) {
+                            sphere.setRotate(sphere.getRotate() + SETTINGS.render().starSpinSpeed());
+                        } else {
+                            sphere.setRotate(sphere.getRotate() + SETTINGS.render().bodySpinSpeed());
+                        }
+                    }
+
+                    if (body.getName().equalsIgnoreCase("Saturn")) {
+                        this.saturnBody = body;
+                    }
                 }
 
-                Sphere sphere = this.visualObjects.get(body);
-                if (sphere != null) {
+                if (this.saturnBody != null && this.saturnRingVisual != null) {
                     double scale = SETTINGS.render().positionScale();
-                    double tx = body.getPosition().x() * scale;
-                    double ty = body.getPosition().y() * scale;
-                    double tz = body.getPosition().z() * scale;
+                    this.saturnRingVisual.setTranslateX(this.saturnBody.getPosition().x() * scale);
+                    this.saturnRingVisual.setTranslateY(this.saturnBody.getPosition().y() * scale);
+                    this.saturnRingVisual.setTranslateZ(this.saturnBody.getPosition().z() * scale);
+                }
+                
+                if (this.targetedBody == null) {
+                    double scale = SETTINGS.render().positionScale();
+                    Star centralStar = findCentralStar();
+                    
+                    for (CelestialBody body : snapshotBodies) {
+                        if (!(body instanceof Kinematic movingTarget)) continue;
 
-                    if (!Double.isFinite(tx)) tx = 0.0;
-                    if (!Double.isFinite(ty)) ty = 0.0;
-                    if (!Double.isFinite(tz)) tz = 0.0;
+                        VectorArrow3D vArrow = this.velocityArrows.get(body);
+                        VectorArrow3D gArrow = this.gravityArrows.get(body);
 
-                    tx = Math.max(-MAX_RENDER_COORD, Math.min(MAX_RENDER_COORD, tx));
-                    ty = Math.max(-MAX_RENDER_COORD, Math.min(MAX_RENDER_COORD, ty));
-                    tz = Math.max(-MAX_RENDER_COORD, Math.min(MAX_RENDER_COORD, tz));
+                        if (vArrow != null && gArrow != null) {
+                            Point3D scaledOrigin = new Point3D(
+                                body.getPosition().x() * scale,
+                                body.getPosition().y() * scale,
+                                body.getPosition().z() * scale
+                            );
+                            
+                            double visualRadius = getVisualRadius(body);
 
-                    sphere.setTranslateX(tx);
-                    sphere.setTranslateY(ty);
-                    sphere.setTranslateZ(tz);
+                            vArrow.update(scaledOrigin, movingTarget.getVelocity(), 10.0, visualRadius);
 
-                    if (body instanceof Star) {
-                        sphere.setRotate(sphere.getRotate() + SETTINGS.render().starSpinSpeed());
-                    } else {
-                        sphere.setRotate(sphere.getRotate() + SETTINGS.render().bodySpinSpeed());
+                            if (centralStar != null && !body.equals(centralStar)) {
+                                Point3D starPos = centralStar.getPosition();
+                                Point3D targetPos = body.getPosition();
+                                
+                                double dx = starPos.x() - targetPos.x();
+                                double dy = starPos.y() - targetPos.y();
+                                double dz = starPos.z() - targetPos.z();
+                                
+                                double distSq = dx * dx + dy * dy + dz * dz;
+                                
+                                if (distSq > 0) {
+                                    double forceMultiplier = (1.0 / distSq) * 50000000.0;
+                                    Point3D gravityVector = new Point3D(dx, dy, dz).normalize().scale(forceMultiplier);
+                                    gArrow.update(scaledOrigin, gravityVector, 1.0, visualRadius);
+                                    gArrow.setVisible(true);
+                                } else {
+                                    gArrow.setVisible(false);
+                                }
+                            } else {
+                                gArrow.setVisible(false);
+                            }
+                        }
                     }
                 }
 
-                if (body.getName().equalsIgnoreCase("Saturn")) {
-                    this.saturnBody = body;
+                if ((frameCounter % PREDICTION_REFRESH_RATE == 0 || frameCounter == 1) && !isPredicting.get()) {
+                    triggerAsyncPrediction(snapshotBodies);
                 }
+
+                if (this.performanceMonitor != null) {
+                    this.performanceMonitor.recordRender(System.nanoTime() - renderStart);
+                }
+            } catch (Throwable t) {
+                System.err.println("Render Engine Guard caught an error: " + t.getMessage());
             }
-
-            if (this.saturnBody != null && this.saturnRingVisual != null) {
-                double scale = SETTINGS.render().positionScale();
-                double rtx = this.saturnBody.getPosition().x() * scale;
-                double rty = this.saturnBody.getPosition().y() * scale;
-                double rtz = this.saturnBody.getPosition().z() * scale;
-
-                if (!Double.isFinite(rtx)) rtx = 0.0;
-                if (!Double.isFinite(rty)) rty = 0.0;
-                if (!Double.isFinite(rtz)) rtz = 0.0;
-
-                rtx = Math.max(-MAX_RENDER_COORD, Math.min(MAX_RENDER_COORD, rtx));
-                rty = Math.max(-MAX_RENDER_COORD, Math.min(MAX_RENDER_COORD, rty));
-                rtz = Math.max(-MAX_RENDER_COORD, Math.min(MAX_RENDER_COORD, rtz));
-
-                this.saturnRingVisual.setTranslateX(rtx);
-                this.saturnRingVisual.setTranslateY(rty);
-                this.saturnRingVisual.setTranslateZ(rtz);
-            }
-
-            if (this.performanceMonitor != null) {
-                this.performanceMonitor.recordRender(System.nanoTime() - renderStart);
-            }
-        } catch (Throwable t) {
-            System.err.println("Render Engine Guard caught an error: " + t.getMessage());
-        }
+        });
     }
 
     /**
-     * Constructs the physical three dimensional shapes, paints the image textures, and calculates the 
-     * orbital paths for a newly introduced celestial body.
-     * 
-     * This method looks at the name of the new body to find the corresponding image file. If the body 
-     * is a moving object and not a simple moon, it mathematically extracts its orbital shape from the 
-     * universe factory and draws a massive three dimensional ring in space to represent its trajectory. 
-     * Finally, if the newly spawned body happens to be Saturn, it triggers the generation of a specialized, 
-     * highly detailed procedural ring system and attaches it to the planet.
+     * Retrieves the visual size of a specific celestial body to assist external classes in accurately 
+     * placing UI elements or calculating camera distances.
+     *
+     * @param body the physical entity to measure.
+     * @return the calculated numerical radius used for the graphical three dimensional sphere.
+     */
+    public double getTargetVisualRadius(CelestialBody body) {
+        if (body == null) return 0;
+        return getVisualRadius(body);
+    }
+
+    /**
+     * Spawns a lightweight background thread to consult the Trajectory Predictor. 
+     * This ensures the heavy calculations for future steps do not block the JavaFX rendering pipeline.
+     * Once the calculations are complete and the new 3D meshes are generated, they are injected back into the 
+     * main UI thread for display.
+     *
+     * @param snapshotBodies a thread-safe copy of the universe to base the prediction on.
+     */
+    private void triggerAsyncPrediction(List<CelestialBody> snapshotBodies) {
+        isPredicting.set(true);
+        double scale = SETTINGS.render().positionScale();
+
+        Thread predictionThread = new Thread(() -> {
+            try {
+                Map<CelestialBody, List<Point3D>> predictions = TrajectoryPredictor.calculate(snapshotBodies, 40000, 1.0, 3);
+                
+                Map<CelestialBody, MeshView> newMeshes = new HashMap<>();
+                
+                for (Map.Entry<CelestialBody, List<Point3D>> entry : predictions.entrySet()) {
+                    CelestialBody body = entry.getKey();
+                    List<Point3D> path = entry.getValue();
+                    
+                    if (path.size() >= 2) {
+                        MeshView newTrail = createDynamicTrailMesh(path, scale);
+                        newMeshes.put(body, newTrail);
+                    }
+                }
+
+                Platform.runLater(() -> {
+                    for (Map.Entry<CelestialBody, MeshView> entry : newMeshes.entrySet()) {
+                        CelestialBody body = entry.getKey();
+                        MeshView newTrail = entry.getValue();
+
+                        if (visualObjects.containsKey(body)) {
+                            Node oldOrbit = this.orbitObjects.remove(body);
+                            if (oldOrbit != null) {
+                                this.worldGroup.getChildren().remove(oldOrbit);
+                            }
+
+                            this.worldGroup.getChildren().add(0, newTrail);
+                            this.orbitObjects.put(body, newTrail);
+                        }
+                    }
+                    isPredicting.set(false);
+                });
+
+            } catch (Exception e) {
+                System.err.println("Prediction Thread Error: " + e.getMessage());
+                isPredicting.set(false);
+            }
+        }, "Trajectory-Oracle-Thread");
+        
+        predictionThread.setDaemon(true);
+        predictionThread.start();
+    }
+
+    /**
+     * Constructs the initial physical three dimensional spheres, paints the image textures, 
+     * and initializes the personal vector arrows for a newly introduced body.
      *
      * @param body the physical entity that has just entered the simulation and requires visual representation.
      */
     private void createVisualsFor(CelestialBody body) {
         String name = body.getName().toLowerCase();
-
-        if (body instanceof Kinematic && !(body instanceof Moon)) {
-            double e = 0.0;
-            double iDeg = 0.0;
-
-            if (!name.contains("custom")) {
-                try {
-                    e = UniverseFactory.getEccentricity(body.getName());
-                    iDeg = UniverseFactory.getInclination(body.getName());
-                } catch (Exception ex) {
-                    e = 0.0;
-                    iDeg = 0.0;
-                }
-            }
-
-            double currentDistScaled = body.getPosition().magnitude() * SETTINGS.render().positionScale();
-            
-            if (currentDistScaled > 0.1 && currentDistScaled < MAX_RENDER_COORD) {
-                double a = currentDistScaled / (1.0 - e);
-                double b = a * Math.sqrt(Math.max(0, 1 - (e * e)));
-                double c = a * e;
-
-                if (Double.isFinite(a) && Double.isFinite(b) && a < MAX_RENDER_COORD && b < MAX_RENDER_COORD) {
-                    MeshView orbit = create3DOrbitMesh(a, b);
-                    orbit.setTranslateX(-c);
-                    orbit.setRotationAxis(Rotate.X_AXIS);
-                    orbit.setRotate(iDeg);
-
-                    this.worldGroup.getChildren().add(0, orbit);
-                    this.orbitObjects.put(body, orbit);
-                }
-            }
-        }
 
         Sphere sphere = new Sphere(getVisualRadius(body), 32);
         sphere.setUserData(body);
@@ -284,6 +451,21 @@ public class SimulationRenderer implements SimulationObserver {
 
         this.visualObjects.put(body, sphere);
         this.worldGroup.getChildren().add(sphere);
+        
+        VectorArrow3D vArrow = new VectorArrow3D(Color.LIMEGREEN);
+        VectorArrow3D gArrow = new VectorArrow3D(Color.ORANGERED);
+        
+        if (this.targetedBody == null) {
+            vArrow.setVisible(true);
+            gArrow.setVisible(true);
+        } else {
+            vArrow.setVisible(false);
+            gArrow.setVisible(false);
+        }
+        
+        this.velocityArrows.put(body, vArrow);
+        this.gravityArrows.put(body, gArrow);
+        this.worldGroup.getChildren().addAll(vArrow, gArrow);
 
         if (name.equals("saturn")) {
             this.saturnRingVisual = new SaturnRing(
@@ -299,78 +481,68 @@ public class SimulationRenderer implements SimulationObserver {
     }
 
     /**
-     * Mathematically generates a massive, incredibly thin three dimensional ring to visually represent 
-     * the orbital path of a planet. 
+     * Converts a series of calculated future coordinates into a solid, flat 3D ribbon stretching through space.
      * 
-     * This specifically builds a three dimensional mesh of triangles rather than using a standard two 
-     * dimensional line shape. This is an extremely important architectural workaround. The standard two 
-     * dimensional line drawer inside JavaFX suffers from a fatal flaw that crashes the entire application 
-     * when asked to draw a shape that is too large. By using three dimensional triangles instead, this 
-     * method completely bypasses that broken engine and sends the orbital shape directly to the graphics 
-     * card, ensuring the application remains perfectly stable even when drawing orbits that are millions 
-     * of units wide.
+     * This avoids drawing standard JavaFX lines, which are prone to crashing at massive scales. By mathematically 
+     * extruding the points into a connected triangle mesh, it creates a stable, high-performance visual trail.
      *
-     * @param radiusA the primary horizontal radius of the elliptical orbital path.
-     * @param radiusB the secondary depth radius of the elliptical orbital path.
-     * @return a fully constructed, semi transparent three dimensional mesh representing the orbital track.
+     * @param path  the ordered list of future physical coordinates provided by the trajectory predictor.
+     * @param scale the visual scaling factor to translate physical meters into on-screen pixels.
+     * @return a fully constructed, semi-transparent 3D ribbon representing the predicted path.
      */
-    private MeshView create3DOrbitMesh(double radiusA, double radiusB) {
+    private MeshView createDynamicTrailMesh(List<Point3D> path, double scale) {
         TriangleMesh mesh = new TriangleMesh();
         mesh.getTexCoords().addAll(0f, 0f);
 
-        int divisions = 120; 
-        float halfThickness = 1.0f; 
+        int pointsCount = path.size();
+        float[] points = new float[pointsCount * 2 * 3];
+        int[] faces = new int[(pointsCount - 1) * 2 * 6];
 
-        float[] points = new float[divisions * 2 * 3];
-        int[] faces = new int[divisions * 2 * 6];
-
-        float innerA = (float)(radiusA - halfThickness);
-        float outerA = (float)(radiusA + halfThickness);
-        float innerB = (float)(radiusB - halfThickness);
-        float outerB = (float)(radiusB + halfThickness);
-
-        double angleStep = (Math.PI * 2.0) / divisions;
-
+        float halfThickness = 0.5f;
         int pIndex = 0;
         int fIndex = 0;
 
-        for (int i = 0; i < divisions; i++) {
-            double angle = i * angleStep;
-            float cos = (float) Math.cos(angle);
-            float sin = (float) Math.sin(angle);
+        for (int i = 0; i < pointsCount; i++) {
+            Point3D p = path.get(i);
+            
+            float x = (float) Math.max(-MAX_RENDER_COORD, Math.min(MAX_RENDER_COORD, p.x() * scale));
+            float y = (float) Math.max(-MAX_RENDER_COORD, Math.min(MAX_RENDER_COORD, p.y() * scale));
+            float z = (float) Math.max(-MAX_RENDER_COORD, Math.min(MAX_RENDER_COORD, p.z() * scale));
 
-            points[pIndex++] = innerA * cos;
-            points[pIndex++] = 0;
-            points[pIndex++] = innerB * sin;
+            points[pIndex++] = x;
+            points[pIndex++] = y;
+            points[pIndex++] = z - halfThickness;
 
-            points[pIndex++] = outerA * cos;
-            points[pIndex++] = 0;
-            points[pIndex++] = outerB * sin;
+            points[pIndex++] = x;
+            points[pIndex++] = y;
+            points[pIndex++] = z + halfThickness;
 
-            int currentInner = i * 2;
-            int currentOuter = i * 2 + 1;
-            int nextInner = ((i + 1) % divisions) * 2;
-            int nextOuter = ((i + 1) % divisions) * 2 + 1;
+            if (i < pointsCount - 1) {
+                int currentInner = i * 2;
+                int currentOuter = i * 2 + 1;
+                int nextInner = (i + 1) * 2;
+                int nextOuter = (i + 1) * 2 + 1;
 
-            faces[fIndex++] = currentInner; faces[fIndex++] = 0;
-            faces[fIndex++] = currentOuter; faces[fIndex++] = 0;
-            faces[fIndex++] = nextInner;    faces[fIndex++] = 0;
+                faces[fIndex++] = currentInner; faces[fIndex++] = 0;
+                faces[fIndex++] = currentOuter; faces[fIndex++] = 0;
+                faces[fIndex++] = nextInner;    faces[fIndex++] = 0;
 
-            faces[fIndex++] = currentOuter; faces[fIndex++] = 0;
-            faces[fIndex++] = nextOuter;    faces[fIndex++] = 0;
-            faces[fIndex++] = nextInner;    faces[fIndex++] = 0;
+                faces[fIndex++] = currentOuter; faces[fIndex++] = 0;
+                faces[fIndex++] = nextOuter;    faces[fIndex++] = 0;
+                faces[fIndex++] = nextInner;    faces[fIndex++] = 0;
+            }
         }
 
         mesh.getPoints().addAll(points);
         mesh.getFaces().addAll(faces);
 
-        MeshView orbitView = new MeshView(mesh);
+        MeshView trailView = new MeshView(mesh);
         PhongMaterial material = new PhongMaterial();
         material.setDiffuseColor(Color.rgb(135, 206, 250, 0.4));
-        orbitView.setMaterial(material);
-        orbitView.setCullFace(CullFace.NONE);
+        trailView.setMaterial(material);
+        trailView.setCullFace(CullFace.NONE);
 
-        return orbitView;
+        return trailView;
     }
 
     /**

@@ -1,7 +1,9 @@
 package astronomicalsystem.controller;
 
-import astronomicalsystem.config.SimulationSettings;
+import java.util.Objects;
+
 import astronomicalsystem.SolarSystem3D;
+import astronomicalsystem.config.SimulationSettings;
 import astronomicalsystem.model.CelestialBody;
 import javafx.scene.Node;
 import javafx.scene.PerspectiveCamera;
@@ -11,14 +13,12 @@ import javafx.scene.input.PickResult;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.transform.Rotate;
 
-import java.util.Objects;
-
 /**
  * The primary input controller for the application.
  * <p>
  * Acting as the Controller in the MVC architecture, this class intercepts hardware
  * input events (mouse and keyboard) and translates them into 3D scene transformations
- * (camera panning, rotation, zooming) or application state changes (pausing, entity selection).
+ * (camera panning, rotation, zooming) or application state changes (HUD toggling, entity selection).
  * </p>
  */
 public class InputHandler {
@@ -74,12 +74,10 @@ public class InputHandler {
             double deltaX = mousePosX - mouseOldX;
             double deltaY = mousePosY - mouseOldY;
 
-            // Secondary button (Right click) or Primary + Shift (Left click + Shift) pans the camera
             if (event.isSecondaryButtonDown() || (event.isPrimaryButtonDown() && event.isShiftDown())) {
                 camera.setTranslateX(camera.getTranslateX() - deltaX * SETTINGS.input().mousePanSpeed());
                 camera.setTranslateY(camera.getTranslateY() - deltaY * SETTINGS.input().mousePanSpeed());
             } 
-            // Primary button (Left click) rotates the camera (Orbital controls)
             else if (event.isPrimaryButtonDown()) {
                 rotateX.setAngle(rotateX.getAngle() + deltaY * SETTINGS.input().mouseRotSpeed());
                 rotateY.setAngle(rotateY.getAngle() - deltaX * SETTINGS.input().mouseRotSpeed());
@@ -90,23 +88,17 @@ public class InputHandler {
         });
 
         scene.setOnMouseClicked(event -> {
-            // Ignore click logic if the user was actively dragging the camera
             if (this.isDragging) return;
 
-            // Perform 3D raycasting to detect clicks on celestial meshes
             PickResult pick = event.getPickResult();
             Node intersectedNode = pick.getIntersectedNode();
 
-            // Check if a valid 3D node was clicked and extract its mapped model entity
             if (intersectedNode != null && intersectedNode.getUserData() instanceof CelestialBody selectedBody) {
-                mainApp.setPaused(true);
                 mainApp.showInfoPanel(selectedBody);
             } else {
-                mainApp.setPaused(false);
-                mainApp.hideInfoPanel();
+                mainApp.releaseFocus();
             }
 
-            // Ensure the root node regains focus so keyboard events continue firing
             scene.getRoot().requestFocus();
         });
 
@@ -114,7 +106,6 @@ public class InputHandler {
             double zoomDelta = event.getDeltaY();
             double newZ = camera.getTranslateZ() + zoomDelta * SETTINGS.input().scrollZoomSpeed();
             
-            // Limit camera depth to prevent clipping out of the skybox or piercing planets
             camera.setTranslateZ(clamp(newZ, SETTINGS.input().minCameraZ(), SETTINGS.input().maxCameraZ()));
         });
     }
@@ -127,29 +118,18 @@ public class InputHandler {
     private void initKeyboardControl(Scene scene) {
         scene.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
             switch (event.getCode()) {
-                // Zoom controls with safety clamping
                 case W -> camera.setTranslateZ(clamp(camera.getTranslateZ() + SETTINGS.input().keyboardZoomSpeed(), 
                                                      SETTINGS.input().minCameraZ(), SETTINGS.input().maxCameraZ()));
                 case S -> camera.setTranslateZ(clamp(camera.getTranslateZ() - SETTINGS.input().keyboardZoomSpeed(), 
                                                      SETTINGS.input().minCameraZ(), SETTINGS.input().maxCameraZ()));
                 
-                // Pan controls
                 case LEFT -> camera.setTranslateX(camera.getTranslateX() - SETTINGS.input().keyboardPanSpeed());
                 case RIGHT -> camera.setTranslateX(camera.getTranslateX() + SETTINGS.input().keyboardPanSpeed());
                 case UP -> camera.setTranslateY(camera.getTranslateY() - SETTINGS.input().keyboardPanSpeed());
                 case DOWN -> camera.setTranslateY(camera.getTranslateY() + SETTINGS.input().keyboardPanSpeed());
                 
-                // Camera reset
-                case R -> {
-                    camera.setTranslateZ(SETTINGS.input().defaultCameraZ());
-                    camera.setTranslateX(0);
-                    camera.setTranslateY(0);
-                    rotateX.setAngle(SETTINGS.input().defaultRotX());
-                    rotateY.setAngle(SETTINGS.input().defaultRotY());
-                }
+                case R, ESCAPE -> mainApp.releaseFocus();
                 
-                // Application state toggles
-                case SPACE -> mainApp.togglePause();
                 case P -> mainApp.togglePauseMenu();
                 case C -> mainApp.toggleCreatorPanel();
                 default -> {}

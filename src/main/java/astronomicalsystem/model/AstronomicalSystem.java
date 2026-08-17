@@ -88,16 +88,36 @@ public class AstronomicalSystem implements Serializable {
     }
 
     /**
-     * Drives the entire simulation forward in time by a specific number of computational cycles.
-     * To maximize performance and prevent the graphical interface from freezing during rapid execution, 
-     * the physics calculations are performed silently in a rapid loop, and the graphical observers 
-     * are notified only once the final future state has been reached.
+     * Drives the entire simulation forward in time by a specific number of computational cycles, 
+     * assuming a standard default time slice of 1.0 unit per frame.
+     * 
+     * This is an overloaded convenience method primarily maintained for legacy code or simple tests 
+     * that do not utilize advanced time-warping capabilities. For precise control over the simulation 
+     * speed, use the parameterized version of this method.
      *
      * @param steps the exact number of discrete integration frames to compute before stopping.
      */
     public void simulate(int steps) {
+        simulate(steps, 1.0);
+    }
+
+    /**
+     * Drives the entire simulation forward in time, providing fine-grained control over both the 
+     * number of computational cycles (sub-stepping) and the exact slice of time (Delta Time) simulated 
+     * during each individual cycle.
+     * 
+     * To maximize performance and prevent the graphical interface from freezing during rapid execution, 
+     * the physics calculations are performed silently in a rapid loop, and the graphical observers 
+     * are notified only once the final future state has been reached. This allows the system to remain 
+     * mathematically stable even when fast-forwarding the universe by dividing heavy gravitational 
+     * calculations into numerous tiny, highly accurate time slices.
+     *
+     * @param steps the number of internal, silent calculations to perform before notifying the interface.
+     * @param dt    the precise slice of time (Delta Time) that passes during each internal calculation step.
+     */
+    public void simulate(int steps, double dt) {
         for (int i = 1; i <= steps; i++) {
-            tick();
+            tick(dt);
         }
         notifyObservers(steps);
     }
@@ -105,21 +125,23 @@ public class AstronomicalSystem implements Serializable {
     /**
      * Executes the foundational Newtonian physics calculations for a single moment in time.
      * This method enforces a strict sequential order to maintain mathematical stability:
-     * First, the gravitational pull between all moving bodies is calculated to determine their new velocities.
-     * Second, those new velocities are applied to update their spatial coordinates.
+     * First, the gravitational pull between all moving bodies is calculated based on the given slice of time.
+     * Second, those newly scaled velocities are applied to update their spatial coordinates.
      * Third, objects on rigid, fixed orbital paths (like moons) are advanced.
      * Finally, the system scans for and permanently resolves any overlapping physical intersections.
+     * 
+     * @param dt the Delta Time slice being simulated during this exact moment.
      */
-    private void tick() {
+    private void tick(double dt) {
         for (CelestialBody b : this.bodies) {
             if (b instanceof Kinematic k) {
-                k.updateVelocity(this.bodies);
+                k.updateVelocity(this.bodies, dt);
             }
         }
 
         for (CelestialBody b : this.bodies) {
             if (b instanceof Kinematic k) {
-                k.updatePosition();
+                k.updatePosition(dt);
             }
         }
 

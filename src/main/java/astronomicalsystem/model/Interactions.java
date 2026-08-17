@@ -38,18 +38,22 @@ public final class Interactions {
 
     /**
      * Calculates the total gravitational pull exerted on a specific moving body by every other
-     * body currently existing in the system, and applies that acceleration to its velocity.
+     * body currently existing in the system, and applies that acceleration to its velocity, scaled 
+     * by the provided slice of simulated time (Delta Time).
      * 
      * The method calculates the exact distance between the target body and the interacting body.
      * If the distance is dangerously close to zero, a softening limit is enforced to prevent
      * mathematical underflow. Once the pure gravitational force is determined, it is distributed
      * across the X, Y, and Z axes. Finally, the total acceleration is capped at a maximum limit
-     * to prevent physics glitches, and only applied if the resulting numbers are mathematically valid.
+     * to prevent physics glitches, multiplied by the exact amount of time that has passed, and 
+     * applied to the target's current velocity.
      *
      * @param target       the moving celestial entity whose velocity is currently being updated.
      * @param systemBodies the complete list of all celestial bodies present in the simulation universe.
+     * @param dt           the exact slice of time, or Delta Time, being simulated. This correctly 
+     *                     scales the gravitational acceleration before it is applied to the velocity vector.
      */
-    public static void updateGravitationalVelocity(Kinematic target, List<CelestialBody> systemBodies) {
+    public static void updateGravitationalVelocity(Kinematic target, List<CelestialBody> systemBodies, double dt) {
         CelestialBody targetBody = (CelestialBody) target;
 
         double accX = 0.0;
@@ -98,7 +102,9 @@ public final class Interactions {
 
         if (!Double.isNaN(accX) && !Double.isNaN(accY) && !Double.isNaN(accZ)) {
             Point3D totalAcceleration = new Point3D(accX, accY, accZ);
-            target.setVelocity(target.getVelocity().add(totalAcceleration));
+            
+            // The raw acceleration is multiplied by Delta Time before being added to velocity
+            target.setVelocity(target.getVelocity().add(totalAcceleration.scale(dt)));
         }
     }
 

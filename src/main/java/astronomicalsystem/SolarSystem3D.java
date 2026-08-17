@@ -4,6 +4,7 @@ import java.io.InputStream;
 
 import astronomicalsystem.config.SimulationSettings;
 import astronomicalsystem.controller.InputHandler;
+import astronomicalsystem.engine.SimulationEngine;
 import astronomicalsystem.factory.UniverseFactory;
 import astronomicalsystem.model.AstronomicalSystem;
 import astronomicalsystem.model.CelestialBody;
@@ -20,8 +21,10 @@ import astronomicalsystem.view.CreatorPanel;
 import astronomicalsystem.view.InfoPanel;
 import astronomicalsystem.view.PauseMenu;
 import astronomicalsystem.view.SimulationRenderer;
+import astronomicalsystem.view.TimeControlPanel;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.AmbientLight;
 import javafx.scene.Group;
@@ -31,7 +34,9 @@ import javafx.scene.Scene;
 import javafx.scene.SceneAntialiasing;
 import javafx.scene.SubScene;
 import javafx.scene.image.Image;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.CullFace;
@@ -47,11 +52,12 @@ import javafx.stage.Stage;
  * building the three dimensional space, setting up the lighting and cameras, and starting the 
  * continuous loop that makes time flow forward.
  * 
- * To ensure everything looks beautiful and remains interactive, it uses a stacked visual architecture. 
- * The deep space environment, planets, and orbits are drawn on a specialized, hardware accelerated 
- * background layer. On top of that, it stacks a transparent foreground layer that holds all the 
- * standard two dimensional menus, sliders, and text panels, allowing the user to click buttons 
- * without accidentally dragging the 3D camera.
+ * The user interface has been heavily engineered to mimic a high-tech aerospace Mission Control 
+ * dashboard. A transparent, non-blocking Heads-Up Display (HUD) overlay is stacked securely on top 
+ * of the hardware-accelerated 3D space scene. This unified layout intelligently groups telemetry 
+ * data and creation controls into a right-aligned sidebar, while time manipulation controls are 
+ * anchored to the bottom, ensuring maximum visibility of the cosmos while keeping vital scientific 
+ * instruments instantly accessible.
  */
 public class SolarSystem3D extends Application {
 
@@ -60,15 +66,17 @@ public class SolarSystem3D extends Application {
     private static final SimulationSettings SETTINGS = SimulationSettings.defaults();
 
     private AstronomicalSystem system;
+    private SimulationEngine physicsEngine;
+    
     private InfoPanel infoPanel;
     private PauseMenu pauseMenu;
     private CreatorPanel creatorPanel;
+    private TimeControlPanel timeControlPanel;
     private SimulationRenderer renderer;
     private SimulationPerformanceMonitor performanceMonitor;
     private PerspectiveCamera camera;
     private final SessionPersistenceService sessionPersistenceService = new SessionPersistenceService();
     
-    private boolean isPaused = false;
     private int customPlanetCount = 1;
 
     private final Rotate rotateX = new Rotate(20, Rotate.X_AXIS);
@@ -78,18 +86,17 @@ public class SolarSystem3D extends Application {
      * The primary assembly line where the entire application is constructed right before appearing 
      * on the user's screen.
      * 
-     * It begins by asking the factory to construct the mathematical solar system. It then builds the 
-     * 3D environment, injecting the stars, ambient lighting, and the brilliant light emitting from the 
-     * sun. Next, it wires up the telemetry panels, the pause menu, and the planet creation drawer. 
-     * Finally, it creates the massive, unending heartbeat of the application: the animation timer. 
-     * This timer fires constantly, telling the physics engine to calculate the next frame and telling 
-     * the performance monitor to record how long it took.
+     * It initiates the universe generation, constructs the three dimensional rendering sub-scene, 
+     * and layers the modern aerospace HUD over the screen. It purposefully separates the graphical 
+     * rendering pipeline from the heavy mathematical physics calculations by deploying the 
+     * SimulationEngine onto a completely independent background thread.
      *
      * @param primaryStage the main window container provided by the operating system to hold the application.
      */
     @Override
     public void start(Stage primaryStage) {
         this.system = UniverseFactory.createSolarSystem();
+        this.physicsEngine = new SimulationEngine(this.system);
 
         SmartGroup world = new SmartGroup();
         world.getTransforms().addAll(rotateX, rotateY);
@@ -102,6 +109,7 @@ public class SolarSystem3D extends Application {
             SETTINGS.performance().enabled(),
             SETTINGS.performance().reportEveryFrames()
         );
+        
         this.renderer = new SimulationRenderer(world, this.performanceMonitor);
         this.system.addObserver(this.renderer);
 
@@ -114,23 +122,37 @@ public class SolarSystem3D extends Application {
         this.camera.setFarClip(SETTINGS.camera().farClip());
         subScene.setCamera(this.camera);
 
-        this.infoPanel = new InfoPanel();
-        this.infoPanel.setMouseTransparent(true);
+        this.infoPanel = new InfoPanel(this::releaseFocus);
+        this.creatorPanel = new CreatorPanel(this::spawnCustomPlanet);
+        this.timeControlPanel = new TimeControlPanel(factor -> this.physicsEngine.setTimeWarp(factor));
 
         this.pauseMenu = new PauseMenu(
                 this::togglePauseMenu,
                 this::handleQuickSave,
                 this::handleQuickLoad,
-                () -> System.exit(0)
+                () -> {
+                    this.physicsEngine.stopEngine();
+                    System.exit(0);
+                }
         );
 
-        this.creatorPanel = new CreatorPanel(this::spawnCustomPlanet);
+        BorderPane hudOverlay = new BorderPane();
+        hudOverlay.setPickOnBounds(false); 
+
+        VBox rightSidebar = new VBox(20);
+        rightSidebar.setPickOnBounds(false);
+        rightSidebar.setAlignment(Pos.TOP_RIGHT);
+        rightSidebar.setPadding(new Insets(30, 30, 30, 0));
+        rightSidebar.getChildren().addAll(this.infoPanel, this.creatorPanel);
+        hudOverlay.setRight(rightSidebar);
+
+        BorderPane.setAlignment(this.timeControlPanel, Pos.BOTTOM_CENTER);
+        BorderPane.setMargin(this.timeControlPanel, new Insets(0, 0, 30, 0));
+        hudOverlay.setBottom(this.timeControlPanel);
 
         StackPane rootLayout = new StackPane();
-        rootLayout.getChildren().addAll(subScene, infoPanel, pauseMenu, creatorPanel);
-        StackPane.setAlignment(infoPanel, Pos.TOP_LEFT);
+        rootLayout.getChildren().addAll(subScene, hudOverlay, pauseMenu);
         StackPane.setAlignment(pauseMenu, Pos.CENTER);
-        StackPane.setAlignment(creatorPanel, Pos.CENTER_RIGHT);
 
         subScene.widthProperty().bind(rootLayout.widthProperty());
         subScene.heightProperty().bind(rootLayout.heightProperty());
@@ -148,15 +170,6 @@ public class SolarSystem3D extends Application {
         AnimationTimer timer = new AnimationTimer() {
             @Override
             public void handle(long now) {
-                if (!isPaused) {
-                    try {
-                        long frameStart = System.nanoTime();
-                        system.simulate(1);
-                        performanceMonitor.recordFrame(System.nanoTime() - frameStart);
-                    } catch (Throwable t) {
-                        System.err.println("Physics Engine Guard caught an error: " + t.getMessage());
-                    }
-                }
             }
         };
         timer.start();
@@ -165,19 +178,23 @@ public class SolarSystem3D extends Application {
         primaryStage.setScene(mainScene);
         primaryStage.setMaximized(true);
         primaryStage.show();
+        
+        Thread engineThread = new Thread(this.physicsEngine, "Physics-Engine-Thread");
+        engineThread.setDaemon(true);
+        engineThread.start();
 
         rootLayout.requestFocus();
     }
 
     /**
-     * Instantly forces the physics engine to either freeze entirely or resume running. When frozen, 
-     * gravity stops calculating and the planets hang motionless in space, though the camera can still 
-     * be moved freely.
+     * Instantly forces the independent physics engine to either freeze entirely or resume running. 
+     * When frozen, gravity stops calculating and the planets hang motionless in space, though the 
+     * camera can still be moved freely to inspect the frozen scene.
      *
      * @param paused true to completely halt the physics engine, false to resume the flow of time.
      */
     public void setPaused(boolean paused) {
-        this.isPaused = paused;
+        this.physicsEngine.setPaused(paused);
     }
 
     /**
@@ -185,11 +202,11 @@ public class SolarSystem3D extends Application {
      * already frozen, it resumes running.
      */
     public void togglePause() {
-        this.isPaused = !this.isPaused;
+        this.physicsEngine.setPaused(!this.physicsEngine.isPaused());
     }
 
     /**
-     * Controls the visibility of the central pause menu while automatically managing the flow of time. 
+     * Controls the visibility of the central override menu while automatically managing the flow of time. 
      * If the menu is currently hidden, this method reveals the menu and instantly freezes the physics 
      * engine. If the menu is already visible, it hides the menu and resumes the simulation.
      */
@@ -197,44 +214,77 @@ public class SolarSystem3D extends Application {
         if (this.pauseMenu.isVisible()) {
             this.pauseMenu.setVisible(false);
             this.pauseMenu.clearStatus();
-            this.isPaused = false;
+            this.physicsEngine.setPaused(false);
         } else {
             hideInfoPanel();
             this.pauseMenu.setVisible(true);
-            this.isPaused = true;
+            this.physicsEngine.setPaused(true);
         }
     }
 
     /**
-     * Commands the dynamic creator panel on the right side of the screen to slide in or out of view.
+     * Commands the dynamic planet generation panel within the right sidebar to switch its visibility state.
      */
     public void toggleCreatorPanel() {
         this.creatorPanel.toggle();
     }
 
     /**
-     * Reveals the informational telemetry panel in the top left corner, populating it with data from 
-     * the specific celestial body the user just clicked on. It automatically pauses the simulation 
-     * so the user can easily read the data without the planet flying away.
+     * Executes a cinematic camera maneuver that teleports the user's viewpoint directly to the 
+     * selected celestial body. It calculates the exact required zoom to fill the screen appropriately, 
+     * halts the simulation time for observation, and activates the scientific HUD overlay.
      *
      * @param body the celestial entity the user wishes to inspect.
      */
     public void showInfoPanel(CelestialBody body) {
+        this.physicsEngine.setPaused(true);
         this.infoPanel.showPlanet(body);
-        this.isPaused = true;
+        this.renderer.setTargetBody(body);
+        
+        double renderScale = SETTINGS.render().positionScale();
+        double physicalX = body.getPosition().x() * renderScale;
+        double physicalY = body.getPosition().y() * renderScale;
+        double physicalZ = body.getPosition().z() * renderScale;
+        
+        double visualRadius = this.renderer.getTargetVisualRadius(body);
+        double zoomOffset = visualRadius * -8.5; 
+        
+        this.camera.setTranslateX(physicalX);
+        this.camera.setTranslateY(physicalY);
+        this.camera.setTranslateZ(physicalZ + zoomOffset);
+        
+        this.rotateX.setAngle(0);
+        this.rotateY.setAngle(0);
     }
 
     /**
-     * Hides the informational telemetry panel and instantly resumes the flow of time.
+     * Executes a tactical release maneuver, instantly detaching the camera from the currently 
+     * focused celestial body. It restores the camera to its original panoramic viewpoint, hides 
+     * all telemetry overlays, and resumes the flow of time in the universe.
+     */
+    public void releaseFocus() {
+        hideInfoPanel();
+        
+        this.camera.setTranslateX(0);
+        this.camera.setTranslateY(0);
+        this.camera.setTranslateZ(SETTINGS.camera().initialTranslateZ());
+        this.rotateX.setAngle(20);
+        this.rotateY.setAngle(0);
+    }
+
+    /**
+     * Hides the informational telemetry panel, immediately deactivates the scientific HUD 3D vectors, 
+     * and instantly resumes the flow of time in the universe.
      */
     public void hideInfoPanel() {
         this.infoPanel.hide();
-        this.isPaused = false;
+        this.renderer.setTargetBody(null);
+        this.physicsEngine.setPaused(false);
     }
 
     /**
      * Gathers all the data about the current state of the universe and asks the persistence service 
-     * to save it to a file. It updates the pause menu text to inform the user whether the save was 
+     * to save it to a file. It updates the central override menu to confirm whether the save was 
      * successful or if an error occurred.
      */
     private void handleQuickSave() {
@@ -248,9 +298,8 @@ public class SolarSystem3D extends Application {
 
     /**
      * Asks the persistence service to read a saved file from the hard drive and attempts to reconstruct 
-     * the universe from that data. It intelligently checks if the loaded file is a modern save or an 
-     * outdated legacy save, routes the data to the correct reconstruction method, and updates the pause 
-     * menu text to confirm success or failure.
+     * the universe from that data. It intelligently routes the data to the correct legacy or modern 
+     * reconstruction method based on the file version format.
      */
     private void handleQuickLoad() {
         try {
@@ -269,17 +318,14 @@ public class SolarSystem3D extends Application {
     }
 
     /**
-     * Handles the complex physics and mathematics required to create a brand new planet exactly when 
-     * the user clicks the launch button in the creator panel. 
-     * 
-     * Instead of just dropping a planet randomly, this method actively calculates the perfect velocity 
-     * required for the new planet to establish a stable, circular orbit around the central sun based on 
-     * its exact starting distance. It then applies the user's velocity multiplier, allowing them to 
-     * either launch it perfectly or purposely create chaotic elliptical orbits.
+     * Executes the complex mathematics required to inject a brand new planet exactly when the user 
+     * triggers the launch command from the creation panel. It dynamically calculates the perfect 
+     * velocity required for the new planet to establish a stable orbit around the primary star, 
+     * applying any user-defined multipliers for chaotic effects.
      *
      * @param massMultiplier     how much heavier or lighter the new planet should be compared to Earth.
      * @param distance           how far away from the center of the universe the planet should spawn.
-     * @param velocityMultiplier a modifier allowing the user to increase or decrease the perfect orbital speed.
+     * @param velocityMultiplier a modifier allowing the user to purposely disrupt the perfect orbital speed.
      */
     private void spawnCustomPlanet(double massMultiplier, double distance, double velocityMultiplier) {
         String name = "Custom Planet X-" + (customPlanetCount++);
@@ -318,9 +364,9 @@ public class SolarSystem3D extends Application {
     }
 
     /**
-     * Creates an unimaginably massive, hollow sphere that completely surrounds the entire simulated 
-     * universe. By painting the inside of this sphere with a high resolution image of the Milky Way 
-     * galaxy, it creates a perfect optical illusion of deep, endless space surrounding the planets.
+     * Creates an unimaginably massive, hollow sphere surrounding the simulated universe. By painting 
+     * the inside of this sphere with a high resolution galactic texture, it creates a perfect optical 
+     * illusion of deep space.
      *
      * @param root3D the primary graphical group where the massive sky sphere will be added.
      */
@@ -346,11 +392,10 @@ public class SolarSystem3D extends Application {
     }
 
     /**
-     * Attempts to locate and open the image files used to create the background space illusion. 
-     * It looks for the high quality Milky Way texture first, and if that file is missing, it 
-     * safely falls back to a generic starfield texture.
+     * Attempts to locate the optimal image files required to generate the deep space background illusion, 
+     * falling back to lower quality defaults if the primary texture is missing.
      *
-     * @return a data stream containing the image file, or null if neither image could be found.
+     * @return a data stream containing the image file, or null if no resources could be found.
      */
     private InputStream openSkyboxTexture() {
         InputStream milkyWay = getClass().getResourceAsStream("/milky_way.jpg");
@@ -361,16 +406,15 @@ public class SolarSystem3D extends Application {
     }
 
     /**
-     * Gathers all the volatile, ever changing data from the running application—including the exact 
-     * physics engine state, whether the game is paused, and exactly how the user has angled the 
-     * camera—and packs it all into a single, immutable record ready to be saved to the hard drive.
+     * Gathers the exact physics state, the current time warp status, and the precise camera angles, 
+     * sealing them into an immutable snapshot ready for disk persistence.
      *
      * @return a perfectly sealed snapshot of the exact current moment in the simulation.
      */
     private SessionState captureSessionState() {
         return SessionState.current(
                 this.system,
-                this.isPaused,
+                this.physicsEngine.isPaused(),
                 this.customPlanetCount,
                 new CameraState(
                         this.camera.getTranslateX(),
@@ -383,16 +427,26 @@ public class SolarSystem3D extends Application {
     }
 
     /**
-     * Carefully unpacks a modern session snapshot that was loaded from the hard drive and uses that 
-     * data to completely overwrite the current state of the application. It replaces the entire physics 
-     * engine, moves the camera back to the exact saved angle, and resets the interface menus.
+     * Safely disposes of the running physics engine and overwrites the entire application state with 
+     * data extracted from a verified modern save file.
      *
-     * @param sessionState the sealed data package containing the loaded universe.
+     * @param sessionState the sealed data package containing the loaded universe and camera positions.
      */
     private void restoreSessionState(SessionState sessionState) {
+        if (this.physicsEngine != null) {
+            this.physicsEngine.stopEngine();
+        }
+        
         this.system = sessionState.system();
         this.system.addObserver(this.renderer);
-        this.isPaused = sessionState.paused();
+        
+        this.physicsEngine = new SimulationEngine(this.system);
+        this.physicsEngine.setPaused(sessionState.paused());
+        
+        Thread newEngineThread = new Thread(this.physicsEngine, "Physics-Engine-Thread");
+        newEngineThread.setDaemon(true);
+        newEngineThread.start();
+        
         this.customPlanetCount = sessionState.customPlanetCount();
 
         CameraState cameraState = sessionState.cameraState();
@@ -402,40 +456,49 @@ public class SolarSystem3D extends Application {
         this.rotateX.setAngle(cameraState.rotateX());
         this.rotateY.setAngle(cameraState.rotateY());
 
-        this.pauseMenu.setVisible(this.isPaused);
+        this.pauseMenu.setVisible(this.physicsEngine.isPaused());
         this.infoPanel.hide();
+        this.renderer.setTargetBody(null);
         this.pauseMenu.clearStatus();
     }
 
     /**
-     * Safely reconstructs the application state when loading an old, outdated save file that only 
-     * contained planetary physics data. Because the old file has no camera or menu data, this method 
-     * replaces the physics engine but manually applies safe, default settings to the user interface 
-     * to prevent the modern application from breaking.
+     * Reconstructs the application environment from an outdated save file. It replaces the core 
+     * physical system but manually enforces safe default states for modern interface components that 
+     * did not exist when the legacy file was created.
      *
-     * @param loadedSystem the pure physics engine extracted from the old save file.
+     * @param loadedSystem the raw mathematical simulation engine extracted from the old save file.
      */
     private void restoreLegacySession(AstronomicalSystem loadedSystem) {
+        if (this.physicsEngine != null) {
+            this.physicsEngine.stopEngine();
+        }
+        
         this.system = loadedSystem;
         this.system.addObserver(this.renderer);
-        this.isPaused = false;
+        
+        this.physicsEngine = new SimulationEngine(this.system);
+        this.physicsEngine.setPaused(false);
+        
+        Thread newEngineThread = new Thread(this.physicsEngine, "Physics-Engine-Thread");
+        newEngineThread.setDaemon(true);
+        newEngineThread.start();
+        
         this.customPlanetCount = 1;
         this.infoPanel.hide();
+        this.renderer.setTargetBody(null);
         this.pauseMenu.setVisible(false);
         this.pauseMenu.clearStatus();
     }
 
     /**
-     * A specialized grouping container used to hold all the planets and the sun in the very center 
-     * of the universe. This allows the camera mechanics to easily rotate the entire universe around 
-     * a central pivot point.
+     * A specialized structural node used to group the core astronomical components within the 3D space, 
+     * providing a solid anchor point for orbital camera rotations.
      */
     private static class SmartGroup extends Group { }
 
     /**
-     * The internal launch method required by the JavaFX framework. When the main launcher delegates 
-     * control to this class, this method triggers the internal engine that eventually calls the main 
-     * start method.
+     * The internal launch method required by the JavaFX application lifecycle.
      *
      * @param args command-line arguments passed through from the launcher.
      */

@@ -5,6 +5,11 @@ import java.util.Objects;
 import astronomicalsystem.model.CelestialBody;
 import astronomicalsystem.model.CelestialBody.BodyMetadata;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.Button;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -57,38 +62,75 @@ public class InfoPanel extends VBox {
 
     /**
      * Constructs the information panel, configuring its internal layout structure, visual styling, 
-     * and permanently allocating all the text elements it will need. The panel starts in a hidden 
-     * state, remaining invisible until the user actively clicks on a planet to inspect it.
+     * and permanently allocating all the text elements it will need. It applies a sophisticated 
+     * aerospace HUD design and integrates an interactive tactical release mechanism to return 
+     * the camera to a free-roaming state.
+     *
+     * @param onReleaseFocus the executable action to trigger when the user clicks the return button, 
+     *                       typically restoring the camera and unpausing the simulation. Must not be null.
+     * @throws NullPointerException if the provided callback function is missing.
      */
-    public InfoPanel() {
+    public InfoPanel(Runnable onReleaseFocus) {
+        Objects.requireNonNull(onReleaseFocus, "Release focus callback cannot be null");
+
         this.setPadding(new Insets(20));
-        this.setSpacing(10);
+        this.setSpacing(15);
         this.setMaxWidth(280);
-        this.setMaxHeight(200);
 
         this.setStyle(
-                "-fx-background-color: rgba(18, 22, 28, 0.90);" +
-                "-fx-background-radius: 0 0 8 0;" +
-                "-fx-border-color: rgba(255, 255, 255, 0.08);" +
-                "-fx-border-width: 0 1 1 0;" +
-                "-fx-border-radius: 0 0 8 0;"
+                "-fx-background-color: rgba(12, 18, 28, 0.85);" +
+                "-fx-background-radius: 4;" +
+                "-fx-border-color: rgba(0, 230, 255, 0.5) rgba(255, 255, 255, 0.05) rgba(255, 255, 255, 0.05) rgba(255, 255, 255, 0.05);" +
+                "-fx-border-width: 2 1 1 1;" +
+                "-fx-border-radius: 4;"
         );
 
+        Text targetHeader = new Text("TARGET LOCKED // TELEMETRY");
+        targetHeader.setFill(Color.web("#FF7043"));
+        targetHeader.setFont(Font.font("Segoe UI", FontWeight.BOLD, 10));
+
         this.nameLabel = new Text();
-        this.nameLabel.setFill(Color.web("#7EA6E0"));
-        this.nameLabel.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 18));
+        this.nameLabel.setFill(Color.web("#FFFFFF"));
+        this.nameLabel.setFont(Font.font("Segoe UI", FontWeight.BOLD, 18));
 
-        VBox metadataContainer = new VBox(6);
+        VBox headerBox = new VBox(2, targetHeader, this.nameLabel);
+
+        VBox metadataContainer = new VBox(8);
         
-        this.massRow = createInfoRowNode();
-        this.radiusRow = createInfoRowNode();
-        this.tempRow = createInfoRowNode();
-        this.rotationRow = createInfoRowNode();
-        this.orbitRow = createInfoRowNode();
+        this.massRow = createValueNode();
+        this.radiusRow = createValueNode();
+        this.tempRow = createValueNode();
+        this.rotationRow = createValueNode();
+        this.orbitRow = createValueNode();
 
-        metadataContainer.getChildren().addAll(massRow, radiusRow, tempRow, rotationRow, orbitRow);
+        metadataContainer.getChildren().addAll(
+                createTelemetryRow("MASS", this.massRow),
+                createTelemetryRow("RADIUS", this.radiusRow),
+                createTelemetryRow("SURFACE TEMP", this.tempRow),
+                createTelemetryRow("ROTATION", this.rotationRow),
+                createTelemetryRow("ORBITAL PERIOD", this.orbitRow)
+        );
 
-        this.getChildren().addAll(nameLabel, metadataContainer);
+        Button returnBtn = new Button("RETURN [ R ]");
+        returnBtn.setMaxWidth(Double.MAX_VALUE);
+        returnBtn.setPrefHeight(30);
+
+        String btnStyle = "-fx-background-color: rgba(255, 112, 67, 0.1); -fx-border-color: rgba(255, 112, 67, 0.5); " +
+                "-fx-text-fill: #FF7043; -fx-font-family: 'Consolas'; -fx-font-size: 12px; -fx-font-weight: bold; " +
+                "-fx-border-radius: 2; -fx-cursor: hand; -fx-padding: 5 15 5 15;";
+                
+        String btnHoverStyle = "-fx-background-color: rgba(255, 112, 67, 0.25); -fx-border-color: #FF7043; " +
+                "-fx-text-fill: #FFFFFF; -fx-font-family: 'Consolas'; -fx-font-size: 12px; -fx-font-weight: bold; " +
+                "-fx-border-radius: 2; -fx-cursor: hand; -fx-padding: 5 15 5 15;";
+
+        returnBtn.setStyle(btnStyle);
+        returnBtn.setOnMouseEntered(e -> returnBtn.setStyle(btnHoverStyle));
+        returnBtn.setOnMouseExited(e -> returnBtn.setStyle(btnStyle));
+        returnBtn.setOnAction(e -> onReleaseFocus.run());
+
+        VBox.setMargin(returnBtn, new Insets(10, 0, 0, 0));
+
+        this.getChildren().addAll(headerBox, metadataContainer, returnBtn);
         this.setVisible(false);
     }
 
@@ -110,17 +152,17 @@ public class InfoPanel extends VBox {
 
         BodyMetadata meta = body.getMetadata();
         if (meta != null) {
-            this.massRow.setText("Mass: " + meta.displayMass());
-            this.radiusRow.setText("Radius: " + meta.displayRadius());
-            this.tempRow.setText("Surface Temp: " + meta.temperature());
-            this.rotationRow.setText("Rotation Period: " + meta.rotationPeriod());
-            this.orbitRow.setText("Orbital Period: " + meta.revolutionPeriod());
+            this.massRow.setText(meta.displayMass());
+            this.radiusRow.setText(meta.displayRadius());
+            this.tempRow.setText(meta.temperature());
+            this.rotationRow.setText(meta.rotationPeriod());
+            this.orbitRow.setText(meta.revolutionPeriod());
         } else {
-            this.massRow.setText("Mass: N/A");
-            this.radiusRow.setText("Radius: N/A");
-            this.tempRow.setText("Surface Temp: N/A");
-            this.rotationRow.setText("Rotation Period: N/A");
-            this.orbitRow.setText("Orbital Period: N/A");
+            this.massRow.setText("N/A");
+            this.radiusRow.setText("N/A");
+            this.tempRow.setText("N/A");
+            this.rotationRow.setText("N/A");
+            this.orbitRow.setText("N/A");
         }
 
         this.setVisible(true);
@@ -135,15 +177,38 @@ public class InfoPanel extends VBox {
     }
 
     /**
-     * An internal factory helper that generates standard JavaFX text elements with consistent 
-     * styling to match the deep space aesthetic of the user interface.
+     * An internal factory helper that generates a perfectly aligned horizontal row for the telemetry 
+     * monitor. It places the descriptive label on the far left and pushes the dynamic data value to 
+     * the far right, creating a clean, professional dashboard appearance.
+     *
+     * @param labelText the static category name to display on the left.
+     * @param valueNode the dynamic text node that will display the actual data on the right.
+     * @return a fully configured horizontal layout box containing both elements.
+     */
+    private HBox createTelemetryRow(String labelText, Text valueNode) {
+        Text label = new Text(labelText);
+        label.setFill(Color.web("#7EA6E0"));
+        label.setFont(Font.font("Segoe UI", FontWeight.BOLD, 10));
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        HBox row = new HBox(label, spacer, valueNode);
+        row.setAlignment(Pos.CENTER);
+        return row;
+    }
+
+    /**
+     * An internal factory helper that generates standard JavaFX text elements specifically styled 
+     * for displaying numerical data. It uses a monospaced font and a bright neon color to mimic 
+     * digital screens.
      *
      * @return a fully styled, empty text element ready to be injected into the interface layout.
      */
-    private Text createInfoRowNode() {
+    private Text createValueNode() {
         Text row = new Text();
-        row.setFill(Color.web("#CFD8DC"));
-        row.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 13));
+        row.setFill(Color.web("#00E6FF"));
+        row.setFont(Font.font("Consolas", FontWeight.NORMAL, 12));
         return row;
     }
 }

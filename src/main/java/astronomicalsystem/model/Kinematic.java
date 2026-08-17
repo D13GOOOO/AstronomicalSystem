@@ -11,6 +11,11 @@ import java.util.List;
  * or objects that follow strict mathematical paths without calculating gravity (like moons) 
  * do not have to write fake or empty methods just to fit into the simulation. Only objects that 
  * actually calculate their own speed and respond to gravity will implement this interface.
+ * 
+ * The methods within this contract are explicitly designed to accept a time scalar, commonly 
+ * known as Delta Time. This enables the physics engine to safely accelerate, decelerate, or 
+ * partition the flow of time into smaller sub-steps without breaking the underlying mathematical 
+ * integration.
  */
 public interface Kinematic {
 
@@ -37,12 +42,18 @@ public interface Kinematic {
      * 
      * To prevent mathematical chaos and ensure the simulation remains stable, this step is 
      * executed for every single moving object in the universe before any object is actually 
-     * allowed to change its physical location.
+     * allowed to change its physical location. The resulting physical acceleration is multiplied 
+     * by the provided slice of time to guarantee that the physics remain mathematically accurate 
+     * whether the simulation is running in real-time or fast-forward.
      *
      * @param systemBodies the complete list containing every celestial body currently existing 
      *                     in the simulation universe.
+     * @param dt           the exact slice of time, or Delta Time, being simulated during this 
+     *                     specific calculation step. It acts as a strict multiplier to determine 
+     *                     how much of the calculated acceleration is actually applied to the 
+     *                     current velocity vector.
      */
-    void updateVelocity(List<CelestialBody> systemBodies);
+    void updateVelocity(List<CelestialBody> systemBodies, double dt);
 
     /**
      * Takes the velocity that was previously calculated by the physics engine and uses it to 
@@ -50,9 +61,14 @@ public interface Kinematic {
      * 
      * This represents the second and final phase of a single physics frame. It executes only 
      * after all the gravitational forces in the universe have been fully computed and applied 
-     * to the velocities of the moving objects.
+     * to the velocities of the moving objects. The object's velocity is multiplied by the slice 
+     * of time to determine the exact distance it physically traveled before arriving at its new 
+     * coordinate position.
+     * 
+     * @param dt the precise fraction of time, or Delta Time, that has passed during this specific 
+     *           calculation step, acting as a multiplier for the physical distance traveled.
      */
-    void updatePosition();
+    void updatePosition(double dt);
 
     /**
      * Calculates the total amount of mechanical energy this moving body currently possesses.
