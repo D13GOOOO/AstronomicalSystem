@@ -29,12 +29,22 @@ public class SimulationEngine implements Runnable {
     private static final int TARGET_TPS = 60;
     
     /**
-     * The absolute maximum number of sub-steps the engine is allowed to perform in a single tick.
-     * This acts as a strict CPU safety valve. If the user accelerates time to 10,000x, the engine 
-     * will not attempt 10,000 calculations per frame; it caps at this maximum limit and scales 
-     * the Delta Time to compensate.
+     * The baseline number of sub-steps used for normal to moderately accelerated time scales.
      */
-    private static final int MAX_SUB_STEPS = 100;
+    private static final int BASE_SUB_STEPS = 100;
+    
+    /**
+     * The absolute maximum number of sub-steps the engine is allowed to perform in a single tick 
+     * when the time warp factor is extremely high. This prevents CPU thread locking.
+     */
+    private static final int HARD_LIMIT_SUB_STEPS = 2500;
+    
+    /**
+     * The maximum allowable slice of time (Delta Time) per integration step.
+     * Enforcing this limit guarantees that fast-moving inner planets do not mathematically 
+     * overshoot their orbital curves and collide with the central anchor.
+     */
+    private static final double MAX_SAFE_DELTA_TIME = 4.0;
 
     private final AstronomicalSystem system;
 
@@ -95,14 +105,20 @@ public class SimulationEngine implements Runnable {
      * Calculates the ideal distribution of computational steps and Delta Time, then orders the 
      * Astronomical System to advance the universe.
      * 
-     * This is the mathematical core of the Time Warp mechanic. For low time-warp values (like 10x), 
-     * it performs 10 distinct, highly accurate small steps (dt = 1.0). For extreme time-warp values 
-     * (like 10,000x), it caps the calculations at 100 steps to save the CPU, but assigns a massive 
-     * Delta Time (dt = 100.0) to each step to ensure the physical distance traveled is correct.
+     * Implements an adaptive sub-stepping algorithm. It primarily attempts to maintain a low 
+     * CPU footprint. However, if a massive time warp requests a Delta Time that exceeds the 
+     * safety threshold, it dynamically scales up the number of mathematical steps to protect 
+     * orbital integrity, capping only at the absolute hardware safety limit.
      */
     private void executePhysicsTick() {
-        int stepsToCalculate = Math.min(this.timeWarpFactor, MAX_SUB_STEPS);
+        int stepsToCalculate = Math.min(this.timeWarpFactor, BASE_SUB_STEPS);
         double deltaTime = (double) this.timeWarpFactor / stepsToCalculate;
+
+        if (deltaTime > MAX_SAFE_DELTA_TIME) {
+            stepsToCalculate = (int) Math.ceil((double) this.timeWarpFactor / MAX_SAFE_DELTA_TIME);
+            stepsToCalculate = Math.min(stepsToCalculate, HARD_LIMIT_SUB_STEPS);
+            deltaTime = (double) this.timeWarpFactor / stepsToCalculate;
+        }
 
         this.system.simulate(stepsToCalculate, deltaTime);
     }

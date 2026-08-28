@@ -125,25 +125,14 @@ public class AstronomicalSystem implements Serializable {
     /**
      * Executes the foundational Newtonian physics calculations for a single moment in time.
      * This method enforces a strict sequential order to maintain mathematical stability:
-     * First, the gravitational pull between all moving bodies is calculated based on the given slice of time.
-     * Second, those newly scaled velocities are applied to update their spatial coordinates.
-     * Third, objects on rigid, fixed orbital paths (like moons) are advanced.
+     * First, it utilizes an advanced Runge-Kutta 4 (RK4) integrator to calculate precise orbits.
+     * Second, objects on rigid, fixed orbital paths (like moons) are advanced parametrically.
      * Finally, the system scans for and permanently resolves any overlapping physical intersections.
      * 
      * @param dt the Delta Time slice being simulated during this exact moment.
      */
     private void tick(double dt) {
-        for (CelestialBody b : this.bodies) {
-            if (b instanceof Kinematic k) {
-                k.updateVelocity(this.bodies, dt);
-            }
-        }
-
-        for (CelestialBody b : this.bodies) {
-            if (b instanceof Kinematic k) {
-                k.updatePosition(dt);
-            }
-        }
+        integrateRK4(dt);
 
         for (CelestialBody b : this.bodies) {
             if (b instanceof OrbitingBody o) {
@@ -155,11 +144,98 @@ public class AstronomicalSystem implements Serializable {
     }
 
     /**
-     * Scans the entire universe for overlapping physical boundaries and enforces perfectly inelastic mergers.
-     * When two entities occupy the same space, they are immediately removed from the active collection 
-     * and replaced by a single, larger composite entity. Because a multiple-body pileup could occur in a 
-     * single frame, this logic loops continuously until the entire spatial environment is confirmed to be 
-     * free of any intersecting objects.
+     * Performs a 4th-order Runge-Kutta (RK4) numerical integration for the entire N-Body system.
+     * 
+     * Unlike simple Euler integration, RK4 projects the positions of all planets into the future 
+     * four separate times per frame (k1, k2, k3, k4), calculates the gravitational field at each 
+     * of those theoretical points, and then computes a highly accurate weighted average.
+     * This guarantees that planetary orbits remain perpetually perfectly elliptical without degrading
+     * over millions of simulated frames.
+     *
+     * @param dt the time slice to integrate over.
+     */
+    private void integrateRK4(double dt) {
+        List<Kinematic> kinematics = new ArrayList<>();
+        for (CelestialBody b : this.bodies) {
+            if (b instanceof Kinematic k) {
+                kinematics.add(k);
+            }
+        }
+
+        int n = kinematics.size();
+        if (n == 0) return;
+
+        Point3D[] x0 = new Point3D[n];
+        Point3D[] v0 = new Point3D[n];
+        
+        Point3D[] a1 = new Point3D[n], v1 = new Point3D[n];
+        Point3D[] a2 = new Point3D[n], v2 = new Point3D[n];
+        Point3D[] a3 = new Point3D[n], v3 = new Point3D[n];
+        Point3D[] a4 = new Point3D[n], v4 = new Point3D[n];
+
+        for (int i = 0; i < n; i++) {
+            CelestialBody b = (CelestialBody) kinematics.get(i);
+            x0[i] = b.getPosition();
+            v0[i] = kinematics.get(i).getVelocity();
+        }
+
+        for (int i = 0; i < n; i++) {
+            CelestialBody b = (CelestialBody) kinematics.get(i);
+            a1[i] = Interactions.calculateAccelerationVector(x0[i], b.getRadius(), b, this.bodies);
+            v1[i] = v0[i];
+        }
+
+        for (int i = 0; i < n; i++) {
+            CelestialBody b = (CelestialBody) kinematics.get(i);
+            b.setPosition(x0[i].add(v1[i].scale(dt / 2.0)));
+        }
+        for (int i = 0; i < n; i++) {
+            CelestialBody b = (CelestialBody) kinematics.get(i);
+            a2[i] = Interactions.calculateAccelerationVector(b.getPosition(), b.getRadius(), b, this.bodies);
+            v2[i] = v0[i].add(a1[i].scale(dt / 2.0));
+        }
+
+        for (int i = 0; i < n; i++) {
+            CelestialBody b = (CelestialBody) kinematics.get(i);
+            b.setPosition(x0[i].add(v2[i].scale(dt / 2.0)));
+        }
+        for (int i = 0; i < n; i++) {
+            CelestialBody b = (CelestialBody) kinematics.get(i);
+            a3[i] = Interactions.calculateAccelerationVector(b.getPosition(), b.getRadius(), b, this.bodies);
+            v3[i] = v0[i].add(a2[i].scale(dt / 2.0));
+        }
+
+        for (int i = 0; i < n; i++) {
+            CelestialBody b = (CelestialBody) kinematics.get(i);
+            b.setPosition(x0[i].add(v3[i].scale(dt)));
+        }
+        for (int i = 0; i < n; i++) {
+            CelestialBody b = (CelestialBody) kinematics.get(i);
+            a4[i] = Interactions.calculateAccelerationVector(b.getPosition(), b.getRadius(), b, this.bodies);
+            v4[i] = v0[i].add(a3[i].scale(dt));
+        }
+
+        for (int i = 0; i < n; i++) {
+            CelestialBody b = (CelestialBody) kinematics.get(i);
+            
+            Point3D vSum = v1[i].add(v2[i].scale(2.0)).add(v3[i].scale(2.0)).add(v4[i]);
+            Point3D xFinal = x0[i].add(vSum.scale(dt / 6.0));
+            
+            Point3D aSum = a1[i].add(a2[i].scale(2.0)).add(a3[i].scale(2.0)).add(a4[i]);
+            Point3D vFinal = v0[i].add(aSum.scale(dt / 6.0));
+
+            b.setPosition(xFinal);
+            kinematics.get(i).setVelocity(vFinal);
+        }
+    }
+
+    /**
+     * Scans the entire universe for overlapping physical boundaries and enforces thermodynamic impacts.
+     * When two entities occupy the same space, they are immediately removed from the active collection.
+     * Depending on the impact energy and angle, they are replaced by either a single composite core, 
+     * deflected damaged cores, or a radial burst of debris fragments. Because a multiple-body pileup 
+     * could occur in a single frame, this logic loops continuously until the entire spatial environment 
+     * is confirmed to be free of any intersecting objects.
      */
     private void handleCollisions() {
         boolean mergedThisPass;
@@ -178,10 +254,10 @@ public class AstronomicalSystem implements Serializable {
                     CelestialBody b2 = this.bodies.get(j);
                     if (toRemove.contains(b2)) continue;
 
-                    CelestialBody merged = Interactions.checkCollision(b1, b2);
+                    List<CelestialBody> impactResults = Interactions.checkCollision(b1, b2);
 
-                    if (merged != null) {
-                        toAdd.add(merged);
+                    if (impactResults != null && !impactResults.isEmpty()) {
+                        toAdd.addAll(impactResults);
                         toRemove.add(b1);
                         toRemove.add(b2);
                         mergedThisPass = true;

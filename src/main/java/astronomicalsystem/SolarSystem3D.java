@@ -95,7 +95,7 @@ public class SolarSystem3D extends Application {
      */
     @Override
     public void start(Stage primaryStage) {
-        this.system = UniverseFactory.createSolarSystem();
+        this.system = UniverseFactory.createLiveSolarSystem();
         this.physicsEngine = new SimulationEngine(this.system);
 
         SmartGroup world = new SmartGroup();
@@ -119,7 +119,7 @@ public class SolarSystem3D extends Application {
         this.camera = new PerspectiveCamera(true);
         this.camera.setTranslateZ(SETTINGS.camera().initialTranslateZ());
         this.camera.setNearClip(SETTINGS.camera().nearClip());
-        this.camera.setFarClip(SETTINGS.camera().farClip());
+        this.camera.setFarClip(1_000_000.0);
         subScene.setCamera(this.camera);
 
         this.infoPanel = new InfoPanel(this::releaseFocus);
