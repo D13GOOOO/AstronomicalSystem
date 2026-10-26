@@ -50,4 +50,13 @@ class Vector3Test {
 
         assertThat(lengthSquared).isEqualTo(49.0);
     }
+
+    @Test
+    void lengthIsEuclideanNorm() {
+        Vector3 SUT = new Vector3(2.0, -3.0, 6.0);
+
+        double length = SUT.length();
+
+        assertThat(length).isEqualTo(7.0);
+    }
 }

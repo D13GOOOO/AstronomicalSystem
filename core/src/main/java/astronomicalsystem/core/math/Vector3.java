@@ -26,4 +26,8 @@ public record Vector3(double x, double y, double z) {
     public double lengthSquared() {
         return dot(this);
     }
+
+    public double length() {
+        throw new UnsupportedOperationException("not yet implemented");
+    }
 }
