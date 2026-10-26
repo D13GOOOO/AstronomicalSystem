@@ -1,6 +1,8 @@
 package astronomicalsystem.core.math;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -82,5 +84,19 @@ class Vector3Test {
         assertThatThrownBy(SUT::normalized)
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("Cannot normalize the zero vector");
+    }
+
+    @ParameterizedTest
+    @CsvSource(textBlock = """
+            NaN,      0.0,       0.0
+            0.0,      NaN,       0.0
+            0.0,      0.0,       NaN
+            Infinity, 0.0,       0.0
+            0.0,      -Infinity, 0.0
+            """)
+    void constructorRejectsNonFiniteComponents(double x, double y, double z) {
+        assertThatThrownBy(() -> new Vector3(x, y, z))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Vector components must be finite");
     }
 }
