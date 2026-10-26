@@ -18,4 +18,8 @@ public record Vector3(double x, double y, double z) {
     public @NotNull Vector3 times(double scalar) {
         return new Vector3(x * scalar, y * scalar, z * scalar);
     }
+
+    public double dot(@NotNull Vector3 other) {
+        throw new UnsupportedOperationException("not yet implemented");
+    }
 }

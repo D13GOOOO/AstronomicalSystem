@@ -32,4 +32,13 @@ class Vector3Test {
 
         assertThat(scaled).isEqualTo(new Vector3(2.5, -5.0, 7.5));
     }
+
+    @Test
+    void dotSumsProductsOfComponents() {
+        Vector3 SUT = new Vector3(1.0, 2.0, 3.0);
+
+        double product = SUT.dot(new Vector3(4.0, -5.0, 6.0));
+
+        assertThat(product).isEqualTo(12.0);
+    }
 }
