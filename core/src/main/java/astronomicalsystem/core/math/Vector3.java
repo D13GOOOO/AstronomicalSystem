@@ -7,6 +7,12 @@ import org.jetbrains.annotations.NotNull;
  */
 public record Vector3(double x, double y, double z) {
 
+    public Vector3 {
+        if (!Double.isFinite(x) || !Double.isFinite(y) || !Double.isFinite(z)) {
+            throw new IllegalArgumentException("Vector components must be finite");
+        }
+    }
+
     public @NotNull Vector3 plus(@NotNull Vector3 other) {
         return new Vector3(x + other.x, y + other.y, z + other.z);
     }
