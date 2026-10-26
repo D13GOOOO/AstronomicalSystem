@@ -32,6 +32,10 @@ public record Vector3(double x, double y, double z) {
     }
 
     public @NotNull Vector3 normalized() {
-        return times(1.0 / length());
+        double length = length();
+        if (length == 0.0) {
+            throw new IllegalStateException("Cannot normalize the zero vector");
+        }
+        return times(1.0 / length);
     }
 }
