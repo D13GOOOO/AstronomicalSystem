@@ -6,4 +6,10 @@ import org.jetbrains.annotations.NotNull;
  * Human-readable name of a body.
  */
 public record BodyName(@NotNull String value) {
+
+    public BodyName {
+        if (value.isBlank()) {
+            throw new IllegalArgumentException("Body name must not be blank");
+        }
+    }
 }
