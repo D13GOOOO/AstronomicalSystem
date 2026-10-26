@@ -28,6 +28,6 @@ public record Vector3(double x, double y, double z) {
     }
 
     public double length() {
-        throw new UnsupportedOperationException("not yet implemented");
+        return Math.sqrt(lengthSquared());
     }
 }
