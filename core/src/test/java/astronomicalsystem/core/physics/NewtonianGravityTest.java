@@ -8,11 +8,14 @@ import astronomicalsystem.core.body.Radius;
 import astronomicalsystem.core.math.Vector3;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.Comparator;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class NewtonianGravityTest {
 
@@ -25,6 +28,14 @@ class NewtonianGravityTest {
             (actual, expected) -> actual.minus(expected).length() < TOLERANCE ? 0 : 1;
 
     private final NewtonianGravity SUT = new NewtonianGravity(G, NO_SOFTENING);
+
+    @ParameterizedTest
+    @ValueSource(doubles = {0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY})
+    void constructorRejectsInvalidGravitationalConstant(double gravitationalConstant) {
+        assertThatThrownBy(() -> new NewtonianGravity(gravitationalConstant, NO_SOFTENING))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Gravitational constant must be positive and finite");
+    }
 
     @Test
     void lonelyBodyHasNoAcceleration() {
