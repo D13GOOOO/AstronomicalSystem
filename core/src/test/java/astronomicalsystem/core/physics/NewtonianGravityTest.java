@@ -82,6 +82,16 @@ class NewtonianGravityTest {
                             new Vector3(G * PLANET_MASS / softenedCube, 0.0, 0.0),
                             new Vector3(-G * SUN_MASS / softenedCube, 0.0, 0.0));
         }
+
+        @Test
+        void coincidentBodiesDoNotPullEachOther() {
+            Body sun = body("Sun", SUN_MASS, Vector3.ZERO);
+            Body planet = body("Planet", PLANET_MASS, Vector3.ZERO);
+
+            List<Vector3> accelerations = SUT.accelerations(List.of(sun, planet));
+
+            assertThat(accelerations).containsExactly(new Vector3(0.0, 0.0, 0.0), new Vector3(0.0, 0.0, 0.0));
+        }
     }
 
     private static Body body(String name, double solarMasses, Vector3 position) {

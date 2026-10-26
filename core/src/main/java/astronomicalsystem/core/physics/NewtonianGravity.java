@@ -31,8 +31,9 @@ public record NewtonianGravity(double gravitationalConstant, double softeningLen
         Body first = bodies.get(i);
         Body second = bodies.get(j);
         Vector3 separation = second.position().minus(first.position());
-        double distance = separation.length();
-        Vector3 pullPerUnitMass = separation.times(gravitationalConstant / (distance * distance * distance));
+        double softenedDistance = Math.sqrt(separation.lengthSquared() + softeningLength * softeningLength);
+        Vector3 pullPerUnitMass = separation.times(
+                gravitationalConstant / (softenedDistance * softenedDistance * softenedDistance));
         accelerations[i] = accelerations[i].plus(pullPerUnitMass.times(second.mass().solarMasses()));
         accelerations[j] = accelerations[j].minus(pullPerUnitMass.times(first.mass().solarMasses()));
     }
