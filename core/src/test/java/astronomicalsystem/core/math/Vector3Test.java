@@ -41,4 +41,13 @@ class Vector3Test {
 
         assertThat(product).isEqualTo(12.0);
     }
+
+    @Test
+    void lengthSquaredSumsSquaresOfComponents() {
+        Vector3 SUT = new Vector3(2.0, -3.0, 6.0);
+
+        double lengthSquared = SUT.lengthSquared();
+
+        assertThat(lengthSquared).isEqualTo(49.0);
+    }
 }

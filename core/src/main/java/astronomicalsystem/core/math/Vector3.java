@@ -22,4 +22,8 @@ public record Vector3(double x, double y, double z) {
     public double dot(@NotNull Vector3 other) {
         return x * other.x + y * other.y + z * other.z;
     }
+
+    public double lengthSquared() {
+        throw new UnsupportedOperationException("not yet implemented");
+    }
 }
