@@ -4,7 +4,7 @@ import astronomicalsystem.core.body.Body;
 import astronomicalsystem.core.math.Vector3;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -17,6 +17,23 @@ public record NewtonianGravity(double gravitationalConstant, double softeningLen
 
     @Override
     public @NotNull List<Vector3> accelerations(@NotNull List<Body> bodies) {
-        return Collections.nCopies(bodies.size(), Vector3.ZERO);
+        Vector3[] accelerations = new Vector3[bodies.size()];
+        Arrays.fill(accelerations, Vector3.ZERO);
+        for (int i = 0; i < bodies.size(); i++) {
+            for (int j = i + 1; j < bodies.size(); j++) {
+                addMutualAttraction(bodies, accelerations, i, j);
+            }
+        }
+        return List.of(accelerations);
+    }
+
+    private void addMutualAttraction(@NotNull List<Body> bodies, @NotNull Vector3[] accelerations, int i, int j) {
+        Body first = bodies.get(i);
+        Body second = bodies.get(j);
+        Vector3 separation = second.position().minus(first.position());
+        double distance = separation.length();
+        Vector3 pullPerUnitMass = separation.times(gravitationalConstant / (distance * distance * distance));
+        accelerations[i] = accelerations[i].plus(pullPerUnitMass.times(second.mass().solarMasses()));
+        accelerations[j] = accelerations[j].minus(pullPerUnitMass.times(first.mass().solarMasses()));
     }
 }
