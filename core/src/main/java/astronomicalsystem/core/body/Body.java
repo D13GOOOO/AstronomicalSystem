@@ -14,6 +14,6 @@ public record Body(@NotNull BodyName name,
                    @NotNull Vector3 velocity) {
 
     public @NotNull Body withMotion(@NotNull Vector3 newPosition, @NotNull Vector3 newVelocity) {
-        throw new UnsupportedOperationException("not yet implemented");
+        return new Body(name, kind, mass, radius, newPosition, newVelocity);
     }
 }
