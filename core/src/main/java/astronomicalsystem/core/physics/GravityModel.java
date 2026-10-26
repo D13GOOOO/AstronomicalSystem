@@ -12,7 +12,7 @@ import java.util.List;
 public interface GravityModel {
 
     /**
-     * @param bodies the bodies of the system
+     * @param bodies the bodies of the system, no two of which share a position
      * @return the accelerations, in AU per day squared; the element at index {@code i} is the
      *         acceleration of the body at index {@code i} of {@code bodies}
      */

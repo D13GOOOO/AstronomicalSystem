@@ -18,6 +18,7 @@ public record NewtonianGravity(double gravitationalConstant, double softeningLen
 
     public NewtonianGravity {
         Quantities.requirePositiveFinite(gravitationalConstant, "Gravitational constant");
+        Quantities.requireNonNegativeFinite(softeningLength, "Softening length");
     }
 
     @Override
