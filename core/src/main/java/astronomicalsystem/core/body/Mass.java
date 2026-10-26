@@ -6,8 +6,6 @@ package astronomicalsystem.core.body;
 public record Mass(double solarMasses) {
 
     public Mass {
-        if (solarMasses <= 0.0 || !Double.isFinite(solarMasses)) {
-            throw new IllegalArgumentException("Mass must be positive and finite");
-        }
+        Quantities.requirePositiveFinite(solarMasses, "Mass");
     }
 }

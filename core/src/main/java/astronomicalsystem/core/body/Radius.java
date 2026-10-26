@@ -6,8 +6,6 @@ package astronomicalsystem.core.body;
 public record Radius(double astronomicalUnits) {
 
     public Radius {
-        if (astronomicalUnits <= 0.0 || !Double.isFinite(astronomicalUnits)) {
-            throw new IllegalArgumentException("Radius must be positive and finite");
-        }
+        Quantities.requirePositiveFinite(astronomicalUnits, "Radius");
     }
 }
