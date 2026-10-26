@@ -32,6 +32,6 @@ public record Vector3(double x, double y, double z) {
     }
 
     public @NotNull Vector3 normalized() {
-        throw new UnsupportedOperationException("not yet implemented");
+        return times(1.0 / length());
     }
 }
