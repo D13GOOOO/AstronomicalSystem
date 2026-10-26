@@ -44,6 +44,22 @@ class NewtonianGravityTest {
                 .containsExactly(new Vector3(G * PLANET_MASS, 0.0, 0.0), new Vector3(-G * SUN_MASS, 0.0, 0.0));
     }
 
+    @Test
+    void pullsFromSeveralBodiesAddUp() {
+        Body left = body("Left", PLANET_MASS, new Vector3(-1.0, 0.0, 0.0));
+        Body sun = body("Sun", SUN_MASS, Vector3.ZERO);
+        Body right = body("Right", PLANET_MASS, new Vector3(1.0, 0.0, 0.0));
+
+        List<Vector3> accelerations = SUT.accelerations(List.of(left, sun, right));
+
+        assertThat(accelerations)
+                .usingElementComparator(CLOSE_ENOUGH)
+                .containsExactly(
+                        new Vector3(G * (SUN_MASS + PLANET_MASS / 4.0), 0.0, 0.0),
+                        new Vector3(0.0, 0.0, 0.0),
+                        new Vector3(-G * (SUN_MASS + PLANET_MASS / 4.0), 0.0, 0.0));
+    }
+
     private static Body body(String name, double solarMasses, Vector3 position) {
         return new Body(new BodyName(name), BodyKind.PLANET, new Mass(solarMasses), new Radius(1e-3),
                 position, Vector3.ZERO);
