@@ -20,6 +20,6 @@ public record Vector3(double x, double y, double z) {
     }
 
     public double dot(@NotNull Vector3 other) {
-        throw new UnsupportedOperationException("not yet implemented");
+        return x * other.x + y * other.y + z * other.z;
     }
 }
