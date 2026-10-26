@@ -4,6 +4,7 @@ import astronomicalsystem.core.body.Body;
 import astronomicalsystem.core.math.Vector3;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -16,6 +17,6 @@ public record NewtonianGravity(double gravitationalConstant, double softeningLen
 
     @Override
     public @NotNull List<Vector3> accelerations(@NotNull List<Body> bodies) {
-        throw new UnsupportedOperationException("not yet implemented");
+        return Collections.nCopies(bodies.size(), Vector3.ZERO);
     }
 }
