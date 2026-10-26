@@ -6,6 +6,7 @@ import astronomicalsystem.core.body.BodyName;
 import astronomicalsystem.core.body.Mass;
 import astronomicalsystem.core.body.Radius;
 import astronomicalsystem.core.math.Vector3;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.Comparator;
@@ -58,6 +59,29 @@ class NewtonianGravityTest {
                         new Vector3(G * (SUN_MASS + PLANET_MASS / 4.0), 0.0, 0.0),
                         new Vector3(0.0, 0.0, 0.0),
                         new Vector3(-G * (SUN_MASS + PLANET_MASS / 4.0), 0.0, 0.0));
+    }
+
+    @Nested
+    class WithSoftening {
+
+        private static final double SOFTENING = 1.0;
+
+        private final NewtonianGravity SUT = new NewtonianGravity(G, SOFTENING);
+
+        @Test
+        void softeningWeakensThePullAtShortDistances() {
+            Body sun = body("Sun", SUN_MASS, Vector3.ZERO);
+            Body planet = body("Planet", PLANET_MASS, new Vector3(1.0, 0.0, 0.0));
+
+            List<Vector3> accelerations = SUT.accelerations(List.of(sun, planet));
+
+            double softenedCube = 2.0 * Math.sqrt(2.0);
+            assertThat(accelerations)
+                    .usingElementComparator(CLOSE_ENOUGH)
+                    .containsExactly(
+                            new Vector3(G * PLANET_MASS / softenedCube, 0.0, 0.0),
+                            new Vector3(-G * SUN_MASS / softenedCube, 0.0, 0.0));
+        }
     }
 
     private static Body body(String name, double solarMasses, Vector3 position) {
