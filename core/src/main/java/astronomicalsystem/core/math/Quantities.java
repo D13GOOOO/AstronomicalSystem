@@ -1,13 +1,16 @@
-package astronomicalsystem.core.body;
+package astronomicalsystem.core.math;
 
 import org.jetbrains.annotations.NotNull;
 
-final class Quantities {
+/**
+ * Validation of scalar physical quantities.
+ */
+public final class Quantities {
 
     private Quantities() {
     }
 
-    static void requirePositiveFinite(double value, @NotNull String quantityName) {
+    public static void requirePositiveFinite(double value, @NotNull String quantityName) {
         if (value <= 0.0 || !Double.isFinite(value)) {
             throw new IllegalArgumentException(quantityName + " must be positive and finite");
         }

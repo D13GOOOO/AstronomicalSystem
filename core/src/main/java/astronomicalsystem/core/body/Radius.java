@@ -1,5 +1,7 @@
 package astronomicalsystem.core.body;
 
+import astronomicalsystem.core.math.Quantities;
+
 /**
  * Radius of a body, in astronomical units.
  */
