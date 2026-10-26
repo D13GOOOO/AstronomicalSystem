@@ -37,6 +37,14 @@ class NewtonianGravityTest {
                 .hasMessage("Gravitational constant must be positive and finite");
     }
 
+    @ParameterizedTest
+    @ValueSource(doubles = {-1.0, Double.NaN, Double.POSITIVE_INFINITY})
+    void constructorRejectsInvalidSofteningLength(double softeningLength) {
+        assertThatThrownBy(() -> new NewtonianGravity(G, softeningLength))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Softening length must be non-negative and finite");
+    }
+
     @Test
     void lonelyBodyHasNoAcceleration() {
         List<Vector3> accelerations = SUT.accelerations(List.of(body("Sun", SUN_MASS, Vector3.ZERO)));
