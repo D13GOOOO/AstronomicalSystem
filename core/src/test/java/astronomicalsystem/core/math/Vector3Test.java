@@ -3,6 +3,7 @@ package astronomicalsystem.core.math;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
 
 class Vector3Test {
@@ -72,5 +73,14 @@ class Vector3Test {
         assertThat(unit.x()).isCloseTo(0.0, within(TOLERANCE));
         assertThat(unit.y()).isCloseTo(0.6, within(TOLERANCE));
         assertThat(unit.z()).isCloseTo(0.8, within(TOLERANCE));
+    }
+
+    @Test
+    void normalizedRejectsZeroVector() {
+        Vector3 SUT = new Vector3(0.0, 0.0, 0.0);
+
+        assertThatThrownBy(SUT::normalized)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Cannot normalize the zero vector");
     }
 }
