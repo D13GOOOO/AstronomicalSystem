@@ -1,5 +1,7 @@
 package astronomicalsystem.core.body;
 
+import astronomicalsystem.core.math.Quantities;
+
 /**
  * Mass of a body, in solar masses.
  */
