@@ -23,4 +23,13 @@ class Vector3Test {
 
         assertThat(difference).isEqualTo(new Vector3(10.0, 20.0, 30.0));
     }
+
+    @Test
+    void timesScalesEachComponent() {
+        Vector3 SUT = new Vector3(1.0, -2.0, 3.0);
+
+        Vector3 scaled = SUT.times(2.5);
+
+        assertThat(scaled).isEqualTo(new Vector3(2.5, -5.0, 7.5));
+    }
 }
