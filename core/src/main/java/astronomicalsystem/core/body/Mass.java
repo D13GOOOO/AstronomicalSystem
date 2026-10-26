@@ -1,0 +1,11 @@
+package astronomicalsystem.core.body;
+
+/**
+ * Mass of a body, in solar masses.
+ */
+public record Mass(double solarMasses) {
+
+    public Mass {
+        Quantities.requirePositiveFinite(solarMasses, "Mass");
+    }
+}
