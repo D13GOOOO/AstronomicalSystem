@@ -30,4 +30,8 @@ public record Vector3(double x, double y, double z) {
     public double length() {
         return Math.sqrt(lengthSquared());
     }
+
+    public @NotNull Vector3 normalized() {
+        throw new UnsupportedOperationException("not yet implemented");
+    }
 }

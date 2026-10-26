@@ -3,8 +3,11 @@ package astronomicalsystem.core.math;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 class Vector3Test {
+
+    private static final double TOLERANCE = 1e-12;
 
     @Test
     void plusAddsEachComponent() {
@@ -58,5 +61,16 @@ class Vector3Test {
         double length = SUT.length();
 
         assertThat(length).isEqualTo(7.0);
+    }
+
+    @Test
+    void normalizedKeepsDirectionWithUnitLength() {
+        Vector3 SUT = new Vector3(0.0, 3.0, 4.0);
+
+        Vector3 unit = SUT.normalized();
+
+        assertThat(unit.x()).isCloseTo(0.0, within(TOLERANCE));
+        assertThat(unit.y()).isCloseTo(0.6, within(TOLERANCE));
+        assertThat(unit.z()).isCloseTo(0.8, within(TOLERANCE));
     }
 }
