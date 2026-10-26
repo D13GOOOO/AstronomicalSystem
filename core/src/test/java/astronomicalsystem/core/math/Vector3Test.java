@@ -14,4 +14,13 @@ class Vector3Test {
 
         assertThat(sum).isEqualTo(new Vector3(11.0, 22.0, 33.0));
     }
+
+    @Test
+    void minusSubtractsEachComponent() {
+        Vector3 SUT = new Vector3(11.0, 22.0, 33.0);
+
+        Vector3 difference = SUT.minus(new Vector3(1.0, 2.0, 3.0));
+
+        assertThat(difference).isEqualTo(new Vector3(10.0, 20.0, 30.0));
+    }
 }
