@@ -1,0 +1,30 @@
+package astronomicalsystem.core.orbit;
+
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
+
+class KeplerEquationTest {
+
+    private static final double TOLERANCE = 1e-12;
+
+    @ParameterizedTest(name = "{0}")
+    @CsvSource(textBlock = """
+            periapsis,                  0.0,                0.5
+            apoapsis,                   3.141592653589793,  0.5
+            quarter of the ellipse,     1.5707963267948966, 0.5
+            Earth,                      1.0,                0.0167
+            before periapsis,          -1.0,                0.5
+            Halley near perihelion,     0.1,                0.967
+            almost parabolic,           0.05,               0.99
+            """)
+    void solvesForTheEccentricAnomaly(String description, double eccentricAnomaly, double eccentricity) {
+        double meanAnomaly = eccentricAnomaly - eccentricity * Math.sin(eccentricAnomaly);
+
+        double solved = KeplerEquation.eccentricAnomaly(meanAnomaly, new Eccentricity(eccentricity));
+
+        assertThat(solved).isCloseTo(eccentricAnomaly, within(TOLERANCE));
+    }
+}
