@@ -5,8 +5,10 @@ import astronomicalsystem.core.math.Vector3;
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class OrbitalElementsTest {
 
@@ -66,6 +68,14 @@ class OrbitalElementsTest {
 
         assertThat(state).usingRecursiveComparison(CLOSE_ENOUGH)
                 .isEqualTo(new StateVector(new Vector3(x, y, z), new Vector3(vx, vy, vz)));
+    }
+
+    @ParameterizedTest
+    @ValueSource(doubles = {0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY})
+    void constructorRejectsNonPositiveOrNonFiniteSemiMajorAxes(double semiMajorAxis) {
+        assertThatThrownBy(() -> new OrbitalElements(semiMajorAxis, new Eccentricity(ECCENTRICITY), 0.0, 0.0, 0.0, 0.0))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Semi-major axis must be positive and finite");
     }
 
     private static OrbitalElements atPeriapsisOriented(double inclinationDegrees, double ascendingNodeDegrees,
