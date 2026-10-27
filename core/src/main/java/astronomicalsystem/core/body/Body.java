@@ -50,6 +50,9 @@ public record Body(@NotNull BodyName name,
         Vector3 centreOfMass = position.times(mass.solarMasses())
                 .plus(other.position.times(other.mass.solarMasses()))
                 .times(1.0 / mergedMass.solarMasses());
-        return new Body(name, kind, mergedMass, radius, centreOfMass, velocity);
+        Vector3 centreOfMassVelocity = velocity.times(mass.solarMasses())
+                .plus(other.velocity.times(other.mass.solarMasses()))
+                .times(1.0 / mergedMass.solarMasses());
+        return new Body(name, kind, mergedMass, radius, centreOfMass, centreOfMassVelocity);
     }
 }
