@@ -2,14 +2,19 @@ package astronomicalsystem.core.body;
 
 import astronomicalsystem.core.math.Vector3;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 class BodyTest {
 
     private static final BodyName EARTH = new BodyName("Earth");
+    private static final BodyName MOON = new BodyName("Moon");
     private static final Mass EARTH_MASS = new Mass(3.003e-6);
     private static final Radius EARTH_RADIUS = new Radius(4.259e-5);
+    private static final double CUBE_ROOT_OF_NINE = 2.080083823051904;
 
     @Test
     void withMotionReplacesOnlyPositionAndVelocity() {
@@ -42,5 +47,111 @@ class BodyTest {
 
         assertThat(kicked).isEqualTo(new Body(EARTH, BodyKind.PLANET, EARTH_MASS, EARTH_RADIUS,
                 new Vector3(1.0, 0.0, 0.0), new Vector3(-0.25, 0.25, 0.0)));
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @CsvSource(textBlock = """
+            apart,                       1.0, 0.5,  2.0,  0.0, false
+            touching,                    1.0, 0.5,  1.5,  0.0, false
+            overlapping,                 1.0, 0.5,  1.25, 0.0, true
+            inside,                      1.0, 0.5,  0.25, 0.0, true
+            coincident,                  1.0, 0.5,  0.0,  0.0, true
+            overlapping on the left,     1.0, 0.5, -1.25, 0.0, true
+            overlapping off axis,        1.0, 0.5,  0.75, 1.0, true
+            apart off axis,              1.0, 0.5,  1.2,  1.6, false
+            overlapping (radii swapped), 0.5, 1.0,  1.25, 0.0, true
+            touching (radii swapped),    0.5, 1.0,  1.5,  0.0, false
+            """)
+    void overlapsWhenTheDistanceIsLessThanTheSumOfTheRadii(String description,
+                                                           double ownRadius, double otherRadius,
+                                                           double otherX, double otherY,
+                                                           boolean expected) {
+        Body SUT = sphere(EARTH, ownRadius, Vector3.ZERO);
+        Body other = sphere(MOON, otherRadius, new Vector3(otherX, otherY, 0.0));
+
+        boolean overlaps = SUT.overlaps(other);
+
+        assertThat(overlaps).isEqualTo(expected);
+    }
+
+    @Test
+    void mergedWithAddsTheMasses() {
+        Body SUT = withMass(EARTH, 0.75);
+        Body other = withMass(MOON, 0.25);
+
+        Body merged = SUT.mergedWith(other);
+
+        assertThat(merged.mass()).isEqualTo(new Mass(1.0));
+    }
+
+    @Test
+    void mergedWithIsPlacedAtTheCentreOfMass() {
+        Body SUT = body(EARTH, 0.75, new Vector3(1.0, 2.0, 0.0), Vector3.ZERO);
+        Body other = body(MOON, 0.25, new Vector3(5.0, -2.0, 4.0), Vector3.ZERO);
+
+        Body merged = SUT.mergedWith(other);
+
+        assertThat(merged.position()).isEqualTo(new Vector3(2.0, 1.0, 1.0));
+    }
+
+    @Test
+    void mergedWithConservesTheMomentum() {
+        Body SUT = body(EARTH, 0.75, Vector3.ZERO, new Vector3(2.0, 0.0, -1.0));
+        Body other = body(MOON, 0.25, Vector3.ZERO, new Vector3(-2.0, 4.0, 3.0));
+
+        Body merged = SUT.mergedWith(other);
+
+        assertThat(merged.velocity()).isEqualTo(new Vector3(1.0, 1.0, 0.0));
+    }
+
+    @Test
+    void mergedWithConservesTheVolume() {
+        Body SUT = sphere(EARTH, 1.0, Vector3.ZERO);
+        Body other = sphere(MOON, 2.0, Vector3.ZERO);
+
+        Body merged = SUT.mergedWith(other);
+
+        assertThat(merged.radius().astronomicalUnits()).isCloseTo(CUBE_ROOT_OF_NINE, within(1e-12));
+    }
+
+    @Test
+    void mergedWithTakesTheIdentityOfTheMoreMassiveOther() {
+        Body SUT = identified(MOON, BodyKind.MOON, 0.25);
+        Body other = identified(EARTH, BodyKind.PLANET, 0.75);
+
+        Body merged = SUT.mergedWith(other);
+
+        assertThat(merged).extracting(Body::name, Body::kind).containsExactly(EARTH, BodyKind.PLANET);
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @CsvSource(textBlock = """
+            more massive, 0.75, 0.25
+            as massive,   0.5,  0.5
+            """)
+    void mergedWithKeepsItsOwnIdentityUnlessTheOtherIsMoreMassive(String description,
+                                                                  double ownMass, double otherMass) {
+        Body SUT = identified(EARTH, BodyKind.PLANET, ownMass);
+        Body other = identified(MOON, BodyKind.MOON, otherMass);
+
+        Body merged = SUT.mergedWith(other);
+
+        assertThat(merged).extracting(Body::name, Body::kind).containsExactly(EARTH, BodyKind.PLANET);
+    }
+
+    private static Body identified(BodyName name, BodyKind kind, double solarMasses) {
+        return new Body(name, kind, new Mass(solarMasses), EARTH_RADIUS, Vector3.ZERO, Vector3.ZERO);
+    }
+
+    private static Body withMass(BodyName name, double solarMasses) {
+        return body(name, solarMasses, Vector3.ZERO, Vector3.ZERO);
+    }
+
+    private static Body body(BodyName name, double solarMasses, Vector3 position, Vector3 velocity) {
+        return new Body(name, BodyKind.PLANET, new Mass(solarMasses), EARTH_RADIUS, position, velocity);
+    }
+
+    private static Body sphere(BodyName name, double radius, Vector3 position) {
+        return new Body(name, BodyKind.PLANET, EARTH_MASS, new Radius(radius), position, Vector3.ZERO);
     }
 }
