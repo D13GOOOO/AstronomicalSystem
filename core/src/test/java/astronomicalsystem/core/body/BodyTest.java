@@ -92,6 +92,16 @@ class BodyTest {
         assertThat(merged.position()).isEqualTo(new Vector3(2.0, 1.0, 1.0));
     }
 
+    @Test
+    void mergedWithConservesTheMomentum() {
+        Body SUT = body(EARTH, 0.75, Vector3.ZERO, new Vector3(2.0, 0.0, -1.0));
+        Body other = body(MOON, 0.25, Vector3.ZERO, new Vector3(-2.0, 4.0, 3.0));
+
+        Body merged = SUT.mergedWith(other);
+
+        assertThat(merged.velocity()).isEqualTo(new Vector3(1.0, 1.0, 0.0));
+    }
+
     private static Body withMass(BodyName name, double solarMasses) {
         return body(name, solarMasses, Vector3.ZERO, Vector3.ZERO);
     }
