@@ -46,6 +46,10 @@ public record Body(@NotNull BodyName name,
      * @return the body formed by a perfectly inelastic collision of this body with {@code other}
      */
     public @NotNull Body mergedWith(@NotNull Body other) {
-        return new Body(name, kind, mass.plus(other.mass), radius, position, velocity);
+        Mass mergedMass = mass.plus(other.mass);
+        Vector3 centreOfMass = position.times(mass.solarMasses())
+                .plus(other.position.times(other.mass.solarMasses()))
+                .times(1.0 / mergedMass.solarMasses());
+        return new Body(name, kind, mergedMass, radius, centreOfMass, velocity);
     }
 }
