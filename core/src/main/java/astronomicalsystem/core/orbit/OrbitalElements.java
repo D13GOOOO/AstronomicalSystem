@@ -27,6 +27,9 @@ public record OrbitalElements(double semiMajorAxis,
         if (!inclinationInRange) {
             throw new IllegalArgumentException("Inclination must be between 0 and pi radians");
         }
+        if (!Double.isFinite(longitudeOfAscendingNode) || !Double.isFinite(argumentOfPeriapsis)) {
+            throw new IllegalArgumentException("Orbital angles must be finite");
+        }
     }
 
     /**
