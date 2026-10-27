@@ -124,6 +124,21 @@ class BodyTest {
         assertThat(merged).extracting(Body::name, Body::kind).containsExactly(EARTH, BodyKind.PLANET);
     }
 
+    @ParameterizedTest(name = "{0}")
+    @CsvSource(textBlock = """
+            more massive, 0.75, 0.25
+            as massive,   0.5,  0.5
+            """)
+    void mergedWithKeepsItsOwnIdentityUnlessTheOtherIsMoreMassive(String description,
+                                                                  double ownMass, double otherMass) {
+        Body SUT = identified(EARTH, BodyKind.PLANET, ownMass);
+        Body other = identified(MOON, BodyKind.MOON, otherMass);
+
+        Body merged = SUT.mergedWith(other);
+
+        assertThat(merged).extracting(Body::name, Body::kind).containsExactly(EARTH, BodyKind.PLANET);
+    }
+
     private static Body identified(BodyName name, BodyKind kind, double solarMasses) {
         return new Body(name, kind, new Mass(solarMasses), EARTH_RADIUS, Vector3.ZERO, Vector3.ZERO);
     }
