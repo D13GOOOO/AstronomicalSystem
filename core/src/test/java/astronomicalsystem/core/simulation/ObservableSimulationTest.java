@@ -43,6 +43,19 @@ class ObservableSimulationTest {
     }
 
     @Test
+    void everyObserverIsNotified() {
+        Observer<List<Body>> anotherObserver = mock();
+        when(integrator.step(List.of(SUN, EARTH), TWO_DAYS)).thenReturn(List.of(SUN, MOVED_EARTH));
+        SUT.addObserver(observer);
+        SUT.addObserver(anotherObserver);
+
+        SUT.advance(TWO_DAYS);
+
+        verify(observer).update(SUT, List.of(SUN, MOVED_EARTH));
+        verify(anotherObserver).update(SUT, List.of(SUN, MOVED_EARTH));
+    }
+
+    @Test
     void theStateIsTheCurrentBodies() {
         List<Body> state = SUT.getState();
 
