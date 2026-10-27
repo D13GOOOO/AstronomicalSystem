@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -39,5 +40,12 @@ class ObservableSimulationTest {
         SUT.advance(TWO_DAYS);
 
         verify(observer).update(SUT, List.of(SUN, MOVED_EARTH));
+    }
+
+    @Test
+    void theStateIsTheCurrentBodies() {
+        List<Body> state = SUT.getState();
+
+        assertThat(state).containsExactly(SUN, EARTH);
     }
 }
