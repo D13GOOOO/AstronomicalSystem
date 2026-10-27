@@ -11,10 +11,13 @@ import java.util.List;
  */
 public class Simulation {
 
+    private List<Body> bodies;
+
     public Simulation(@NotNull Integrator integrator, @NotNull List<Body> initialBodies) {
+        this.bodies = initialBodies;
     }
 
     public @NotNull List<Body> bodies() {
-        return List.of();
+        return bodies;
     }
 }
