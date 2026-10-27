@@ -29,6 +29,17 @@ class MergingCollisionsTest {
         assertThat(resolved).containsExactly(first.mergedWith(second));
     }
 
+    @Test
+    void separateBodiesAreLeftUnchanged() {
+        Body first = sphereAt("First", 0.0);
+        Body second = sphereAt("Second", 3.0);
+        Body third = sphereAt("Third", 6.0);
+
+        List<Body> resolved = SUT.resolve(List.of(first, second, third));
+
+        assertThat(resolved).containsExactly(first, second, third);
+    }
+
     private static Body sphereAt(String name, double x) {
         return new Body(new BodyName(name), BodyKind.PLANET, UNIT_MASS, UNIT_RADIUS,
                 new Vector3(x, 0.0, 0.0), Vector3.ZERO);
