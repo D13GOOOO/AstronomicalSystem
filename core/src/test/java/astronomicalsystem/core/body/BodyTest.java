@@ -6,6 +6,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 class BodyTest {
 
@@ -13,6 +14,7 @@ class BodyTest {
     private static final BodyName MOON = new BodyName("Moon");
     private static final Mass EARTH_MASS = new Mass(3.003e-6);
     private static final Radius EARTH_RADIUS = new Radius(4.259e-5);
+    private static final double CUBE_ROOT_OF_NINE = 2.080083823051904;
 
     @Test
     void withMotionReplacesOnlyPositionAndVelocity() {
@@ -100,6 +102,16 @@ class BodyTest {
         Body merged = SUT.mergedWith(other);
 
         assertThat(merged.velocity()).isEqualTo(new Vector3(1.0, 1.0, 0.0));
+    }
+
+    @Test
+    void mergedWithConservesTheVolume() {
+        Body SUT = sphere(EARTH, 1.0, Vector3.ZERO);
+        Body other = sphere(MOON, 2.0, Vector3.ZERO);
+
+        Body merged = SUT.mergedWith(other);
+
+        assertThat(merged.radius().astronomicalUnits()).isCloseTo(CUBE_ROOT_OF_NINE, within(1e-12));
     }
 
     private static Body withMass(BodyName name, double solarMasses) {
