@@ -1,5 +1,7 @@
 package astronomicalsystem.core.math;
 
+import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
+import org.assertj.core.util.DoubleComparator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -11,6 +13,44 @@ import static org.assertj.core.api.Assertions.within;
 class Vector3Test {
 
     private static final double TOLERANCE = 1e-12;
+    private static final double QUARTER_TURN = Math.PI / 2.0;
+    private static final RecursiveComparisonConfiguration CLOSE_ENOUGH = RecursiveComparisonConfiguration.builder()
+            .withComparatorForType(new DoubleComparator(TOLERANCE), Double.class)
+            .build();
+
+    @ParameterizedTest
+    @CsvSource(textBlock = """
+            1.0, 0.0, 0.0,   0.0, 1.0, 0.0
+            0.0, 1.0, 0.0,  -1.0, 0.0, 0.0
+            0.0, 0.0, 1.0,   0.0, 0.0, 1.0
+            1.0, 2.0, 3.0,  -2.0, 1.0, 3.0
+            """)
+    void aQuarterTurnAboutZTurnsXIntoYAndKeepsZ(double x, double y, double z,
+                                               double expectedX, double expectedY, double expectedZ) {
+        Vector3 SUT = new Vector3(x, y, z);
+
+        Vector3 rotated = SUT.rotatedAboutZ(QUARTER_TURN);
+
+        assertThat(rotated).usingRecursiveComparison(CLOSE_ENOUGH)
+                .isEqualTo(new Vector3(expectedX, expectedY, expectedZ));
+    }
+
+    @ParameterizedTest
+    @CsvSource(textBlock = """
+            0.0, 1.0, 0.0,   0.0,  0.0, 1.0
+            0.0, 0.0, 1.0,   0.0, -1.0, 0.0
+            1.0, 0.0, 0.0,   1.0,  0.0, 0.0
+            1.0, 2.0, 3.0,   1.0, -3.0, 2.0
+            """)
+    void aQuarterTurnAboutXTurnsYIntoZAndKeepsX(double x, double y, double z,
+                                               double expectedX, double expectedY, double expectedZ) {
+        Vector3 SUT = new Vector3(x, y, z);
+
+        Vector3 rotated = SUT.rotatedAboutX(QUARTER_TURN);
+
+        assertThat(rotated).usingRecursiveComparison(CLOSE_ENOUGH)
+                .isEqualTo(new Vector3(expectedX, expectedY, expectedZ));
+    }
 
     @Test
     void plusAddsEachComponent() {
