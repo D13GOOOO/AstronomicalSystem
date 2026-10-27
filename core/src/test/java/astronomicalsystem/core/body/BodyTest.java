@@ -114,6 +114,20 @@ class BodyTest {
         assertThat(merged.radius().astronomicalUnits()).isCloseTo(CUBE_ROOT_OF_NINE, within(1e-12));
     }
 
+    @Test
+    void mergedWithTakesTheIdentityOfTheMoreMassiveOther() {
+        Body SUT = identified(MOON, BodyKind.MOON, 0.25);
+        Body other = identified(EARTH, BodyKind.PLANET, 0.75);
+
+        Body merged = SUT.mergedWith(other);
+
+        assertThat(merged).extracting(Body::name, Body::kind).containsExactly(EARTH, BodyKind.PLANET);
+    }
+
+    private static Body identified(BodyName name, BodyKind kind, double solarMasses) {
+        return new Body(name, kind, new Mass(solarMasses), EARTH_RADIUS, Vector3.ZERO, Vector3.ZERO);
+    }
+
     private static Body withMass(BodyName name, double solarMasses) {
         return body(name, solarMasses, Vector3.ZERO, Vector3.ZERO);
     }
