@@ -4,6 +4,8 @@ import astronomicalsystem.core.math.Quantities;
 import astronomicalsystem.core.math.Vector3;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.stream.DoubleStream;
+
 /**
  * Keplerian elements of an elliptic orbit, referred to the ecliptic. Angles are in radians.
  *
@@ -25,17 +27,24 @@ public record OrbitalElements(double semiMajorAxis,
 
     public OrbitalElements {
         Quantities.requirePositiveFinite(semiMajorAxis, "Semi-major axis");
-        // Written so that NaN, for which every comparison is false, is rejected too
-        boolean inclinationInRange = inclination >= 0.0 && inclination <= Math.PI;
-        if (!inclinationInRange) {
-            throw new IllegalArgumentException("Inclination must be between 0 and pi radians");
-        }
-        if (!Double.isFinite(longitudeOfAscendingNode) || !Double.isFinite(argumentOfPeriapsis)
-                || !Double.isFinite(meanAnomaly)) {
-            throw new IllegalArgumentException("Orbital angles must be finite");
-        }
+        requireInclinationInRange(inclination);
+        requireFiniteAngles(longitudeOfAscendingNode, argumentOfPeriapsis, meanAnomaly);
         // The exact IEEE remainder keeps Kepler's equation within its domain however many turns
         meanAnomaly = Math.IEEEremainder(meanAnomaly, FULL_TURN);
+    }
+
+    private static void requireInclinationInRange(double inclination) {
+        // Written so that NaN, for which every comparison is false, is rejected too
+        boolean inRange = inclination >= 0.0 && inclination <= Math.PI;
+        if (!inRange) {
+            throw new IllegalArgumentException("Inclination must be between 0 and pi radians");
+        }
+    }
+
+    private static void requireFiniteAngles(double... angles) {
+        if (!DoubleStream.of(angles).allMatch(Double::isFinite)) {
+            throw new IllegalArgumentException("Orbital angles must be finite");
+        }
     }
 
     /**
