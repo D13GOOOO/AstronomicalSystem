@@ -22,22 +22,14 @@ public final class VelocityVerlet implements Integrator {
     public @NotNull List<Body> step(@NotNull List<Body> bodies, @NotNull TimeStep timeStep) {
         double days = timeStep.days();
         List<Body> halfKicked = halfKick(bodies, gravity.accelerations(bodies), days);
-        List<Body> drifted = halfKicked.stream().map(body -> drift(body, days)).toList();
+        List<Body> drifted = halfKicked.stream().map(body -> body.drifted(days)).toList();
         return halfKick(drifted, gravity.accelerations(drifted), days);
     }
 
     private static @NotNull List<Body> halfKick(@NotNull List<Body> bodies, @NotNull List<Vector3> accelerations,
                                                 double days) {
         return IntStream.range(0, bodies.size())
-                .mapToObj(i -> kick(bodies.get(i), accelerations.get(i), days / 2.0))
+                .mapToObj(i -> bodies.get(i).kicked(accelerations.get(i), days / 2.0))
                 .toList();
-    }
-
-    private static @NotNull Body kick(@NotNull Body body, @NotNull Vector3 acceleration, double days) {
-        return body.withMotion(body.position(), body.velocity().plus(acceleration.times(days)));
-    }
-
-    private static @NotNull Body drift(@NotNull Body body, double days) {
-        return body.withMotion(body.position().plus(body.velocity().times(days)), body.velocity());
     }
 }
