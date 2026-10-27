@@ -6,12 +6,13 @@ import astronomicalsystem.core.body.BodyName;
 import astronomicalsystem.core.body.Mass;
 import astronomicalsystem.core.body.Radius;
 import astronomicalsystem.core.math.Vector3;
+import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
+import org.assertj.core.util.DoubleComparator;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import java.util.Comparator;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -24,8 +25,9 @@ class NewtonianGravityTest {
     private static final double SUN_MASS = 1.0;
     private static final double PLANET_MASS = 1e-3;
     private static final double TOLERANCE = 1e-15;
-    private static final Comparator<Vector3> CLOSE_ENOUGH =
-            (actual, expected) -> actual.minus(expected).length() < TOLERANCE ? 0 : 1;
+    private static final RecursiveComparisonConfiguration CLOSE_ENOUGH = RecursiveComparisonConfiguration.builder()
+            .withComparatorForType(new DoubleComparator(TOLERANCE), Double.class)
+            .build();
 
     private final NewtonianGravity SUT = new NewtonianGravity(G, NO_SOFTENING);
 
@@ -60,7 +62,7 @@ class NewtonianGravityTest {
         List<Vector3> accelerations = SUT.accelerations(List.of(sun, planet));
 
         assertThat(accelerations)
-                .usingElementComparator(CLOSE_ENOUGH)
+                .usingRecursiveFieldByFieldElementComparator(CLOSE_ENOUGH)
                 .containsExactly(new Vector3(G * PLANET_MASS, 0.0, 0.0), new Vector3(-G * SUN_MASS, 0.0, 0.0));
     }
 
@@ -73,7 +75,7 @@ class NewtonianGravityTest {
         List<Vector3> accelerations = SUT.accelerations(List.of(left, sun, right));
 
         assertThat(accelerations)
-                .usingElementComparator(CLOSE_ENOUGH)
+                .usingRecursiveFieldByFieldElementComparator(CLOSE_ENOUGH)
                 .containsExactly(
                         new Vector3(G * (SUN_MASS + PLANET_MASS / 4.0), 0.0, 0.0),
                         new Vector3(0.0, 0.0, 0.0),
@@ -96,7 +98,7 @@ class NewtonianGravityTest {
 
             double softenedCube = 2.0 * Math.sqrt(2.0);
             assertThat(accelerations)
-                    .usingElementComparator(CLOSE_ENOUGH)
+                    .usingRecursiveFieldByFieldElementComparator(CLOSE_ENOUGH)
                     .containsExactly(
                             new Vector3(G * PLANET_MASS / softenedCube, 0.0, 0.0),
                             new Vector3(-G * SUN_MASS / softenedCube, 0.0, 0.0));

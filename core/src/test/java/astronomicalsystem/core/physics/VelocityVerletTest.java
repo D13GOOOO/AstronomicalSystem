@@ -51,7 +51,7 @@ class VelocityVerletTest {
 
     @Test
     void velocityChangesByTheAverageOfTheOldAndTheNewAcceleration() {
-        when(gravity.accelerations(anyList())).thenReturn(PULL_ALONG_X, PULL_ALONG_Y);
+        when(gravity.accelerations(anyList())).thenReturn(PULL_ALONG_X).thenReturn(PULL_ALONG_Y);
 
         List<Body> stepped = SUT.step(List.of(PROBE), TWO_DAYS);
 
