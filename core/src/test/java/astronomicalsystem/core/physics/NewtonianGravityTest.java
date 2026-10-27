@@ -5,9 +5,9 @@ import astronomicalsystem.core.body.BodyKind;
 import astronomicalsystem.core.body.BodyName;
 import astronomicalsystem.core.body.Mass;
 import astronomicalsystem.core.body.Radius;
+import astronomicalsystem.core.math.Tolerances;
 import astronomicalsystem.core.math.Vector3;
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
-import org.assertj.core.util.DoubleComparator;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -25,9 +25,7 @@ class NewtonianGravityTest {
     private static final double SUN_MASS = 1.0;
     private static final double PLANET_MASS = 1e-3;
     private static final double TOLERANCE = 1e-15;
-    private static final RecursiveComparisonConfiguration CLOSE_ENOUGH = RecursiveComparisonConfiguration.builder()
-            .withComparatorForType(new DoubleComparator(TOLERANCE), Double.class)
-            .build();
+    private static final RecursiveComparisonConfiguration CLOSE_ENOUGH = Tolerances.closeEnough(TOLERANCE);
 
     private final NewtonianGravity SUT = new NewtonianGravity(G, NO_SOFTENING);
 
