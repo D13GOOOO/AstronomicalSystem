@@ -40,6 +40,17 @@ class MergingCollisionsTest {
         assertThat(resolved).containsExactly(first, second, third);
     }
 
+    @Test
+    void theMergedBodyTakesThePlaceOfTheFirstOfThePair() {
+        Body first = sphereAt("First", 0.0);
+        Body middle = sphereAt("Middle", 5.0);
+        Body last = sphereAt("Last", 1.0);
+
+        List<Body> resolved = SUT.resolve(List.of(first, middle, last));
+
+        assertThat(resolved).containsExactly(first.mergedWith(last), middle);
+    }
+
     private static Body sphereAt(String name, double x) {
         return new Body(new BodyName(name), BodyKind.PLANET, UNIT_MASS, UNIT_RADIUS,
                 new Vector3(x, 0.0, 0.0), Vector3.ZERO);
