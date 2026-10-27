@@ -2,6 +2,7 @@ package astronomicalsystem.core.simulation;
 
 import astronomicalsystem.core.body.Body;
 import astronomicalsystem.core.physics.Integrator;
+import astronomicalsystem.core.physics.TimeStep;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -19,5 +20,8 @@ public class Simulation {
 
     public @NotNull List<Body> bodies() {
         return bodies;
+    }
+
+    public void advance(@NotNull TimeStep timeStep) {
     }
 }
