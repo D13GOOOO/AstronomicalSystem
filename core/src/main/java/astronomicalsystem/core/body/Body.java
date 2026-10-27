@@ -41,4 +41,8 @@ public record Body(@NotNull BodyName name,
         double reach = radius.astronomicalUnits() + other.radius.astronomicalUnits();
         return other.position.minus(position).lengthSquared() < reach * reach;
     }
+
+    public @NotNull Body mergedWith(@NotNull Body other) {
+        return this;
+    }
 }

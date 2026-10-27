@@ -72,6 +72,20 @@ class BodyTest {
         assertThat(overlaps).isEqualTo(expected);
     }
 
+    @Test
+    void mergedWithAddsTheMasses() {
+        Body SUT = withMass(EARTH, 0.75);
+        Body other = withMass(MOON, 0.25);
+
+        Body merged = SUT.mergedWith(other);
+
+        assertThat(merged.mass()).isEqualTo(new Mass(1.0));
+    }
+
+    private static Body withMass(BodyName name, double solarMasses) {
+        return new Body(name, BodyKind.PLANET, new Mass(solarMasses), EARTH_RADIUS, Vector3.ZERO, Vector3.ZERO);
+    }
+
     private static Body sphere(BodyName name, double radius, Vector3 position) {
         return new Body(name, BodyKind.PLANET, EARTH_MASS, new Radius(radius), position, Vector3.ZERO);
     }
