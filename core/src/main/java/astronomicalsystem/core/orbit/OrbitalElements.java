@@ -35,6 +35,15 @@ public record OrbitalElements(double semiMajorAxis,
         // Perifocal frame: origin in the focus, x towards the periapsis
         Vector3 position = new Vector3(semiMajorAxis * (cos - e), semiMinorAxis * sin, 0.0);
         Vector3 velocity = new Vector3(-semiMajorAxis * sin, semiMinorAxis * cos, 0.0).times(eccentricAnomalyRate);
-        return new StateVector(position, velocity);
+        return new StateVector(toEcliptic(position), toEcliptic(velocity));
+    }
+
+    /**
+     * Applies R_z(Ω) R_x(i) R_z(ω): the rotation from the perifocal frame to the ecliptic one.
+     */
+    private @NotNull Vector3 toEcliptic(@NotNull Vector3 perifocal) {
+        return perifocal.rotatedAboutZ(argumentOfPeriapsis)
+                .rotatedAboutX(inclination)
+                .rotatedAboutZ(longitudeOfAscendingNode);
     }
 }
