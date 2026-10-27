@@ -1,18 +1,18 @@
 package astronomicalsystem.core.simulation;
 
 import astronomicalsystem.core.body.Body;
-import astronomicalsystem.core.body.BodyKind;
-import astronomicalsystem.core.body.BodyName;
-import astronomicalsystem.core.body.Mass;
-import astronomicalsystem.core.body.Radius;
-import astronomicalsystem.core.math.Vector3;
 import astronomicalsystem.core.physics.Integrator;
-import astronomicalsystem.core.physics.TimeStep;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import static astronomicalsystem.core.simulation.SolarSystemFixtures.EARTH;
+import static astronomicalsystem.core.simulation.SolarSystemFixtures.INITIAL_BODIES;
+import static astronomicalsystem.core.simulation.SolarSystemFixtures.INTEGRATED_BODIES;
+import static astronomicalsystem.core.simulation.SolarSystemFixtures.MOVED_EARTH;
+import static astronomicalsystem.core.simulation.SolarSystemFixtures.SUN;
+import static astronomicalsystem.core.simulation.SolarSystemFixtures.TWO_DAYS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
@@ -20,18 +20,11 @@ import static org.mockito.Mockito.when;
 
 class SimulationTest {
 
-    private static final TimeStep TWO_DAYS = new TimeStep(2.0);
-
-    private static final Body SUN = new Body(new BodyName("Sun"), BodyKind.STAR, new Mass(1.0),
-            new Radius(4.65e-3), Vector3.ZERO, Vector3.ZERO);
-    private static final Body EARTH = new Body(new BodyName("Earth"), BodyKind.PLANET, new Mass(3.003e-6),
-            new Radius(4.259e-5), new Vector3(1.0, 0.0, 0.0), new Vector3(0.0, 0.0172, 0.0));
-
     private final Integrator integrator = mock();
 
     @Test
     void aNewSimulationHoldsTheInitialBodies() {
-        Simulation SUT = new Simulation(integrator, List.of(SUN, EARTH));
+        Simulation SUT = new Simulation(integrator, INITIAL_BODIES);
 
         List<Body> bodies = SUT.bodies();
 
@@ -40,18 +33,17 @@ class SimulationTest {
 
     @Test
     void advancingReplacesTheBodiesWithTheIntegratedOnes() {
-        Simulation SUT = new Simulation(integrator, List.of(SUN, EARTH));
-        Body movedEarth = EARTH.withMotion(new Vector3(0.0, 1.0, 0.0), new Vector3(-0.0172, 0.0, 0.0));
-        when(integrator.step(List.of(SUN, EARTH), TWO_DAYS)).thenReturn(List.of(SUN, movedEarth));
+        Simulation SUT = new Simulation(integrator, INITIAL_BODIES);
+        when(integrator.step(INITIAL_BODIES, TWO_DAYS)).thenReturn(INTEGRATED_BODIES);
 
         SUT.advance(TWO_DAYS);
 
-        assertThat(SUT.bodies()).containsExactly(SUN, movedEarth);
+        assertThat(SUT.bodies()).containsExactly(SUN, MOVED_EARTH);
     }
 
     @Test
     void changingTheInitialListLaterDoesNotChangeTheSimulation() {
-        List<Body> initialBodies = new ArrayList<>(List.of(SUN, EARTH));
+        List<Body> initialBodies = new ArrayList<>(INITIAL_BODIES);
         Simulation SUT = new Simulation(integrator, initialBodies);
 
         initialBodies.clear();
@@ -61,7 +53,7 @@ class SimulationTest {
 
     @Test
     void theExposedBodiesCannotBeModified() {
-        Simulation SUT = new Simulation(integrator, List.of(SUN, EARTH));
+        Simulation SUT = new Simulation(integrator, INITIAL_BODIES);
 
         List<Body> bodies = SUT.bodies();
 
@@ -70,8 +62,8 @@ class SimulationTest {
 
     @Test
     void theExposedBodiesStayReadOnlyAfterAdvancing() {
-        Simulation SUT = new Simulation(integrator, List.of(SUN, EARTH));
-        when(integrator.step(List.of(SUN, EARTH), TWO_DAYS)).thenReturn(new ArrayList<>(List.of(SUN, EARTH)));
+        Simulation SUT = new Simulation(integrator, INITIAL_BODIES);
+        when(integrator.step(INITIAL_BODIES, TWO_DAYS)).thenReturn(new ArrayList<>(INTEGRATED_BODIES));
         SUT.advance(TWO_DAYS);
 
         List<Body> bodies = SUT.bodies();
