@@ -14,8 +14,10 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 class ObservableSimulationTest {
@@ -53,6 +55,16 @@ class ObservableSimulationTest {
 
         verify(observer).update(SUT, List.of(SUN, MOVED_EARTH));
         verify(anotherObserver).update(SUT, List.of(SUN, MOVED_EARTH));
+    }
+
+    @Test
+    void aFailedAdvanceNotifiesNobody() {
+        when(integrator.step(List.of(SUN, EARTH), TWO_DAYS)).thenThrow(new IllegalStateException("Integration failed"));
+        SUT.addObserver(observer);
+
+        assertThatThrownBy(() -> SUT.advance(TWO_DAYS)).isInstanceOf(IllegalStateException.class);
+
+        verifyNoInteractions(observer);
     }
 
     @Test
