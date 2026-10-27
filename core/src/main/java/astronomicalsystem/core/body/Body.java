@@ -33,4 +33,8 @@ public record Body(@NotNull BodyName name,
     public @NotNull Body kicked(@NotNull Vector3 acceleration, double days) {
         return withMotion(position, velocity.plus(acceleration.times(days)));
     }
+
+    public boolean overlaps(@NotNull Body other) {
+        return false;
+    }
 }
