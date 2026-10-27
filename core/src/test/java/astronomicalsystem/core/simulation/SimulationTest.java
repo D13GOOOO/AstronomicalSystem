@@ -67,4 +67,15 @@ class SimulationTest {
 
         assertThatThrownBy(bodies::clear).isInstanceOf(UnsupportedOperationException.class);
     }
+
+    @Test
+    void theExposedBodiesStayReadOnlyAfterAdvancing() {
+        Simulation SUT = new Simulation(integrator, List.of(SUN, EARTH));
+        when(integrator.step(List.of(SUN, EARTH), TWO_DAYS)).thenReturn(new ArrayList<>(List.of(SUN, EARTH)));
+        SUT.advance(TWO_DAYS);
+
+        List<Body> bodies = SUT.bodies();
+
+        assertThatThrownBy(bodies::clear).isInstanceOf(UnsupportedOperationException.class);
+    }
 }
