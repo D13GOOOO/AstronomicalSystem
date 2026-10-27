@@ -13,6 +13,9 @@ import java.util.List;
 public class Simulation {
 
     private final Integrator integrator;
+    // A list rather than a map by name: the integrator and the gravity model work on lists aligned
+    // by index, and no operation looks a body up by name yet. Always an unmodifiable copy, so that
+    // it can be exposed without copying it again.
     private List<Body> bodies;
 
     public Simulation(@NotNull Integrator integrator, @NotNull List<Body> initialBodies) {
@@ -25,6 +28,6 @@ public class Simulation {
     }
 
     public void advance(@NotNull TimeStep timeStep) {
-        bodies = integrator.step(bodies, timeStep);
+        bodies = List.copyOf(integrator.step(bodies, timeStep));
     }
 }
