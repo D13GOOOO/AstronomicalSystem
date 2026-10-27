@@ -30,7 +30,8 @@ public record OrbitalElements(double semiMajorAxis,
         if (!inclinationInRange) {
             throw new IllegalArgumentException("Inclination must be between 0 and pi radians");
         }
-        if (!Double.isFinite(longitudeOfAscendingNode) || !Double.isFinite(argumentOfPeriapsis)) {
+        if (!Double.isFinite(longitudeOfAscendingNode) || !Double.isFinite(argumentOfPeriapsis)
+                || !Double.isFinite(meanAnomaly)) {
             throw new IllegalArgumentException("Orbital angles must be finite");
         }
         // The exact IEEE remainder keeps Kepler's equation within its domain however many turns
