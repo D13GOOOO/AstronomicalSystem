@@ -92,16 +92,20 @@ class OrbitalElementsTest {
 
     @ParameterizedTest
     @CsvSource(textBlock = """
-            NaN,       0.0
-            Infinity,  0.0
-            -Infinity, 0.0
-            0.0,       NaN
-            0.0,       Infinity
-            0.0,       -Infinity
+            NaN,       0.0,       0.0
+            Infinity,  0.0,       0.0
+            -Infinity, 0.0,       0.0
+            0.0,       NaN,       0.0
+            0.0,       Infinity,  0.0
+            0.0,       -Infinity, 0.0
+            0.0,       0.0,       NaN
+            0.0,       0.0,       Infinity
+            0.0,       0.0,       -Infinity
             """)
-    void constructorRejectsNonFiniteNodeOrPeriapsisAngles(double ascendingNode, double argumentOfPeriapsis) {
+    void constructorRejectsNonFiniteOrbitalAngles(double ascendingNode, double argumentOfPeriapsis,
+                                                  double meanAnomaly) {
         assertThatThrownBy(() -> new OrbitalElements(SEMI_MAJOR_AXIS, new Eccentricity(ECCENTRICITY), 0.0,
-                ascendingNode, argumentOfPeriapsis, 0.0))
+                ascendingNode, argumentOfPeriapsis, meanAnomaly))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Orbital angles must be finite");
     }
