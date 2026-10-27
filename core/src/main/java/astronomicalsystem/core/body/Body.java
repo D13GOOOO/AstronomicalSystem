@@ -47,12 +47,19 @@ public record Body(@NotNull BodyName name,
      */
     public @NotNull Body mergedWith(@NotNull Body other) {
         Mass mergedMass = mass.plus(other.mass);
-        Vector3 centreOfMass = position.times(mass.solarMasses())
-                .plus(other.position.times(other.mass.solarMasses()))
-                .times(1.0 / mergedMass.solarMasses());
-        Vector3 centreOfMassVelocity = velocity.times(mass.solarMasses())
-                .plus(other.velocity.times(other.mass.solarMasses()))
-                .times(1.0 / mergedMass.solarMasses());
-        return new Body(name, kind, mergedMass, radius, centreOfMass, centreOfMassVelocity);
+        return new Body(name, kind, mergedMass, radius,
+                massWeightedAverage(position, other, other.position, mergedMass),
+                massWeightedAverage(velocity, other, other.velocity, mergedMass));
+    }
+
+    /**
+     * @return {@code (m·own + m'·others) / total}, where {@code m'} is the mass of {@code other}
+     *         and {@code total} is {@code m + m'}
+     */
+    private @NotNull Vector3 massWeightedAverage(@NotNull Vector3 own, @NotNull Body other,
+                                                 @NotNull Vector3 others, @NotNull Mass total) {
+        return own.times(mass.solarMasses())
+                .plus(others.times(other.mass.solarMasses()))
+                .times(1.0 / total.solarMasses());
     }
 }
