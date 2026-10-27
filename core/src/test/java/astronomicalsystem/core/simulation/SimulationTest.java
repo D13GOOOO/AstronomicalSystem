@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -56,5 +57,14 @@ class SimulationTest {
         initialBodies.clear();
 
         assertThat(SUT.bodies()).containsExactly(SUN, EARTH);
+    }
+
+    @Test
+    void theExposedBodiesCannotBeModified() {
+        Simulation SUT = new Simulation(integrator, List.of(SUN, EARTH));
+
+        List<Body> bodies = SUT.bodies();
+
+        assertThatThrownBy(bodies::clear).isInstanceOf(UnsupportedOperationException.class);
     }
 }
