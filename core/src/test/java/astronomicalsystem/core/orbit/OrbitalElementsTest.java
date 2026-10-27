@@ -89,6 +89,22 @@ class OrbitalElementsTest {
                 .hasMessage("Inclination must be between 0 and pi radians");
     }
 
+    @ParameterizedTest
+    @CsvSource(textBlock = """
+            NaN,       0.0
+            Infinity,  0.0
+            -Infinity, 0.0
+            0.0,       NaN
+            0.0,       Infinity
+            0.0,       -Infinity
+            """)
+    void constructorRejectsNonFiniteNodeOrPeriapsisAngles(double ascendingNode, double argumentOfPeriapsis) {
+        assertThatThrownBy(() -> new OrbitalElements(SEMI_MAJOR_AXIS, new Eccentricity(ECCENTRICITY), 0.0,
+                ascendingNode, argumentOfPeriapsis, 0.0))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Orbital angles must be finite");
+    }
+
     private static OrbitalElements atPeriapsisOriented(double inclinationDegrees, double ascendingNodeDegrees,
                                                        double periapsisDegrees) {
         return new OrbitalElements(SEMI_MAJOR_AXIS, new Eccentricity(ECCENTRICITY), Math.toRadians(inclinationDegrees),
