@@ -17,7 +17,7 @@ public class Simulation {
 
     public Simulation(@NotNull Integrator integrator, @NotNull List<Body> initialBodies) {
         this.integrator = integrator;
-        this.bodies = initialBodies;
+        this.bodies = List.copyOf(initialBodies);
     }
 
     public @NotNull List<Body> bodies() {
