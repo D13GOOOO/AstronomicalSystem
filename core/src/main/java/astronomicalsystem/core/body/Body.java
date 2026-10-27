@@ -34,7 +34,11 @@ public record Body(@NotNull BodyName name,
         return withMotion(position, velocity.plus(acceleration.times(days)));
     }
 
+    /**
+     * @return whether the spheres of the two bodies intersect; bodies that only touch do not
+     */
     public boolean overlaps(@NotNull Body other) {
-        return false;
+        double reach = radius.astronomicalUnits() + other.radius.astronomicalUnits();
+        return other.position.minus(position).lengthSquared() < reach * reach;
     }
 }
