@@ -43,6 +43,16 @@ class SimulationTest {
     }
 
     @Test
+    void aNewSimulationResolvesTheCollisionsOfTheInitialBodies() {
+        when(collisions.resolve(INITIAL_BODIES)).thenReturn(MERGED_BODIES);
+        Simulation SUT = new Simulation(integrator, collisions, INITIAL_BODIES);
+
+        List<Body> bodies = SUT.bodies();
+
+        assertThat(bodies).containsExactlyElementsOf(MERGED_BODIES);
+    }
+
+    @Test
     void advancingReplacesTheBodiesWithTheIntegratedOnes() {
         Simulation SUT = new Simulation(integrator, collisions, INITIAL_BODIES);
         when(integrator.step(INITIAL_BODIES, TWO_DAYS)).thenReturn(INTEGRATED_BODIES);
