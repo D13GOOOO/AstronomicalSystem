@@ -51,6 +51,17 @@ class MergingCollisionsTest {
         assertThat(resolved).containsExactly(first.mergedWith(last), middle);
     }
 
+    @Test
+    void aChainOfOverlapsMergesIntoASingleBody() {
+        Body first = sphereAt("First", 0.0);
+        Body second = sphereAt("Second", 1.0);
+        Body third = sphereAt("Third", 2.5);
+
+        List<Body> resolved = SUT.resolve(List.of(first, second, third));
+
+        assertThat(resolved).containsExactly(first.mergedWith(second).mergedWith(third));
+    }
+
     private static Body sphereAt(String name, double x) {
         return new Body(new BodyName(name), BodyKind.PLANET, UNIT_MASS, UNIT_RADIUS,
                 new Vector3(x, 0.0, 0.0), Vector3.ZERO);
