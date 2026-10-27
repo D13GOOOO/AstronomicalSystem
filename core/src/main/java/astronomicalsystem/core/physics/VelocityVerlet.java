@@ -18,6 +18,10 @@ public final class VelocityVerlet implements Integrator {
 
     @Override
     public @NotNull List<Body> step(@NotNull List<Body> bodies, @NotNull TimeStep timeStep) {
-        return List.of();
+        return bodies.stream()
+                .map(body -> body.withMotion(
+                        body.position().plus(body.velocity().times(timeStep.days())),
+                        body.velocity()))
+                .toList();
     }
 }
