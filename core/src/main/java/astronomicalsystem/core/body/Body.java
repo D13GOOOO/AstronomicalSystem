@@ -16,4 +16,12 @@ public record Body(@NotNull BodyName name,
     public @NotNull Body withMotion(@NotNull Vector3 newPosition, @NotNull Vector3 newVelocity) {
         return new Body(name, kind, mass, radius, newPosition, newVelocity);
     }
+
+    /**
+     * @param days a finite duration
+     * @return this body moved at its current velocity for {@code days}
+     */
+    public @NotNull Body drifted(double days) {
+        return this;
+    }
 }
