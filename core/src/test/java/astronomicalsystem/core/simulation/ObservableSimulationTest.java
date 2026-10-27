@@ -2,7 +2,9 @@ package astronomicalsystem.core.simulation;
 
 import astronomicalsystem.core.body.Body;
 import astronomicalsystem.core.observer.Observer;
+import astronomicalsystem.core.physics.CollisionResolver;
 import astronomicalsystem.core.physics.Integrator;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -14,6 +16,8 @@ import static astronomicalsystem.core.simulation.SolarSystemFixtures.SUN;
 import static astronomicalsystem.core.simulation.SolarSystemFixtures.TWO_DAYS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.AdditionalAnswers.returnsFirstArg;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -22,8 +26,15 @@ import static org.mockito.Mockito.when;
 class ObservableSimulationTest {
 
     private final Integrator integrator = mock();
+    private final CollisionResolver collisions = mock();
     private final Observer<List<Body>> observer = mock();
-    private final ObservableSimulation SUT = new ObservableSimulation(integrator, INITIAL_BODIES);
+    private ObservableSimulation SUT;
+
+    @BeforeEach
+    void createSimulationWithoutCollisions() {
+        when(collisions.resolve(anyList())).thenAnswer(returnsFirstArg());
+        SUT = new ObservableSimulation(integrator, collisions, INITIAL_BODIES);
+    }
 
     @Test
     void advancingNotifiesTheObserversWithTheNewBodies() {
