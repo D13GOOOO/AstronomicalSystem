@@ -10,6 +10,7 @@ import astronomicalsystem.core.physics.Integrator;
 import astronomicalsystem.core.physics.TimeStep;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -45,5 +46,15 @@ class SimulationTest {
         SUT.advance(TWO_DAYS);
 
         assertThat(SUT.bodies()).containsExactly(SUN, movedEarth);
+    }
+
+    @Test
+    void changingTheInitialListLaterDoesNotChangeTheSimulation() {
+        List<Body> initialBodies = new ArrayList<>(List.of(SUN, EARTH));
+        Simulation SUT = new Simulation(integrator, initialBodies);
+
+        initialBodies.clear();
+
+        assertThat(SUT.bodies()).containsExactly(SUN, EARTH);
     }
 }
