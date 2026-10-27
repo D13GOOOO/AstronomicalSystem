@@ -46,4 +46,22 @@ public record Vector3(double x, double y, double z) {
         }
         return times(1.0 / length);
     }
+
+    /**
+     * @param angle in radians, counterclockwise when seen from the positive z axis
+     */
+    public @NotNull Vector3 rotatedAboutZ(double angle) {
+        double cos = Math.cos(angle);
+        double sin = Math.sin(angle);
+        return new Vector3(x * cos - y * sin, x * sin + y * cos, z);
+    }
+
+    /**
+     * @param angle in radians, counterclockwise when seen from the positive x axis
+     */
+    public @NotNull Vector3 rotatedAboutX(double angle) {
+        double cos = Math.cos(angle);
+        double sin = Math.sin(angle);
+        return new Vector3(x, y * cos - z * sin, y * sin + z * cos);
+    }
 }
