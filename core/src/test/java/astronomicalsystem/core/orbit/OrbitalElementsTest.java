@@ -9,6 +9,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.within;
 
 class OrbitalElementsTest {
 
@@ -103,6 +104,21 @@ class OrbitalElementsTest {
                 ascendingNode, argumentOfPeriapsis, 0.0))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Orbital angles must be finite");
+    }
+
+    @ParameterizedTest
+    @CsvSource(textBlock = """
+             0.5,                0.5
+             4.71238898038469,  -1.5707963267948966
+            -4.71238898038469,   1.5707963267948966
+             7.283185307179586,  1.0
+            """)
+    void theMeanAnomalyIsReducedToWithinHalfATurn(double meanAnomaly, double reduced) {
+        OrbitalElements SUT = inTheEclipticPlane(meanAnomaly);
+
+        double stored = SUT.meanAnomaly();
+
+        assertThat(stored).isCloseTo(reduced, within(TOLERANCE));
     }
 
     private static OrbitalElements atPeriapsisOriented(double inclinationDegrees, double ascendingNodeDegrees,
