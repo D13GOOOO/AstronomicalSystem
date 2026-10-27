@@ -12,9 +12,11 @@ import java.util.List;
  */
 public class Simulation {
 
+    private final Integrator integrator;
     private List<Body> bodies;
 
     public Simulation(@NotNull Integrator integrator, @NotNull List<Body> initialBodies) {
+        this.integrator = integrator;
         this.bodies = initialBodies;
     }
 
@@ -23,5 +25,6 @@ public class Simulation {
     }
 
     public void advance(@NotNull TimeStep timeStep) {
+        bodies = integrator.step(bodies, timeStep);
     }
 }
