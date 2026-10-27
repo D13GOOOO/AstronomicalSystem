@@ -22,6 +22,6 @@ public record Body(@NotNull BodyName name,
      * @return this body moved at its current velocity for {@code days}
      */
     public @NotNull Body drifted(double days) {
-        return this;
+        return withMotion(position.plus(velocity.times(days)), velocity);
     }
 }
