@@ -1,5 +1,6 @@
 package astronomicalsystem.core.orbit;
 
+import astronomicalsystem.core.math.Quantities;
 import astronomicalsystem.core.math.Vector3;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,6 +19,10 @@ public record OrbitalElements(double semiMajorAxis,
                              double longitudeOfAscendingNode,
                              double argumentOfPeriapsis,
                              double meanAnomaly) {
+
+    public OrbitalElements {
+        Quantities.requirePositiveFinite(semiMajorAxis, "Semi-major axis");
+    }
 
     /**
      * @param gravitationalParameter {@code G(M + m)}, in AU³ per day squared
