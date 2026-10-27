@@ -82,8 +82,22 @@ class BodyTest {
         assertThat(merged.mass()).isEqualTo(new Mass(1.0));
     }
 
+    @Test
+    void mergedWithIsPlacedAtTheCentreOfMass() {
+        Body SUT = body(EARTH, 0.75, new Vector3(1.0, 2.0, 0.0), Vector3.ZERO);
+        Body other = body(MOON, 0.25, new Vector3(5.0, -2.0, 4.0), Vector3.ZERO);
+
+        Body merged = SUT.mergedWith(other);
+
+        assertThat(merged.position()).isEqualTo(new Vector3(2.0, 1.0, 1.0));
+    }
+
     private static Body withMass(BodyName name, double solarMasses) {
-        return new Body(name, BodyKind.PLANET, new Mass(solarMasses), EARTH_RADIUS, Vector3.ZERO, Vector3.ZERO);
+        return body(name, solarMasses, Vector3.ZERO, Vector3.ZERO);
+    }
+
+    private static Body body(BodyName name, double solarMasses, Vector3 position, Vector3 velocity) {
+        return new Body(name, BodyKind.PLANET, new Mass(solarMasses), EARTH_RADIUS, position, velocity);
     }
 
     private static Body sphere(BodyName name, double radius, Vector3 position) {
