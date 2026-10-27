@@ -15,4 +15,8 @@ public record Mass(double solarMasses) {
     public @NotNull Mass plus(@NotNull Mass other) {
         return new Mass(solarMasses + other.solarMasses);
     }
+
+    public boolean isGreaterThan(@NotNull Mass other) {
+        return solarMasses > other.solarMasses;
+    }
 }
