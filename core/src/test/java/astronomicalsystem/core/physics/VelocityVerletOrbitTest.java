@@ -38,15 +38,15 @@ class VelocityVerletOrbitTest {
                 new Vector3(0.0, Math.sqrt(G * SUN_MASS / EARTH_DISTANCE), 0.0));
         List<Body> initial = List.of(sun, earth);
 
-        List<Body> afterAYear = stepDaily(initial, DAYS_IN_A_YEAR);
+        List<Body> afterAYear = stepDailyForAYear(initial);
 
         assertThat(totalEnergy(afterAYear))
                 .isCloseTo(totalEnergy(initial), withinPercentage(ENERGY_TOLERANCE_PERCENT));
     }
 
-    private List<Body> stepDaily(List<Body> bodies, int days) {
+    private List<Body> stepDailyForAYear(List<Body> bodies) {
         List<Body> stepped = bodies;
-        for (int day = 0; day < days; day++) {
+        for (int day = 0; day < DAYS_IN_A_YEAR; day++) {
             stepped = SUT.step(stepped, ONE_DAY);
         }
         return stepped;
