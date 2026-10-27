@@ -49,6 +49,33 @@ class OrbitalElementsTest {
         assertThat(state.velocity()).usingRecursiveComparison(CLOSE_ENOUGH).isEqualTo(new Vector3(vx, vy, 0.0));
     }
 
+    @ParameterizedTest(name = "{0}")
+    @CsvSource(textBlock = """
+            periapsis turned,        0,   0,  90,  0.0, 0.8, 0.0,  -4.0,  0.0, 0.0
+            node turned,             0,  90,   0,  0.0, 0.8, 0.0,  -4.0,  0.0, 0.0
+            polar,                  90,   0,   0,  0.8, 0.0, 0.0,   0.0,  0.0, 4.0
+            polar with node on y,   90,  90,   0,  0.0, 0.8, 0.0,   0.0,  0.0, 4.0
+            periapsis above,        90,   0,  90,  0.0, 0.0, 0.8,  -4.0,  0.0, 0.0
+            retrograde,            180,   0,   0,  0.8, 0.0, 0.0,   0.0, -4.0, 0.0
+            """)
+    void theOrientationAnglesRotateTheOrbitIntoTheEcliptic(String description, double inclinationDegrees,
+                                                           double ascendingNodeDegrees, double periapsisDegrees,
+                                                           double x, double y, double z,
+                                                           double vx, double vy, double vz) {
+        OrbitalElements SUT = atPeriapsisOriented(inclinationDegrees, ascendingNodeDegrees, periapsisDegrees);
+
+        StateVector state = SUT.stateVector(GRAVITATIONAL_PARAMETER);
+
+        assertThat(state).usingRecursiveComparison(CLOSE_ENOUGH)
+                .isEqualTo(new StateVector(new Vector3(x, y, z), new Vector3(vx, vy, vz)));
+    }
+
+    private static OrbitalElements atPeriapsisOriented(double inclinationDegrees, double ascendingNodeDegrees,
+                                                       double periapsisDegrees) {
+        return new OrbitalElements(SEMI_MAJOR_AXIS, new Eccentricity(ECCENTRICITY), Math.toRadians(inclinationDegrees),
+                Math.toRadians(ascendingNodeDegrees), Math.toRadians(periapsisDegrees), 0.0);
+    }
+
     private static OrbitalElements inTheEclipticPlane(double meanAnomaly) {
         return new OrbitalElements(SEMI_MAJOR_AXIS, new Eccentricity(ECCENTRICITY), 0.0, 0.0, 0.0, meanAnomaly);
     }
