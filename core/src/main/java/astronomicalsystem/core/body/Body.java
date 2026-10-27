@@ -31,6 +31,6 @@ public record Body(@NotNull BodyName name,
      * @return this body with its velocity changed by {@code acceleration} acting for {@code days}
      */
     public @NotNull Body kicked(@NotNull Vector3 acceleration, double days) {
-        return this;
+        return withMotion(position, velocity.plus(acceleration.times(days)));
     }
 }
