@@ -10,6 +10,7 @@ import java.util.List;
 
 /**
  * State of a running simulation: the bodies of the system and how they evolve.
+ * Collisions are resolved on creation and after every step, so no two bodies ever overlap.
  */
 public class Simulation {
 
@@ -24,7 +25,7 @@ public class Simulation {
                       @NotNull List<Body> initialBodies) {
         this.integrator = integrator;
         this.collisions = collisions;
-        this.bodies = List.copyOf(initialBodies);
+        this.bodies = List.copyOf(collisions.resolve(initialBodies));
     }
 
     public @NotNull List<Body> bodies() {
