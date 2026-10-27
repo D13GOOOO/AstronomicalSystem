@@ -33,6 +33,17 @@ class VelocityVerletTest {
         assertThat(stepped).containsExactly(body.withMotion(new Vector3(1.0, 1.0, 0.0), velocity));
     }
 
+    @Test
+    void underConstantAccelerationABodyFollowsAParabola() {
+        Body body = body(new Vector3(1.0, 0.0, 0.0), new Vector3(0.0, 0.5, 0.0));
+        when(gravity.accelerations(anyList())).thenReturn(List.of(new Vector3(0.25, 0.0, 0.0)));
+
+        List<Body> stepped = SUT.step(List.of(body), TWO_DAYS);
+
+        assertThat(stepped).containsExactly(
+                body.withMotion(new Vector3(1.5, 1.0, 0.0), new Vector3(0.5, 0.5, 0.0)));
+    }
+
     private static Body body(Vector3 position, Vector3 velocity) {
         return new Body(new BodyName("Probe"), BodyKind.PLANET, new Mass(1e-3), new Radius(1e-3),
                 position, velocity);
