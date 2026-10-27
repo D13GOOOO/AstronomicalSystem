@@ -33,4 +33,34 @@ public record Body(@NotNull BodyName name,
     public @NotNull Body kicked(@NotNull Vector3 acceleration, double days) {
         return withMotion(position, velocity.plus(acceleration.times(days)));
     }
+
+    /**
+     * @return whether the spheres of the two bodies intersect; bodies that only touch do not
+     */
+    public boolean overlaps(@NotNull Body other) {
+        double reach = radius.astronomicalUnits() + other.radius.astronomicalUnits();
+        return other.position.minus(position).lengthSquared() < reach * reach;
+    }
+
+    /**
+     * @return the body formed by a perfectly inelastic collision of this body with {@code other}
+     */
+    public @NotNull Body mergedWith(@NotNull Body other) {
+        Mass mergedMass = mass.plus(other.mass);
+        Body identity = other.mass.isGreaterThan(mass) ? other : this;
+        return new Body(identity.name, identity.kind, mergedMass, radius.withVolumeAdded(other.radius),
+                massWeightedAverage(position, other, other.position, mergedMass),
+                massWeightedAverage(velocity, other, other.velocity, mergedMass));
+    }
+
+    /**
+     * @return {@code (m·own + m'·others) / total}, where {@code m'} is the mass of {@code other}
+     *         and {@code total} is {@code m + m'}
+     */
+    private @NotNull Vector3 massWeightedAverage(@NotNull Vector3 own, @NotNull Body other,
+                                                 @NotNull Vector3 others, @NotNull Mass total) {
+        return own.times(mass.solarMasses())
+                .plus(others.times(other.mass.solarMasses()))
+                .times(1.0 / total.solarMasses());
+    }
 }

@@ -3,6 +3,7 @@ package astronomicalsystem.core.simulation;
 import astronomicalsystem.core.body.Body;
 import astronomicalsystem.core.observer.Observable;
 import astronomicalsystem.core.observer.Observer;
+import astronomicalsystem.core.physics.CollisionResolver;
 import astronomicalsystem.core.physics.Integrator;
 import astronomicalsystem.core.physics.TimeStep;
 import org.jetbrains.annotations.NotNull;
@@ -17,8 +18,9 @@ public class ObservableSimulation extends Simulation implements Observable<List<
 
     private final List<Observer<List<Body>>> observers = new ArrayList<>();
 
-    public ObservableSimulation(@NotNull Integrator integrator, @NotNull List<Body> initialBodies) {
-        super(integrator, initialBodies);
+    public ObservableSimulation(@NotNull Integrator integrator, @NotNull CollisionResolver collisions,
+                                @NotNull List<Body> initialBodies) {
+        super(integrator, collisions, initialBodies);
     }
 
     @Override

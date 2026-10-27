@@ -24,6 +24,7 @@ final class SolarSystemFixtures {
             new Vector3(-0.0172, 0.0, 0.0));
     static final List<Body> INITIAL_BODIES = List.of(SUN, EARTH);
     static final List<Body> INTEGRATED_BODIES = List.of(SUN, MOVED_EARTH);
+    static final List<Body> MERGED_BODIES = List.of(SUN.mergedWith(MOVED_EARTH));
 
     private SolarSystemFixtures() {
     }
