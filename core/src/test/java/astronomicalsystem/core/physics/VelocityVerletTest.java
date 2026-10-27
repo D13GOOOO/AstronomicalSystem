@@ -7,12 +7,15 @@ import astronomicalsystem.core.body.Mass;
 import astronomicalsystem.core.body.Radius;
 import astronomicalsystem.core.math.Vector3;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class VelocityVerletTest {
@@ -54,6 +57,18 @@ class VelocityVerletTest {
 
         assertThat(stepped).containsExactly(
                 body.withMotion(new Vector3(1.5, 1.0, 0.0), new Vector3(0.25, 0.75, 0.0)));
+    }
+
+    @Test
+    void theNewAccelerationIsEvaluatedAtTheDriftedPositions() {
+        Body body = body(new Vector3(1.0, 0.0, 0.0), new Vector3(0.0, 0.5, 0.0));
+        when(gravity.accelerations(anyList())).thenReturn(List.of(new Vector3(0.25, 0.0, 0.0)));
+
+        SUT.step(List.of(body), TWO_DAYS);
+
+        ArgumentCaptor<List<Body>> evaluated = ArgumentCaptor.captor();
+        verify(gravity, times(2)).accelerations(evaluated.capture());
+        assertThat(evaluated.getValue()).extracting(Body::position).containsExactly(new Vector3(1.5, 1.0, 0.0));
     }
 
     private static Body body(Vector3 position, Vector3 velocity) {
