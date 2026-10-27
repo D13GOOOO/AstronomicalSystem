@@ -47,11 +47,7 @@ public record Body(@NotNull BodyName name,
      */
     public @NotNull Body mergedWith(@NotNull Body other) {
         Mass mergedMass = mass.plus(other.mass);
-        double ownRadius = radius.astronomicalUnits();
-        double otherRadius = other.radius.astronomicalUnits();
-        Radius mergedRadius = new Radius(Math.cbrt(ownRadius * ownRadius * ownRadius
-                + otherRadius * otherRadius * otherRadius));
-        return new Body(name, kind, mergedMass, mergedRadius,
+        return new Body(name, kind, mergedMass, radius.withVolumeAdded(other.radius),
                 massWeightedAverage(position, other, other.position, mergedMass),
                 massWeightedAverage(velocity, other, other.velocity, mergedMass));
     }
