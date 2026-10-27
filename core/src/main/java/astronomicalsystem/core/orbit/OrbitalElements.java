@@ -24,6 +24,11 @@ public record OrbitalElements(double semiMajorAxis,
      * @return the position and velocity relative to the central body at the epoch of the elements
      */
     public @NotNull StateVector stateVector(double gravitationalParameter) {
-        return new StateVector(Vector3.ZERO, Vector3.ZERO);
+        double eccentricAnomaly = KeplerEquation.eccentricAnomaly(meanAnomaly, eccentricity);
+        double e = eccentricity.value();
+        // Perifocal frame: origin in the focus, x towards the periapsis
+        Vector3 position = new Vector3(semiMajorAxis * (Math.cos(eccentricAnomaly) - e),
+                semiMajorAxis * Math.sqrt(1.0 - e * e) * Math.sin(eccentricAnomaly), 0.0);
+        return new StateVector(position, Vector3.ZERO);
     }
 }
