@@ -11,7 +11,8 @@ import org.jetbrains.annotations.NotNull;
  * @param inclination              angle between the orbital plane and the ecliptic
  * @param longitudeOfAscendingNode angle from the reference direction to the ascending node
  * @param argumentOfPeriapsis      angle from the ascending node to the periapsis
- * @param meanAnomaly              mean anomaly at the epoch of the elements, between -π and π
+ * @param meanAnomaly              mean anomaly at the epoch of the elements, reduced to between -π
+ *                                 and π by whole turns
  */
 public record OrbitalElements(double semiMajorAxis,
                              @NotNull Eccentricity eccentricity,
@@ -19,6 +20,8 @@ public record OrbitalElements(double semiMajorAxis,
                              double longitudeOfAscendingNode,
                              double argumentOfPeriapsis,
                              double meanAnomaly) {
+
+    private static final double FULL_TURN = 2.0 * Math.PI;
 
     public OrbitalElements {
         Quantities.requirePositiveFinite(semiMajorAxis, "Semi-major axis");
@@ -30,6 +33,8 @@ public record OrbitalElements(double semiMajorAxis,
         if (!Double.isFinite(longitudeOfAscendingNode) || !Double.isFinite(argumentOfPeriapsis)) {
             throw new IllegalArgumentException("Orbital angles must be finite");
         }
+        // The exact IEEE remainder keeps Kepler's equation within its domain however many turns
+        meanAnomaly = Math.IEEEremainder(meanAnomaly, FULL_TURN);
     }
 
     /**
