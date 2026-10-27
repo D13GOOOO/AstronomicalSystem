@@ -17,6 +17,8 @@ class OrbitalElementsTest {
     private static final double ECCENTRICITY = 0.6;
     private static final double GRAVITATIONAL_PARAMETER = 8.0;
     private static final double TOLERANCE = 1e-12;
+    // Math.nextUp(Math.PI): the smallest double above π
+    private static final double JUST_ABOVE_PI = 3.1415926535897936;
     private static final RecursiveComparisonConfiguration CLOSE_ENOUGH = Tolerances.closeEnough(TOLERANCE);
 
     @ParameterizedTest(name = "{0}")
@@ -76,6 +78,15 @@ class OrbitalElementsTest {
         assertThatThrownBy(() -> new OrbitalElements(semiMajorAxis, new Eccentricity(ECCENTRICITY), 0.0, 0.0, 0.0, 0.0))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Semi-major axis must be positive and finite");
+    }
+
+    @ParameterizedTest
+    @ValueSource(doubles = {-0.1, JUST_ABOVE_PI, Double.NaN, Double.POSITIVE_INFINITY})
+    void constructorRejectsInclinationsOutsideZeroToPi(double inclination) {
+        assertThatThrownBy(() -> new OrbitalElements(SEMI_MAJOR_AXIS, new Eccentricity(ECCENTRICITY), inclination,
+                0.0, 0.0, 0.0))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Inclination must be between 0 and pi radians");
     }
 
     private static OrbitalElements atPeriapsisOriented(double inclinationDegrees, double ascendingNodeDegrees,
