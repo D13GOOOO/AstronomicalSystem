@@ -1,7 +1,6 @@
 package astronomicalsystem.core.math;
 
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
-import org.assertj.core.util.DoubleComparator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -14,9 +13,7 @@ class Vector3Test {
 
     private static final double TOLERANCE = 1e-12;
     private static final double QUARTER_TURN = Math.PI / 2.0;
-    private static final RecursiveComparisonConfiguration CLOSE_ENOUGH = RecursiveComparisonConfiguration.builder()
-            .withComparatorForType(new DoubleComparator(TOLERANCE), Double.class)
-            .build();
+    private static final RecursiveComparisonConfiguration CLOSE_ENOUGH = Tolerances.closeEnough(TOLERANCE);
 
     @ParameterizedTest
     @CsvSource(textBlock = """

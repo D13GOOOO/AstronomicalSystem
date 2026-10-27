@@ -1,8 +1,8 @@
 package astronomicalsystem.core.orbit;
 
+import astronomicalsystem.core.math.Tolerances;
 import astronomicalsystem.core.math.Vector3;
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
-import org.assertj.core.util.DoubleComparator;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
@@ -15,9 +15,7 @@ class OrbitalElementsTest {
     private static final double ECCENTRICITY = 0.6;
     private static final double GRAVITATIONAL_PARAMETER = 8.0;
     private static final double TOLERANCE = 1e-12;
-    private static final RecursiveComparisonConfiguration CLOSE_ENOUGH = RecursiveComparisonConfiguration.builder()
-            .withComparatorForType(new DoubleComparator(TOLERANCE), Double.class)
-            .build();
+    private static final RecursiveComparisonConfiguration CLOSE_ENOUGH = Tolerances.closeEnough(TOLERANCE);
 
     @ParameterizedTest(name = "{0}")
     @CsvSource(textBlock = """
