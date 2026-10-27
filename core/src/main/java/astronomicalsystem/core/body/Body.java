@@ -47,7 +47,8 @@ public record Body(@NotNull BodyName name,
      */
     public @NotNull Body mergedWith(@NotNull Body other) {
         Mass mergedMass = mass.plus(other.mass);
-        return new Body(name, kind, mergedMass, radius.withVolumeAdded(other.radius),
+        Body identity = other.mass.solarMasses() > mass.solarMasses() ? other : this;
+        return new Body(identity.name, identity.kind, mergedMass, radius.withVolumeAdded(other.radius),
                 massWeightedAverage(position, other, other.position, mergedMass),
                 massWeightedAverage(velocity, other, other.velocity, mergedMass));
     }
