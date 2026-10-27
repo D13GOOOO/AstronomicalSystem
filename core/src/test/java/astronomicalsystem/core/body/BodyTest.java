@@ -21,4 +21,26 @@ class BodyTest {
         assertThat(moved).isEqualTo(new Body(EARTH, BodyKind.PLANET, EARTH_MASS, EARTH_RADIUS,
                 new Vector3(0.0, 1.0, 0.0), new Vector3(-0.0172, 0.0, 0.0)));
     }
+
+    @Test
+    void driftedMovesThePositionAlongTheVelocity() {
+        Body SUT = new Body(EARTH, BodyKind.PLANET, EARTH_MASS, EARTH_RADIUS,
+                new Vector3(1.0, 0.0, 0.0), new Vector3(0.0, 0.25, 0.0));
+
+        Body drifted = SUT.drifted(2.0);
+
+        assertThat(drifted).isEqualTo(new Body(EARTH, BodyKind.PLANET, EARTH_MASS, EARTH_RADIUS,
+                new Vector3(1.0, 0.5, 0.0), new Vector3(0.0, 0.25, 0.0)));
+    }
+
+    @Test
+    void kickedChangesTheVelocityAlongTheAcceleration() {
+        Body SUT = new Body(EARTH, BodyKind.PLANET, EARTH_MASS, EARTH_RADIUS,
+                new Vector3(1.0, 0.0, 0.0), new Vector3(0.0, 0.25, 0.0));
+
+        Body kicked = SUT.kicked(new Vector3(-0.125, 0.0, 0.0), 2.0);
+
+        assertThat(kicked).isEqualTo(new Body(EARTH, BodyKind.PLANET, EARTH_MASS, EARTH_RADIUS,
+                new Vector3(1.0, 0.0, 0.0), new Vector3(-0.25, 0.25, 0.0)));
+    }
 }

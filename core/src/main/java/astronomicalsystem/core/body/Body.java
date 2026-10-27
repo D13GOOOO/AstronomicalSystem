@@ -16,4 +16,21 @@ public record Body(@NotNull BodyName name,
     public @NotNull Body withMotion(@NotNull Vector3 newPosition, @NotNull Vector3 newVelocity) {
         return new Body(name, kind, mass, radius, newPosition, newVelocity);
     }
+
+    /**
+     * @param days a finite duration
+     * @return this body moved at its current velocity for {@code days}
+     */
+    public @NotNull Body drifted(double days) {
+        return withMotion(position.plus(velocity.times(days)), velocity);
+    }
+
+    /**
+     * @param acceleration the acceleration, in AU per day squared
+     * @param days         a finite duration
+     * @return this body with its velocity changed by {@code acceleration} acting for {@code days}
+     */
+    public @NotNull Body kicked(@NotNull Vector3 acceleration, double days) {
+        return withMotion(position, velocity.plus(acceleration.times(days)));
+    }
 }
