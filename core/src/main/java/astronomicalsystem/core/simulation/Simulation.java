@@ -32,6 +32,6 @@ public class Simulation {
     }
 
     public void advance(@NotNull TimeStep timeStep) {
-        bodies = List.copyOf(integrator.step(bodies, timeStep));
+        bodies = List.copyOf(collisions.resolve(integrator.step(bodies, timeStep)));
     }
 }
