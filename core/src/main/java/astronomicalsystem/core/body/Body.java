@@ -42,7 +42,11 @@ public record Body(@NotNull BodyName name,
         return other.position.minus(position).lengthSquared() < reach * reach;
     }
 
+    /**
+     * @return the body formed by a perfectly inelastic collision of this body with {@code other}
+     */
     public @NotNull Body mergedWith(@NotNull Body other) {
-        return this;
+        Mass mergedMass = new Mass(mass.solarMasses() + other.mass.solarMasses());
+        return new Body(name, kind, mergedMass, radius, position, velocity);
     }
 }
