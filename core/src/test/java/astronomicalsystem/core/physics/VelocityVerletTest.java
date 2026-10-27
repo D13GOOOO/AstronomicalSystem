@@ -21,58 +21,52 @@ import static org.mockito.Mockito.when;
 class VelocityVerletTest {
 
     private static final TimeStep TWO_DAYS = new TimeStep(2.0);
+    private static final Body PROBE = new Body(new BodyName("Probe"), BodyKind.PLANET, new Mass(1e-3),
+            new Radius(1e-3), new Vector3(1.0, 0.0, 0.0), new Vector3(0.0, 0.5, 0.0));
+    private static final List<Vector3> NO_PULL = List.of(Vector3.ZERO);
+    private static final List<Vector3> PULL_ALONG_X = List.of(new Vector3(0.25, 0.0, 0.0));
+    private static final List<Vector3> PULL_ALONG_Y = List.of(new Vector3(0.0, 0.25, 0.0));
 
     private final GravityModel gravity = mock();
     private final VelocityVerlet SUT = new VelocityVerlet(gravity);
 
     @Test
     void withoutAccelerationABodyMovesInAStraightLineAtConstantVelocity() {
-        Vector3 velocity = new Vector3(0.0, 0.5, 0.0);
-        Body body = body(new Vector3(1.0, 0.0, 0.0), velocity);
-        when(gravity.accelerations(anyList())).thenReturn(List.of(Vector3.ZERO));
+        when(gravity.accelerations(anyList())).thenReturn(NO_PULL);
 
-        List<Body> stepped = SUT.step(List.of(body), TWO_DAYS);
+        List<Body> stepped = SUT.step(List.of(PROBE), TWO_DAYS);
 
-        assertThat(stepped).containsExactly(body.withMotion(new Vector3(1.0, 1.0, 0.0), velocity));
+        assertThat(stepped).containsExactly(PROBE.withMotion(new Vector3(1.0, 1.0, 0.0), PROBE.velocity()));
     }
 
     @Test
     void underConstantAccelerationABodyFollowsAParabola() {
-        Body body = body(new Vector3(1.0, 0.0, 0.0), new Vector3(0.0, 0.5, 0.0));
-        when(gravity.accelerations(anyList())).thenReturn(List.of(new Vector3(0.25, 0.0, 0.0)));
+        when(gravity.accelerations(anyList())).thenReturn(PULL_ALONG_X);
 
-        List<Body> stepped = SUT.step(List.of(body), TWO_DAYS);
+        List<Body> stepped = SUT.step(List.of(PROBE), TWO_DAYS);
 
         assertThat(stepped).containsExactly(
-                body.withMotion(new Vector3(1.5, 1.0, 0.0), new Vector3(0.5, 0.5, 0.0)));
+                PROBE.withMotion(new Vector3(1.5, 1.0, 0.0), new Vector3(0.5, 0.5, 0.0)));
     }
 
     @Test
     void velocityChangesByTheAverageOfTheOldAndTheNewAcceleration() {
-        Body body = body(new Vector3(1.0, 0.0, 0.0), new Vector3(0.0, 0.5, 0.0));
-        when(gravity.accelerations(anyList()))
-                .thenReturn(List.of(new Vector3(0.25, 0.0, 0.0)), List.of(new Vector3(0.0, 0.25, 0.0)));
+        when(gravity.accelerations(anyList())).thenReturn(PULL_ALONG_X, PULL_ALONG_Y);
 
-        List<Body> stepped = SUT.step(List.of(body), TWO_DAYS);
+        List<Body> stepped = SUT.step(List.of(PROBE), TWO_DAYS);
 
         assertThat(stepped).containsExactly(
-                body.withMotion(new Vector3(1.5, 1.0, 0.0), new Vector3(0.25, 0.75, 0.0)));
+                PROBE.withMotion(new Vector3(1.5, 1.0, 0.0), new Vector3(0.25, 0.75, 0.0)));
     }
 
     @Test
     void theNewAccelerationIsEvaluatedAtTheDriftedPositions() {
-        Body body = body(new Vector3(1.0, 0.0, 0.0), new Vector3(0.0, 0.5, 0.0));
-        when(gravity.accelerations(anyList())).thenReturn(List.of(new Vector3(0.25, 0.0, 0.0)));
+        when(gravity.accelerations(anyList())).thenReturn(PULL_ALONG_X);
 
-        SUT.step(List.of(body), TWO_DAYS);
+        SUT.step(List.of(PROBE), TWO_DAYS);
 
         ArgumentCaptor<List<Body>> evaluated = ArgumentCaptor.captor();
         verify(gravity, times(2)).accelerations(evaluated.capture());
         assertThat(evaluated.getValue()).extracting(Body::position).containsExactly(new Vector3(1.5, 1.0, 0.0));
-    }
-
-    private static Body body(Vector3 position, Vector3 velocity) {
-        return new Body(new BodyName("Probe"), BodyKind.PLANET, new Mass(1e-3), new Radius(1e-3),
-                position, velocity);
     }
 }
