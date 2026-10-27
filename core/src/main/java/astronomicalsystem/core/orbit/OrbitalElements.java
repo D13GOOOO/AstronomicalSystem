@@ -22,6 +22,11 @@ public record OrbitalElements(double semiMajorAxis,
 
     public OrbitalElements {
         Quantities.requirePositiveFinite(semiMajorAxis, "Semi-major axis");
+        // Written so that NaN, for which every comparison is false, is rejected too
+        boolean inclinationInRange = inclination >= 0.0 && inclination <= Math.PI;
+        if (!inclinationInRange) {
+            throw new IllegalArgumentException("Inclination must be between 0 and pi radians");
+        }
     }
 
     /**
