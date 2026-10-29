@@ -4,6 +4,8 @@ import astronomicalsystem.core.math.Vector3;
 import astronomicalsystem.core.orbit.StateVector;
 import astronomicalsystem.core.time.JulianDate;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,6 +29,10 @@ class HorizonsParserTest {
     private static final String UNKNOWN_BODY_RESPONSE = "unknown-body.txt";
     // Real response for Earth at JD 2461041.5 and 2461042.5: two rows between the markers
     private static final String TWO_EPOCHS_RESPONSE = "earth-2026-01-01-and-02.txt";
+    // The Earth row of the real response without its last value, VZ
+    private static final String EARTH_ROW_WITHOUT_VZ = "2461041.500000000, A.D. 2026-Jan-01 00:00:00.0000, "
+            + "-1.773487970879621E-01,  9.622255911830275E-01,  7.223908380425527E-05, "
+            + "-1.719737129724856E-02, -3.116429209131983E-03,";
     private static final String START_MARKER = "$$SOE";
     private static final String END_MARKER = "$$EOE";
 
@@ -84,6 +90,22 @@ class HorizonsParserTest {
         assertThatThrownBy(() -> SUT.parse(response))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Horizons response must contain exactly one ephemeris entry");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {EARTH_ROW_WITHOUT_VZ})
+    void rejectsAMalformedRow(String row) {
+        String response = withRow(fixture(EARTH_RESPONSE), row);
+
+        assertThatThrownBy(() -> SUT.parse(response))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Horizons entry is not a valid state vector row");
+    }
+
+    private static String withRow(String response, String row) {
+        int afterStartMarker = response.indexOf(START_MARKER) + START_MARKER.length();
+        return response.substring(0, afterStartMarker) + System.lineSeparator() + row + System.lineSeparator()
+                + response.substring(response.indexOf(END_MARKER));
     }
 
     private static String withoutEntries(String response) {
