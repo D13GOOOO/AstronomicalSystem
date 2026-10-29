@@ -21,12 +21,19 @@ public final class HorizonsParser {
     private static final int FIRST_VELOCITY_FIELD = 5;
 
     public @NotNull EphemerisEntry parse(@NotNull String response) {
-        int start = response.indexOf(START_OF_ENTRIES) + START_OF_ENTRIES.length();
-        int end = response.indexOf(END_OF_ENTRIES);
-        String[] fields = response.substring(start, end).split(SEPARATOR);
+        String[] fields = entriesOf(response).split(SEPARATOR);
         StateVector state =
                 new StateVector(vectorFrom(fields, FIRST_POSITION_FIELD), vectorFrom(fields, FIRST_VELOCITY_FIELD));
         return new EphemerisEntry(new JulianDate(Double.parseDouble(fields[EPOCH_FIELD])), state);
+    }
+
+    private static @NotNull String entriesOf(@NotNull String response) {
+        int startMarker = response.indexOf(START_OF_ENTRIES);
+        int endMarker = response.indexOf(END_OF_ENTRIES);
+        if (startMarker < 0 || endMarker < 0) {
+            throw new IllegalArgumentException("Horizons response is missing the $$SOE/$$EOE markers");
+        }
+        return response.substring(startMarker + START_OF_ENTRIES.length(), endMarker);
     }
 
     private static @NotNull Vector3 vectorFrom(@NotNull String[] fields, int first) {
