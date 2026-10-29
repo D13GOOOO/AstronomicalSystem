@@ -24,15 +24,10 @@ public final class HorizonsParser {
     private static final int FIRST_POSITION_FIELD = 2;
     private static final int FIRST_VELOCITY_FIELD = 5;
     private static final int FIELDS_PER_ROW = 8;
+    private static final String INVALID_ROW = "Horizons entry is not a valid state vector row";
 
     public @NotNull EphemerisEntry parse(@NotNull String response) {
-        String[] fields = onlyRowOf(entriesOf(response)).split(SEPARATOR);
-        if (fields.length < FIELDS_PER_ROW) {
-            throw new IllegalArgumentException("Horizons entry is not a valid state vector row");
-        }
-        StateVector state =
-                new StateVector(vectorFrom(fields, FIRST_POSITION_FIELD), vectorFrom(fields, FIRST_VELOCITY_FIELD));
-        return new EphemerisEntry(new JulianDate(Double.parseDouble(fields[EPOCH_FIELD])), state);
+        return entryFrom(onlyRowOf(entriesOf(response)));
     }
 
     private static @NotNull String entriesOf(@NotNull String response) {
@@ -50,6 +45,20 @@ public final class HorizonsParser {
             throw new IllegalArgumentException("Horizons response must contain exactly one ephemeris entry");
         }
         return rows.getFirst();
+    }
+
+    private static @NotNull EphemerisEntry entryFrom(@NotNull String row) {
+        String[] fields = row.split(SEPARATOR);
+        if (fields.length < FIELDS_PER_ROW) {
+            throw new IllegalArgumentException(INVALID_ROW);
+        }
+        try {
+            StateVector state =
+                    new StateVector(vectorFrom(fields, FIRST_POSITION_FIELD), vectorFrom(fields, FIRST_VELOCITY_FIELD));
+            return new EphemerisEntry(new JulianDate(Double.parseDouble(fields[EPOCH_FIELD])), state);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(INVALID_ROW, e);
+        }
     }
 
     private static @NotNull Vector3 vectorFrom(@NotNull String[] fields, int first) {
