@@ -2,6 +2,7 @@ package astronomicalsystem.ephemeris.horizons;
 
 import astronomicalsystem.core.math.Vector3;
 import astronomicalsystem.core.orbit.StateVector;
+import astronomicalsystem.core.time.JulianDate;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -16,6 +17,7 @@ class HorizonsParserTest {
 
     // Real response for Earth at JD 2461041.5 TDB (2026-01-01), barycentric, ecliptic J2000
     private static final String EARTH_RESPONSE = "earth-2026-01-01.txt";
+    private static final double EARTH_EPOCH = 2461041.5;
     private static final Vector3 EARTH_POSITION =
             new Vector3(-1.773487970879621E-01, 9.622255911830275E-01, 7.223908380425527E-05);
     private static final Vector3 EARTH_VELOCITY =
@@ -27,9 +29,18 @@ class HorizonsParserTest {
     void readsTheStateVectorBetweenTheMarkers() {
         String response = fixture(EARTH_RESPONSE);
 
-        StateVector state = SUT.parse(response);
+        StateVector state = SUT.parse(response).state();
 
         assertThat(state).isEqualTo(new StateVector(EARTH_POSITION, EARTH_VELOCITY));
+    }
+
+    @Test
+    void readsTheEpochOfTheRow() {
+        String response = fixture(EARTH_RESPONSE);
+
+        JulianDate epoch = SUT.parse(response).epoch();
+
+        assertThat(epoch).isEqualTo(new JulianDate(EARTH_EPOCH));
     }
 
     private static String fixture(String name) {
