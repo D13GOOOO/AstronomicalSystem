@@ -27,6 +27,7 @@ class HorizonsParserTest {
     private static final String UNKNOWN_BODY_RESPONSE = "unknown-body.txt";
     // Real response for Earth at JD 2461041.5 and 2461042.5: two rows between the markers
     private static final String TWO_EPOCHS_RESPONSE = "earth-2026-01-01-and-02.txt";
+    private static final String START_MARKER = "$$SOE";
     private static final String END_MARKER = "$$EOE";
 
     private final HorizonsParser SUT = new HorizonsParser();
@@ -74,6 +75,21 @@ class HorizonsParserTest {
         assertThatThrownBy(() -> SUT.parse(response))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Horizons response must contain exactly one ephemeris entry");
+    }
+
+    @Test
+    void rejectsAResponseWithoutEntries() {
+        String response = withoutEntries(fixture(EARTH_RESPONSE));
+
+        assertThatThrownBy(() -> SUT.parse(response))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Horizons response must contain exactly one ephemeris entry");
+    }
+
+    private static String withoutEntries(String response) {
+        int afterStartMarker = response.indexOf(START_MARKER) + START_MARKER.length();
+        return response.substring(0, afterStartMarker) + System.lineSeparator()
+                + response.substring(response.indexOf(END_MARKER));
     }
 
     private static String truncatedBefore(String response, String marker) {
