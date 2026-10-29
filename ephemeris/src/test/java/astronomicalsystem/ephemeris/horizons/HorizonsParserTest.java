@@ -109,9 +109,7 @@ class HorizonsParserTest {
     }
 
     private static String withoutEntries(String response) {
-        int afterStartMarker = response.indexOf(START_MARKER) + START_MARKER.length();
-        return response.substring(0, afterStartMarker) + System.lineSeparator()
-                + response.substring(response.indexOf(END_MARKER));
+        return withRow(response, "");
     }
 
     private static String truncatedBefore(String response, String marker) {
