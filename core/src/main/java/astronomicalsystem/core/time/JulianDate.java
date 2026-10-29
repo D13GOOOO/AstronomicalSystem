@@ -5,4 +5,10 @@ package astronomicalsystem.core.time;
  * of 1 January 4713 BC in the proleptic Julian calendar.
  */
 public record JulianDate(double days) {
+
+    public JulianDate {
+        if (!Double.isFinite(days)) {
+            throw new IllegalArgumentException("Julian date must be finite");
+        }
+    }
 }
