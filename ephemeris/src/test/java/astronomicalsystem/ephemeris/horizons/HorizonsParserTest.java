@@ -33,6 +33,10 @@ class HorizonsParserTest {
     private static final String EARTH_ROW_WITHOUT_VZ = "2461041.500000000, A.D. 2026-Jan-01 00:00:00.0000, "
             + "-1.773487970879621E-01,  9.622255911830275E-01,  7.223908380425527E-05, "
             + "-1.719737129724856E-02, -3.116429209131983E-03,";
+    // The Earth row of the real response with X replaced by "n.a.", the placeholder of Horizons observer tables
+    private static final String EARTH_ROW_WITHOUT_X = "2461041.500000000, A.D. 2026-Jan-01 00:00:00.0000, "
+            + "n.a.,  9.622255911830275E-01,  7.223908380425527E-05, "
+            + "-1.719737129724856E-02, -3.116429209131983E-03,  1.012925163112427E-07,";
     private static final String START_MARKER = "$$SOE";
     private static final String END_MARKER = "$$EOE";
 
@@ -93,7 +97,7 @@ class HorizonsParserTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {EARTH_ROW_WITHOUT_VZ})
+    @ValueSource(strings = {EARTH_ROW_WITHOUT_VZ, EARTH_ROW_WITHOUT_X})
     void rejectsAMalformedRow(String row) {
         String response = withRow(fixture(EARTH_RESPONSE), row);
 
