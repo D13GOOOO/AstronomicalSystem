@@ -25,6 +25,7 @@ class HorizonsParserTest {
             new Vector3(-1.719737129724856E-02, -3.116429209131983E-03, 1.012925163112427E-07);
     // Real response to a query for a body that does not exist: an error text, no markers
     private static final String UNKNOWN_BODY_RESPONSE = "unknown-body.txt";
+    private static final String END_MARKER = "$$EOE";
 
     private final HorizonsParser SUT = new HorizonsParser();
 
@@ -53,6 +54,19 @@ class HorizonsParserTest {
         assertThatThrownBy(() -> SUT.parse(response))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Horizons response is missing the $$SOE/$$EOE markers");
+    }
+
+    @Test
+    void rejectsAResponseTruncatedBeforeTheEndMarker() {
+        String response = truncatedBefore(fixture(EARTH_RESPONSE), END_MARKER);
+
+        assertThatThrownBy(() -> SUT.parse(response))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Horizons response is missing the $$SOE/$$EOE markers");
+    }
+
+    private static String truncatedBefore(String response, String marker) {
+        return response.substring(0, response.indexOf(marker));
     }
 
     private static String fixture(String name) {
