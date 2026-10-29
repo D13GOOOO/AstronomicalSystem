@@ -1,0 +1,9 @@
+API VERSION: 1.2
+API SOURCE: NASA/JPL Horizons API
+
+DXREAD: requested IOBJ= ******** is out of bounds, no action taken.
+Record boundaries:                                                 
+ IAU numbered asteroids:        1-  895910                         
+ Unnumbered asteroids  : 50000001-50682141                         
+ Comets                : 90000001-90004984                         
+If an SPK ID, look-up with "DES= ********;"                        
