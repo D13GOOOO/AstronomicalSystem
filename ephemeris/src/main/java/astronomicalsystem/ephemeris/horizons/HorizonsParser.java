@@ -16,6 +16,7 @@ public final class HorizonsParser {
     private static final String END_OF_ENTRIES = "$$EOE";
     private static final String SEPARATOR = ",";
     // Fields of a row: JDTDB, calendar date, X, Y, Z, VX, VY, VZ
+    private static final int EPOCH_FIELD = 0;
     private static final int FIRST_POSITION_FIELD = 2;
     private static final int FIRST_VELOCITY_FIELD = 5;
 
@@ -25,7 +26,7 @@ public final class HorizonsParser {
         String[] fields = response.substring(start, end).split(SEPARATOR);
         StateVector state =
                 new StateVector(vectorFrom(fields, FIRST_POSITION_FIELD), vectorFrom(fields, FIRST_VELOCITY_FIELD));
-        return new EphemerisEntry(new JulianDate(0.0), state);
+        return new EphemerisEntry(new JulianDate(Double.parseDouble(fields[EPOCH_FIELD])), state);
     }
 
     private static @NotNull Vector3 vectorFrom(@NotNull String[] fields, int first) {
