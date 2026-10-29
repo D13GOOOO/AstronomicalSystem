@@ -6,6 +6,10 @@ import astronomicalsystem.core.time.JulianDate;
 import astronomicalsystem.ephemeris.EphemerisEntry;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
+import static java.util.function.Predicate.not;
+
 /**
  * Reads the state vectors of a NASA JPL Horizons response, requested as plain text with
  * {@code CSV_FORMAT='YES'}, {@code OUT_UNITS='AU-D'} and {@code VEC_TABLE='2'}.
@@ -21,7 +25,7 @@ public final class HorizonsParser {
     private static final int FIRST_VELOCITY_FIELD = 5;
 
     public @NotNull EphemerisEntry parse(@NotNull String response) {
-        String[] fields = entriesOf(response).split(SEPARATOR);
+        String[] fields = onlyRowOf(entriesOf(response)).split(SEPARATOR);
         StateVector state =
                 new StateVector(vectorFrom(fields, FIRST_POSITION_FIELD), vectorFrom(fields, FIRST_VELOCITY_FIELD));
         return new EphemerisEntry(new JulianDate(Double.parseDouble(fields[EPOCH_FIELD])), state);
@@ -34,6 +38,14 @@ public final class HorizonsParser {
             throw new IllegalArgumentException("Horizons response is missing the $$SOE/$$EOE markers");
         }
         return response.substring(startMarker + START_OF_ENTRIES.length(), endMarker);
+    }
+
+    private static @NotNull String onlyRowOf(@NotNull String entries) {
+        List<String> rows = entries.lines().filter(not(String::isBlank)).toList();
+        if (rows.size() != 1) {
+            throw new IllegalArgumentException("Horizons response must contain exactly one ephemeris entry");
+        }
+        return rows.getFirst();
     }
 
     private static @NotNull Vector3 vectorFrom(@NotNull String[] fields, int first) {
