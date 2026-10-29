@@ -25,6 +25,8 @@ class HorizonsParserTest {
             new Vector3(-1.719737129724856E-02, -3.116429209131983E-03, 1.012925163112427E-07);
     // Real response to a query for a body that does not exist: an error text, no markers
     private static final String UNKNOWN_BODY_RESPONSE = "unknown-body.txt";
+    // Real response for Earth at JD 2461041.5 and 2461042.5: two rows between the markers
+    private static final String TWO_EPOCHS_RESPONSE = "earth-2026-01-01-and-02.txt";
     private static final String END_MARKER = "$$EOE";
 
     private final HorizonsParser SUT = new HorizonsParser();
@@ -63,6 +65,15 @@ class HorizonsParserTest {
         assertThatThrownBy(() -> SUT.parse(response))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Horizons response is missing the $$SOE/$$EOE markers");
+    }
+
+    @Test
+    void rejectsAResponseWithMoreThanOneEntry() {
+        String response = fixture(TWO_EPOCHS_RESPONSE);
+
+        assertThatThrownBy(() -> SUT.parse(response))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Horizons response must contain exactly one ephemeris entry");
     }
 
     private static String truncatedBefore(String response, String marker) {
