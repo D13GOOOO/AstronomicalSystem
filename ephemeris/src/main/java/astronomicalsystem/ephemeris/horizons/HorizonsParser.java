@@ -14,7 +14,7 @@ import static java.util.function.Predicate.not;
  * Reads the state vectors of a NASA JPL Horizons response, requested as plain text with
  * {@code CSV_FORMAT='YES'}, {@code OUT_UNITS='AU-D'} and {@code VEC_TABLE='2'}.
  */
-public final class HorizonsParser {
+public final class HorizonsParser implements ResponseParser {
 
     private static final String START_OF_ENTRIES = "$$SOE";
     private static final String END_OF_ENTRIES = "$$EOE";
@@ -26,6 +26,7 @@ public final class HorizonsParser {
     private static final int FIELDS_PER_ROW = 8;
     private static final String INVALID_ROW = "Horizons entry is not a valid state vector row";
 
+    @Override
     public @NotNull EphemerisEntry parse(@NotNull String response) {
         return entryFrom(onlyRowOf(entriesOf(response)));
     }
