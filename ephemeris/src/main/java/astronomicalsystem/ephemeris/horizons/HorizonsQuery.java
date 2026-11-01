@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.math.BigDecimal;
 import java.net.URI;
+import java.util.regex.Pattern;
 
 /**
  * Request to NASA JPL Horizons for the barycentric state vector of one body at one epoch.
@@ -15,6 +16,14 @@ import java.net.URI;
 public record HorizonsQuery(@NotNull String command, @NotNull JulianDate epoch) {
 
     private static final String ENDPOINT = "https://ssd.jpl.nasa.gov/api/horizons.api?format=text";
+    // SPK identifiers: positive for natural bodies, negative for spacecraft
+    private static final Pattern BODY_IDENTIFIER = Pattern.compile("-?\\d+");
+
+    public HorizonsQuery {
+        if (!BODY_IDENTIFIER.matcher(command).matches()) {
+            throw new IllegalArgumentException("Horizons command must be a numeric body identifier");
+        }
+    }
 
     /**
      * Position and velocity relative to the solar-system barycentre, ecliptic J2000 frame, AU and
