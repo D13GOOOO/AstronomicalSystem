@@ -16,6 +16,9 @@ class HorizonsQueryTest {
             + "?format=text&COMMAND=%27399%27&OBJ_DATA=%27NO%27&MAKE_EPHEM=%27YES%27&EPHEM_TYPE=%27VECTORS%27"
             + "&CENTER=%27@0%27&TLIST=%272461041.5%27&REF_PLANE=%27ECLIPTIC%27&OUT_UNITS=%27AU-D%27"
             + "&CSV_FORMAT=%27YES%27&VEC_TABLE=%272%27");
+    // Shortly after the origin of Julian dates (4713 BC, still covered by DE441): Double.toString
+    // writes it in scientific notation, which Horizons does not read as a date
+    private static final JulianDate NEAR_THE_ORIGIN = new JulianDate(0.0001);
 
     @Test
     void buildsTheBarycentricEclipticVectorQueryForOneEpoch() {
@@ -24,5 +27,14 @@ class HorizonsQueryTest {
         URI uri = SUT.uri();
 
         assertThat(uri).isEqualTo(EARTH_QUERY);
+    }
+
+    @Test
+    void writesTheEpochInPlainDecimalNotation() {
+        HorizonsQuery SUT = new HorizonsQuery(EARTH, NEAR_THE_ORIGIN);
+
+        String query = SUT.uri().getQuery();
+
+        assertThat(query).contains("TLIST='0.0001'");
     }
 }
