@@ -1,6 +1,7 @@
 package astronomicalsystem.ephemeris.horizons;
 
 import astronomicalsystem.ephemeris.EphemerisUnavailableException;
+import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,6 +12,7 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.net.http.HttpTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
@@ -23,7 +25,8 @@ class JdkHttpTransportTest {
     private static final int OK = 200;
     private static final int SERVICE_UNAVAILABLE = 503;
     private static final String BODY = "$$SOE\nrow\n$$EOE\n";
-    private static final Duration TIMEOUT = Duration.ofSeconds(2);
+    private static final Duration TIMEOUT = Duration.ofMillis(500);
+    private static final Duration LONGER_THAN_THE_TIMEOUT = Duration.ofMillis(1500);
     // Port 0: the system picks a free one
     private static final int ANY_FREE_PORT = 0;
     private static final int DEFAULT_BACKLOG = 0;
@@ -62,14 +65,41 @@ class JdkHttpTransportTest {
                 .hasMessage("Horizons answered with HTTP status 503");
     }
 
+    @Test
+    void givesUpOnAServerThatDoesNotAnswerInTime() {
+        respondLate(OK, BODY);
+
+        assertThatThrownBy(() -> SUT.fetch(serverUri()))
+                .isInstanceOf(EphemerisUnavailableException.class)
+                .hasMessage("Horizons did not answer within the timeout")
+                .hasCauseInstanceOf(HttpTimeoutException.class);
+    }
+
     private void respondWith(int status, String body) {
+        server.createContext(PATH, exchange -> reply(exchange, status, body));
+    }
+
+    private void respondLate(int status, String body) {
         server.createContext(PATH, exchange -> {
-            byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
-            exchange.sendResponseHeaders(status, bytes.length);
-            try (OutputStream out = exchange.getResponseBody()) {
-                out.write(bytes);
-            }
+            pause(LONGER_THAN_THE_TIMEOUT);
+            reply(exchange, status, body);
         });
+    }
+
+    private static void reply(HttpExchange exchange, int status, String body) throws IOException {
+        byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
+        exchange.sendResponseHeaders(status, bytes.length);
+        try (OutputStream out = exchange.getResponseBody()) {
+            out.write(bytes);
+        }
+    }
+
+    private static void pause(Duration delay) {
+        try {
+            Thread.sleep(delay);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     private URI serverUri() {
