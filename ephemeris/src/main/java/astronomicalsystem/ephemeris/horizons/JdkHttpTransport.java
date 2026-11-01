@@ -1,5 +1,6 @@
 package astronomicalsystem.ephemeris.horizons;
 
+import astronomicalsystem.ephemeris.EphemerisUnavailableException;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -14,6 +15,9 @@ import java.time.Duration;
  */
 public final class JdkHttpTransport implements Transport {
 
+    // Horizons answers 200 even when it finds nothing: any other status is a failure of the service
+    private static final int HTTP_OK = 200;
+
     private final @NotNull HttpClient client;
     private final @NotNull Duration timeout;
 
@@ -27,9 +31,16 @@ public final class JdkHttpTransport implements Transport {
 
     @Override
     public @NotNull String fetch(@NotNull URI uri) {
-        HttpRequest request = HttpRequest.newBuilder(uri).timeout(timeout).GET().build();
+        HttpResponse<String> response = send(HttpRequest.newBuilder(uri).timeout(timeout).GET().build());
+        if (response.statusCode() != HTTP_OK) {
+            throw new EphemerisUnavailableException("Horizons answered with HTTP status " + response.statusCode());
+        }
+        return response.body();
+    }
+
+    private @NotNull HttpResponse<String> send(@NotNull HttpRequest request) {
         try {
-            return client.send(request, HttpResponse.BodyHandlers.ofString()).body();
+            return client.send(request, HttpResponse.BodyHandlers.ofString());
         } catch (IOException | InterruptedException e) {
             throw new IllegalStateException("not yet managed", e);
         }
