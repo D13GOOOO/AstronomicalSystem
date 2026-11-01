@@ -10,4 +10,8 @@ public class EphemerisUnavailableException extends RuntimeException {
     public EphemerisUnavailableException(@NotNull String message) {
         super(message);
     }
+
+    public EphemerisUnavailableException(@NotNull String message, @NotNull Throwable cause) {
+        super(message, cause);
+    }
 }
