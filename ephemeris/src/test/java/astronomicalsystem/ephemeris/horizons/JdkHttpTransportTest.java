@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -75,6 +76,16 @@ class JdkHttpTransportTest {
                 .hasCauseInstanceOf(HttpTimeoutException.class);
     }
 
+    @Test
+    void reportsAServerThatCannotBeReached() {
+        URI closedPort = serverUri();
+        server.stop(0);
+
+        assertThatThrownBy(() -> SUT.fetch(closedPort))
+                .isInstanceOf(EphemerisUnavailableException.class)
+                .hasMessage("Horizons cannot be reached")
+                .hasCauseInstanceOf(ConnectException.class);
+    }
     private void respondWith(int status, String body) {
         server.createContext(PATH, exchange -> reply(exchange, status, body));
     }
