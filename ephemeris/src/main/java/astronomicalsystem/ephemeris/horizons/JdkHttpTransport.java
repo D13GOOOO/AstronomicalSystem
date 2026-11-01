@@ -47,7 +47,8 @@ public final class JdkHttpTransport implements Transport {
         } catch (IOException e) {
             throw new EphemerisUnavailableException("Horizons cannot be reached", e);
         } catch (InterruptedException e) {
-            throw new IllegalStateException("not yet managed", e);
+            Thread.currentThread().interrupt();
+            throw new EphemerisUnavailableException("Horizons query was interrupted", e);
         }
     }
 }
