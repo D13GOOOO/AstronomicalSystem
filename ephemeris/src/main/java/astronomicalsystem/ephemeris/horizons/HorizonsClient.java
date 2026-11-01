@@ -17,6 +17,6 @@ public final class HorizonsClient {
     }
 
     public @NotNull EphemerisEntry entryOf(@NotNull HorizonsQuery query) {
-        throw new UnsupportedOperationException("not yet implemented");
+        return parser.parse(transport.fetch(query.uri()));
     }
 }
