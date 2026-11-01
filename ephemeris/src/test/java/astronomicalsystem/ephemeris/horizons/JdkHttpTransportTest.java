@@ -86,6 +86,18 @@ class JdkHttpTransportTest {
                 .hasMessage("Horizons cannot be reached")
                 .hasCauseInstanceOf(ConnectException.class);
     }
+    @Test
+    void reportsAnInterruptedQueryAndKeepsTheInterruptStatus() {
+        respondWith(OK, BODY);
+        Thread.currentThread().interrupt();
+
+        assertThatThrownBy(() -> SUT.fetch(serverUri()))
+                .isInstanceOf(EphemerisUnavailableException.class)
+                .hasMessage("Horizons query was interrupted")
+                .hasCauseInstanceOf(InterruptedException.class);
+        // Thread.interrupted() also clears the status, so the next tests run on a clean thread
+        assertThat(Thread.interrupted()).isTrue();
+    }
     private void respondWith(int status, String body) {
         server.createContext(PATH, exchange -> reply(exchange, status, body));
     }
