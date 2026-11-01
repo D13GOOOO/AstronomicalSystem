@@ -44,7 +44,9 @@ public final class JdkHttpTransport implements Transport {
             return client.send(request, HttpResponse.BodyHandlers.ofString());
         } catch (HttpTimeoutException e) {
             throw new EphemerisUnavailableException("Horizons did not answer within the timeout", e);
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException e) {
+            throw new EphemerisUnavailableException("Horizons cannot be reached", e);
+        } catch (InterruptedException e) {
             throw new IllegalStateException("not yet managed", e);
         }
     }
