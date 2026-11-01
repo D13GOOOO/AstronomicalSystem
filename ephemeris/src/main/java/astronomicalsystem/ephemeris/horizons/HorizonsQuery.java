@@ -3,6 +3,7 @@ package astronomicalsystem.ephemeris.horizons;
 import astronomicalsystem.core.time.JulianDate;
 import org.jetbrains.annotations.NotNull;
 
+import java.math.BigDecimal;
 import java.net.URI;
 
 /**
@@ -26,11 +27,16 @@ public record HorizonsQuery(@NotNull String command, @NotNull JulianDate epoch) 
                 + parameter("MAKE_EPHEM", "YES")
                 + parameter("EPHEM_TYPE", "VECTORS")
                 + parameter("CENTER", "@0")
-                + parameter("TLIST", String.valueOf(epoch.days()))
+                + parameter("TLIST", plainDecimal(epoch.days()))
                 + parameter("REF_PLANE", "ECLIPTIC")
                 + parameter("OUT_UNITS", "AU-D")
                 + parameter("CSV_FORMAT", "YES")
                 + parameter("VEC_TABLE", "2"));
+    }
+
+    // Double.toString switches to scientific notation, which Horizons does not read as a date
+    private static @NotNull String plainDecimal(double value) {
+        return BigDecimal.valueOf(value).stripTrailingZeros().toPlainString();
     }
 
     // Horizons wants every value between single quotes, here percent-encoded
