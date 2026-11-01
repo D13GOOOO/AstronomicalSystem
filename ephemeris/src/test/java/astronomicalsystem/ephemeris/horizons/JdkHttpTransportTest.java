@@ -1,5 +1,6 @@
 package astronomicalsystem.ephemeris.horizons;
 
+import astronomicalsystem.ephemeris.EphemerisUnavailableException;
 import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,11 +15,13 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class JdkHttpTransportTest {
 
     private static final String PATH = "/horizons";
     private static final int OK = 200;
+    private static final int SERVICE_UNAVAILABLE = 503;
     private static final String BODY = "$$SOE\nrow\n$$EOE\n";
     private static final Duration TIMEOUT = Duration.ofSeconds(2);
     // Port 0: the system picks a free one
@@ -48,6 +51,15 @@ class JdkHttpTransportTest {
         String body = SUT.fetch(serverUri());
 
         assertThat(body).isEqualTo(BODY);
+    }
+
+    @Test
+    void rejectsAnUnsuccessfulResponse() {
+        respondWith(SERVICE_UNAVAILABLE, BODY);
+
+        assertThatThrownBy(() -> SUT.fetch(serverUri()))
+                .isInstanceOf(EphemerisUnavailableException.class)
+                .hasMessage("Horizons answered with HTTP status 503");
     }
 
     private void respondWith(int status, String body) {
