@@ -15,6 +15,7 @@ import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguratio
 import org.assertj.core.util.DoubleComparator;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -55,6 +56,17 @@ class KeplerEphemerisTest {
 
         assertThat(secondRelativeToFirst(bodies)).usingRecursiveComparison(CLOSE_ENOUGH)
                 .isEqualTo(new StateVector(new Vector3(2.0, 0.0, 0.0), new Vector3(0.0, CIRCULAR_SPEED, 0.0)));
+    }
+
+    @Test
+    void changingTheListOfOrbitsAfterwardsDoesNotChangeTheEphemeris() {
+        List<KeplerOrbit> orbits = new ArrayList<>(List.of(new KeplerOrbit(TWIN, CIRCLE_OF_RADIUS_TWO)));
+        KeplerEphemeris SUT = new KeplerEphemeris(SUN, J2000, orbits);
+        orbits.clear();
+
+        List<Body> bodies = SUT.bodiesAt(J2000);
+
+        assertThat(bodies).hasSize(2);
     }
 
     private static StateVector secondRelativeToFirst(List<Body> bodies) {
