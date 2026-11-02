@@ -7,12 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Objects;
-
+import static astronomicalsystem.ephemeris.horizons.HorizonsFixtures.fixture;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -118,14 +113,5 @@ class HorizonsParserTest {
 
     private static String truncatedBefore(String response, String marker) {
         return response.substring(0, response.indexOf(marker));
-    }
-
-    private static String fixture(String name) {
-        try (InputStream in = Objects.requireNonNull(
-                HorizonsParserTest.class.getResourceAsStream("/horizons/" + name), "missing fixture " + name)) {
-            return new String(in.readAllBytes(), StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
     }
 }

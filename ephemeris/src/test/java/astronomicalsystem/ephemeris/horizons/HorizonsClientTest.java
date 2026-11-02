@@ -13,7 +13,7 @@ import static org.mockito.Mockito.when;
 class HorizonsClientTest {
 
     private static final JulianDate EPOCH = new JulianDate(2461041.5);
-    private static final HorizonsQuery EARTH_QUERY = new HorizonsQuery("399", EPOCH);
+    private static final HorizonsQuery EARTH_QUERY = new HorizonsQuery(new HorizonsCommand("399"), EPOCH);
     private static final String RESPONSE = "text of the Horizons response";
     private static final EphemerisEntry EARTH_ENTRY = new EphemerisEntry(EPOCH,
             new StateVector(new Vector3(1.0, 0.0, 0.0), new Vector3(0.0, 0.5, 0.0)));
