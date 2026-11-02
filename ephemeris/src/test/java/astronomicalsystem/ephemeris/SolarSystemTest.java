@@ -42,6 +42,17 @@ class SolarSystemTest {
         assertThat(propertiesOf(bodies)).isEqualTo(propertiesOf(SolarSystem.meanOrbits().bodiesAt(DATE)));
     }
 
+    @Test
+    void whenHorizonsAnswersTheBodiesAreWhereItPutsThem() {
+        when(horizons.entryOf(any())).thenReturn(SOME_ENTRY);
+        EphemerisSource SUT = SolarSystem.withFallback(horizons);
+
+        List<Body> bodies = SUT.bodiesAt(DATE);
+
+        assertThat(bodies).hasSize(SUN_AND_PLANETS).extracting(Body::position)
+                .containsOnly(SOME_ENTRY.state().position());
+    }
+
     private static HorizonsQuery query(String command) {
         return new HorizonsQuery(new HorizonsCommand(command), DATE);
     }

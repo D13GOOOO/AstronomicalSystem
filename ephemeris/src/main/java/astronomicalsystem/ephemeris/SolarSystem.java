@@ -88,6 +88,14 @@ public final class SolarSystem {
         return new HorizonsEphemeris(horizons, HORIZONS_TARGETS);
     }
 
+    /**
+     * @return the Sun and the planets where Horizons puts them or, when Horizons has no usable
+     *         answer, on their mean orbits
+     */
+    public static @NotNull EphemerisSource withFallback(@NotNull Horizons horizons) {
+        throw new UnsupportedOperationException("not yet implemented");
+    }
+
     private static @NotNull BodyProperties planet(@NotNull String name, double gmKm3PerS2, double meanRadiusKm) {
         return new BodyProperties(new BodyName(name), BodyKind.PLANET, new Mass(gmKm3PerS2 / SUN_GM_KM3_PER_S2),
                 radius(meanRadiusKm));
