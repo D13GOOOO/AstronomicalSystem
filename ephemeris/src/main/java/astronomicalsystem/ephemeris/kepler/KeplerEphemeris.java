@@ -31,8 +31,27 @@ public final class KeplerEphemeris {
      * @return the central body followed by the orbiting ones, in the order of the orbits
      */
     public @NotNull List<Body> bodiesAt(@NotNull JulianDate date) {
-        return Stream.concat(Stream.of(centralBody.in(AT_REST_IN_THE_ORIGIN)), orbits.stream().map(this::onItsOrbit))
-                .toList();
+        List<Body> aroundTheCentralBody = Stream.concat(Stream.of(centralBody.in(AT_REST_IN_THE_ORIGIN)),
+                orbits.stream().map(this::onItsOrbit)).toList();
+        StateVector centreOfMass = centreOfMass(aroundTheCentralBody);
+        return aroundTheCentralBody.stream().map(body -> relativeTo(centreOfMass, body)).toList();
+    }
+
+    private static @NotNull StateVector centreOfMass(@NotNull List<Body> bodies) {
+        double totalMass = 0.0;
+        Vector3 massMoment = Vector3.ZERO;
+        Vector3 momentum = Vector3.ZERO;
+        for (Body body : bodies) {
+            double mass = body.mass().solarMasses();
+            totalMass += mass;
+            massMoment = massMoment.plus(body.position().times(mass));
+            momentum = momentum.plus(body.velocity().times(mass));
+        }
+        return new StateVector(massMoment.times(1.0 / totalMass), momentum.times(1.0 / totalMass));
+    }
+
+    private static @NotNull Body relativeTo(@NotNull StateVector origin, @NotNull Body body) {
+        return body.withMotion(body.position().minus(origin.position()), body.velocity().minus(origin.velocity()));
     }
 
     private @NotNull Body onItsOrbit(@NotNull KeplerOrbit orbit) {
