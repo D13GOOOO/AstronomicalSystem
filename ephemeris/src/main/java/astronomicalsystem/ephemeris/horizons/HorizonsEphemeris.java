@@ -12,7 +12,12 @@ import java.util.List;
  */
 public final class HorizonsEphemeris implements EphemerisSource {
 
+    private final @NotNull Horizons horizons;
+    private final @NotNull List<HorizonsTarget> targets;
+
     public HorizonsEphemeris(@NotNull Horizons horizons, @NotNull List<HorizonsTarget> targets) {
+        this.horizons = horizons;
+        this.targets = List.copyOf(targets);
     }
 
     /**
@@ -20,6 +25,10 @@ public final class HorizonsEphemeris implements EphemerisSource {
      */
     @Override
     public @NotNull List<Body> bodiesAt(@NotNull JulianDate date) {
-        return List.of();
+        return targets.stream().map(target -> atDate(target, date)).toList();
+    }
+
+    private @NotNull Body atDate(@NotNull HorizonsTarget target, @NotNull JulianDate date) {
+        return target.body().in(horizons.entryOf(new HorizonsQuery(target.command(), date)).state());
     }
 }
