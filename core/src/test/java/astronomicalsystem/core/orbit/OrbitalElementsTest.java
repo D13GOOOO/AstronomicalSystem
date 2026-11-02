@@ -16,7 +16,7 @@ class OrbitalElementsTest {
     private static final double SEMI_MAJOR_AXIS = 2.0;
     // With e = 0.6 the semi-minor axis is exactly 0.8 a, and with μ = 8 the mean motion √(μ/a³) is 1
     private static final double ECCENTRICITY = 0.6;
-    private static final double GRAVITATIONAL_PARAMETER = 8.0;
+    private static final GravitationalParameter GRAVITATIONAL_PARAMETER = new GravitationalParameter(8.0);
     private static final double TOLERANCE = 1e-12;
     // Math.nextUp(Math.PI): the smallest double above π
     private static final double JUST_ABOVE_PI = 3.1415926535897936;

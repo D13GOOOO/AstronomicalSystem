@@ -25,7 +25,8 @@ class KeplerOrbitAcceptanceTest {
     private static final double NO_SOFTENING = 0.0;
     private static final double SUN_MASS = 1.0;
     private static final double PLANET_MASS = 3.003e-6;
-    private static final double GRAVITATIONAL_PARAMETER = G * (SUN_MASS + PLANET_MASS);
+    private static final GravitationalParameter GRAVITATIONAL_PARAMETER =
+            new GravitationalParameter(G * (SUN_MASS + PLANET_MASS));
     private static final OrbitalElements ECCENTRIC_TILTED_ORBIT =
             new OrbitalElements(1.0, new Eccentricity(0.5), 0.3, 1.0, 2.0, 0.7);
     // Velocity Verlet's error after one period is about 1e-6 AU with this many steps
@@ -51,7 +52,7 @@ class KeplerOrbitAcceptanceTest {
 
     private List<Body> integrateForOnePeriod(List<Body> bodies) {
         double period = 2.0 * Math.PI * Math.sqrt(Math.pow(ECCENTRIC_TILTED_ORBIT.semiMajorAxis(), 3)
-                / GRAVITATIONAL_PARAMETER);
+                / GRAVITATIONAL_PARAMETER.auCubedPerDaySquared());
         TimeStep step = new TimeStep(period / STEPS_PER_PERIOD);
         List<Body> integrated = bodies;
         for (int i = 0; i < STEPS_PER_PERIOD; i++) {

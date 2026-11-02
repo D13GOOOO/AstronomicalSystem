@@ -48,10 +48,10 @@ public record OrbitalElements(double semiMajorAxis,
     }
 
     /**
-     * @param gravitationalParameter {@code G(M + m)}, in AU³ per day squared
+     * @param gravitationalParameter {@code G(M + m)} of the central body and the orbiting one
      * @return the position and velocity relative to the central body at the epoch of the elements
      */
-    public @NotNull StateVector stateVector(double gravitationalParameter) {
+    public @NotNull StateVector stateVector(@NotNull GravitationalParameter gravitationalParameter) {
         StateVector perifocal = perifocalState(gravitationalParameter);
         return new StateVector(toEcliptic(perifocal.position()), toEcliptic(perifocal.velocity()));
     }
@@ -60,13 +60,14 @@ public record OrbitalElements(double semiMajorAxis,
      * @return the state in the perifocal frame: origin in the focus, x towards the periapsis and z
      *         along the angular momentum
      */
-    private @NotNull StateVector perifocalState(double gravitationalParameter) {
+    private @NotNull StateVector perifocalState(@NotNull GravitationalParameter gravitationalParameter) {
         double eccentricAnomaly = KeplerEquation.eccentricAnomaly(meanAnomaly, eccentricity);
         double cos = Math.cos(eccentricAnomaly);
         double sin = Math.sin(eccentricAnomaly);
         double e = eccentricity.value();
         double semiMinorAxis = semiMajorAxis * Math.sqrt(1.0 - e * e);
-        double meanMotion = Math.sqrt(gravitationalParameter / (semiMajorAxis * semiMajorAxis * semiMajorAxis));
+        double meanMotion = Math.sqrt(gravitationalParameter.auCubedPerDaySquared()
+                / (semiMajorAxis * semiMajorAxis * semiMajorAxis));
         // dE/dt, from the derivative of Kepler's equation: n = (1 - e cos E) dE/dt
         double eccentricAnomalyRate = meanMotion / (1.0 - e * cos);
         Vector3 position = new Vector3(semiMajorAxis * (cos - e), semiMinorAxis * sin, 0.0);
