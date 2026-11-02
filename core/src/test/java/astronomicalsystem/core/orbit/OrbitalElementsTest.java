@@ -17,6 +17,8 @@ class OrbitalElementsTest {
     // With e = 0.6 the semi-minor axis is exactly 0.8 a, and with μ = 8 the mean motion √(μ/a³) is 1
     private static final double ECCENTRICITY = 0.6;
     private static final GravitationalParameter GRAVITATIONAL_PARAMETER = new GravitationalParameter(8.0);
+    // Mean motions √(μ/a³) with a = 2: 1 rad/day for μ = 8, 2 rad/day for μ = 32
+    private static final double INITIAL_MEAN_ANOMALY = 0.5;
     private static final double TOLERANCE = 1e-12;
     // Math.nextUp(Math.PI): the smallest double above π
     private static final double JUST_ABOVE_PI = 3.1415926535897936;
@@ -123,6 +125,24 @@ class OrbitalElementsTest {
         double stored = SUT.meanAnomaly();
 
         assertThat(stored).isCloseTo(reduced, within(TOLERANCE));
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @CsvSource(textBlock = """
+            no time,           8.0,   0.0,                0.5
+            forwards,          8.0,   1.0,                1.5
+            backwards,         8.0,  -1.0,               -0.5
+            faster orbit,     32.0,   1.0,                2.5
+            turn and a half,   8.0,   9.42477796076938,  -2.641592653589793
+            """)
+    void theMeanAnomalyGrowsAtTheMeanMotion(String description, double gravitationalParameter, double days,
+                                           double propagatedMeanAnomaly) {
+        OrbitalElements SUT = inTheEclipticPlane(INITIAL_MEAN_ANOMALY);
+
+        OrbitalElements propagated = SUT.propagated(days, new GravitationalParameter(gravitationalParameter));
+
+        assertThat(propagated).usingRecursiveComparison(CLOSE_ENOUGH)
+                .isEqualTo(inTheEclipticPlane(propagatedMeanAnomaly));
     }
 
     private static OrbitalElements atPeriapsisOriented(double inclinationDegrees, double ascendingNodeDegrees,

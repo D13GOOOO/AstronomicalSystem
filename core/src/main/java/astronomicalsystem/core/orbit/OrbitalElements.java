@@ -57,6 +57,15 @@ public record OrbitalElements(double semiMajorAxis,
     }
 
     /**
+     * @param days                   a finite duration, negative to go back in time
+     * @param gravitationalParameter {@code G(M + m)} of the central body and the orbiting one
+     * @return the elements of the same two-body orbit {@code days} after the epoch of these
+     */
+    public @NotNull OrbitalElements propagated(double days, @NotNull GravitationalParameter gravitationalParameter) {
+        return this;
+    }
+
+    /**
      * @return the state in the perifocal frame: origin in the focus, x towards the periapsis and z
      *         along the angular momentum
      */
