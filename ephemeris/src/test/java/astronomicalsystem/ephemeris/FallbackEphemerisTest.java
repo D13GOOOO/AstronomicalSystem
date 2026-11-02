@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -54,6 +55,15 @@ class FallbackEphemerisTest {
         List<Body> bodies = SUT.bodiesAt(DATE);
 
         assertThat(bodies).isEqualTo(FALLBACK_BODIES);
+    }
+
+    @Test
+    void aDefectOfThePrimarySourceIsNotHiddenByTheFallback() {
+        IllegalStateException defect = new IllegalStateException("not yet managed");
+        when(primary.bodiesAt(DATE)).thenThrow(defect);
+
+        assertThatThrownBy(() -> SUT.bodiesAt(DATE)).isSameAs(defect);
+        verifyNoInteractions(fallback);
     }
 
     static Stream<RuntimeException> failuresOfThePrimary() {
