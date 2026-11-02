@@ -57,7 +57,8 @@ class FallbackEphemerisTest {
     }
 
     static Stream<RuntimeException> failuresOfThePrimary() {
-        return Stream.of(new EphemerisUnavailableException("Horizons cannot be reached"));
+        return Stream.of(new EphemerisUnavailableException("Horizons cannot be reached"),
+                new IllegalArgumentException("Horizons response is missing the $$SOE/$$EOE markers"));
     }
 
     private static Body sunAt(Vector3 position) {
