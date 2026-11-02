@@ -2,7 +2,6 @@ package astronomicalsystem.ephemeris.kepler;
 
 import astronomicalsystem.core.body.Body;
 import astronomicalsystem.core.math.Vector3;
-import astronomicalsystem.core.orbit.GravitationalParameter;
 import astronomicalsystem.core.orbit.StateVector;
 import astronomicalsystem.core.time.JulianDate;
 import astronomicalsystem.ephemeris.BodyProperties;
@@ -30,12 +29,13 @@ public final class KeplerEphemeris {
     }
 
     /**
-     * @return the central body followed by the orbiting ones, in the order of the orbits
+     * @return the central body followed by the orbiting ones, in the order of the orbits, with the
+     *         centre of mass of all of them at rest in the origin
      */
     public @NotNull List<Body> bodiesAt(@NotNull JulianDate date) {
         double daysSinceEpoch = date.days() - epochOfElements.days();
         List<Body> aroundTheCentralBody = Stream.concat(Stream.of(centralBody.in(AT_REST_IN_THE_ORIGIN)),
-                orbits.stream().map(orbit -> onItsOrbit(orbit, daysSinceEpoch))).toList();
+                orbits.stream().map(orbit -> orbit.around(centralBody.mass(), daysSinceEpoch))).toList();
         StateVector centreOfMass = centreOfMass(aroundTheCentralBody);
         return aroundTheCentralBody.stream().map(body -> relativeTo(centreOfMass, body)).toList();
     }
@@ -55,12 +55,5 @@ public final class KeplerEphemeris {
 
     private static @NotNull Body relativeTo(@NotNull StateVector origin, @NotNull Body body) {
         return body.withMotion(body.position().minus(origin.position()), body.velocity().minus(origin.velocity()));
-    }
-
-    private @NotNull Body onItsOrbit(@NotNull KeplerOrbit orbit, double daysSinceEpoch) {
-        BodyProperties body = orbit.body();
-        GravitationalParameter gravitationalParameter = GravitationalParameter.of(centralBody.mass(), body.mass());
-        return body.in(orbit.elements().propagated(daysSinceEpoch, gravitationalParameter)
-                .stateVector(gravitationalParameter));
     }
 }
