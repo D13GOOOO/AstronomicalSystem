@@ -12,6 +12,7 @@ import astronomicalsystem.ephemeris.BodyProperties;
 import astronomicalsystem.ephemeris.EphemerisEntry;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,10 +34,10 @@ class HorizonsEphemerisTest {
             new StateVector(new Vector3(-0.18, 0.96, 0.0001), new Vector3(-0.0172, -0.0031, 0.0));
 
     private final Horizons horizons = mock();
-    private final HorizonsEphemeris SUT = new HorizonsEphemeris(horizons, List.of(SUN, EARTH));
 
     @Test
     void everyTargetIsWhereHorizonsPutsItAtTheDate() {
+        HorizonsEphemeris SUT = new HorizonsEphemeris(horizons, List.of(SUN, EARTH));
         when(horizons.entryOf(new HorizonsQuery(SUN.command(), DATE))).thenReturn(new EphemerisEntry(DATE, SUN_STATE));
         when(horizons.entryOf(new HorizonsQuery(EARTH.command(), DATE)))
                 .thenReturn(new EphemerisEntry(DATE, EARTH_STATE));
@@ -44,5 +45,17 @@ class HorizonsEphemerisTest {
         List<Body> bodies = SUT.bodiesAt(DATE);
 
         assertThat(bodies).containsExactly(SUN.body().in(SUN_STATE), EARTH.body().in(EARTH_STATE));
+    }
+
+    @Test
+    void changingTheListOfTargetsAfterwardsDoesNotChangeTheEphemeris() {
+        List<HorizonsTarget> targets = new ArrayList<>(List.of(SUN));
+        HorizonsEphemeris SUT = new HorizonsEphemeris(horizons, targets);
+        targets.clear();
+        when(horizons.entryOf(new HorizonsQuery(SUN.command(), DATE))).thenReturn(new EphemerisEntry(DATE, SUN_STATE));
+
+        List<Body> bodies = SUT.bodiesAt(DATE);
+
+        assertThat(bodies).containsExactly(SUN.body().in(SUN_STATE));
     }
 }
