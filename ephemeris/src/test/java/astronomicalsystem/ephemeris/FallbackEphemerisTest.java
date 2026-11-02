@@ -21,6 +21,7 @@ class FallbackEphemerisTest {
 
     private static final JulianDate DATE = new JulianDate(2461041.5);
     private static final List<Body> PRIMARY_BODIES = List.of(sunAt(new Vector3(1.0, 0.0, 0.0)));
+    private static final List<Body> FALLBACK_BODIES = List.of(sunAt(new Vector3(2.0, 0.0, 0.0)));
 
     private final EphemerisSource primary = mock();
     private final EphemerisSource fallback = mock();
@@ -39,6 +40,16 @@ class FallbackEphemerisTest {
 
         assertThat(bodies).isEqualTo(PRIMARY_BODIES);
         verifyNoInteractions(fallback);
+    }
+
+    @Test
+    void theFallbackAnswersWhenThePrimarySourceIsUnavailable() {
+        when(primary.bodiesAt(DATE)).thenThrow(new EphemerisUnavailableException("Horizons cannot be reached"));
+        when(fallback.bodiesAt(DATE)).thenReturn(FALLBACK_BODIES);
+
+        List<Body> bodies = SUT.bodiesAt(DATE);
+
+        assertThat(bodies).isEqualTo(FALLBACK_BODIES);
     }
 
     private static Body sunAt(Vector3 position) {
