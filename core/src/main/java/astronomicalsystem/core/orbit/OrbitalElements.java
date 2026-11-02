@@ -45,7 +45,7 @@ public record OrbitalElements(double semiMajorAxis,
                                                           double longitudeOfPeriapsis,
                                                           double longitudeOfAscendingNode) {
         return new OrbitalElements(semiMajorAxis, eccentricity, inclination, longitudeOfAscendingNode,
-                longitudeOfPeriapsis, meanLongitude);
+                longitudeOfPeriapsis - longitudeOfAscendingNode, meanLongitude - longitudeOfPeriapsis);
     }
 
     private static void requireInclinationInRange(double inclination) {
