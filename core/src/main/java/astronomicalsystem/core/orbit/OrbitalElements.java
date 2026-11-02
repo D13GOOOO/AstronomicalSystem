@@ -33,6 +33,21 @@ public record OrbitalElements(double semiMajorAxis,
         meanAnomaly = Math.IEEEremainder(meanAnomaly, FULL_TURN);
     }
 
+    /**
+     * Builds the elements from the longitudes used by planetary tables, whose columns come in this
+     * order. Angles are in radians.
+     *
+     * @param meanLongitude        {@code L = Ω + ω + M}
+     * @param longitudeOfPeriapsis {@code ϖ = Ω + ω}
+     */
+    public static @NotNull OrbitalElements fromLongitudes(double semiMajorAxis, @NotNull Eccentricity eccentricity,
+                                                          double inclination, double meanLongitude,
+                                                          double longitudeOfPeriapsis,
+                                                          double longitudeOfAscendingNode) {
+        return new OrbitalElements(semiMajorAxis, eccentricity, inclination, longitudeOfAscendingNode,
+                longitudeOfPeriapsis, meanLongitude);
+    }
+
     private static void requireInclinationInRange(double inclination) {
         // Written so that NaN, for which every comparison is false, is rejected too
         boolean inRange = inclination >= 0.0 && inclination <= Math.PI;
