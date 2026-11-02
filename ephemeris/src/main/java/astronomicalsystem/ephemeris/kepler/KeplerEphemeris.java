@@ -19,11 +19,13 @@ public final class KeplerEphemeris {
     private static final StateVector AT_REST_IN_THE_ORIGIN = new StateVector(Vector3.ZERO, Vector3.ZERO);
 
     private final @NotNull BodyProperties centralBody;
+    private final @NotNull JulianDate epochOfElements;
     private final @NotNull List<KeplerOrbit> orbits;
 
     public KeplerEphemeris(@NotNull BodyProperties centralBody, @NotNull JulianDate epochOfElements,
                            @NotNull List<KeplerOrbit> orbits) {
         this.centralBody = centralBody;
+        this.epochOfElements = epochOfElements;
         this.orbits = List.copyOf(orbits);
     }
 
@@ -31,8 +33,9 @@ public final class KeplerEphemeris {
      * @return the central body followed by the orbiting ones, in the order of the orbits
      */
     public @NotNull List<Body> bodiesAt(@NotNull JulianDate date) {
+        double daysSinceEpoch = date.days() - epochOfElements.days();
         List<Body> aroundTheCentralBody = Stream.concat(Stream.of(centralBody.in(AT_REST_IN_THE_ORIGIN)),
-                orbits.stream().map(this::onItsOrbit)).toList();
+                orbits.stream().map(orbit -> onItsOrbit(orbit, daysSinceEpoch))).toList();
         StateVector centreOfMass = centreOfMass(aroundTheCentralBody);
         return aroundTheCentralBody.stream().map(body -> relativeTo(centreOfMass, body)).toList();
     }
@@ -54,9 +57,10 @@ public final class KeplerEphemeris {
         return body.withMotion(body.position().minus(origin.position()), body.velocity().minus(origin.velocity()));
     }
 
-    private @NotNull Body onItsOrbit(@NotNull KeplerOrbit orbit) {
+    private @NotNull Body onItsOrbit(@NotNull KeplerOrbit orbit, double daysSinceEpoch) {
         BodyProperties body = orbit.body();
         GravitationalParameter gravitationalParameter = GravitationalParameter.of(centralBody.mass(), body.mass());
-        return body.in(orbit.elements().stateVector(gravitationalParameter));
+        return body.in(orbit.elements().propagated(daysSinceEpoch, gravitationalParameter)
+                .stateVector(gravitationalParameter));
     }
 }
