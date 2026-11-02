@@ -9,8 +9,11 @@ import astronomicalsystem.core.math.Vector3;
 import astronomicalsystem.core.time.JulianDate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -42,14 +45,19 @@ class FallbackEphemerisTest {
         verifyNoInteractions(fallback);
     }
 
-    @Test
-    void theFallbackAnswersWhenThePrimarySourceIsUnavailable() {
-        when(primary.bodiesAt(DATE)).thenThrow(new EphemerisUnavailableException("Horizons cannot be reached"));
+    @ParameterizedTest
+    @MethodSource("failuresOfThePrimary")
+    void theFallbackAnswersWhenThePrimarySourceFails(RuntimeException failure) {
+        when(primary.bodiesAt(DATE)).thenThrow(failure);
         when(fallback.bodiesAt(DATE)).thenReturn(FALLBACK_BODIES);
 
         List<Body> bodies = SUT.bodiesAt(DATE);
 
         assertThat(bodies).isEqualTo(FALLBACK_BODIES);
+    }
+
+    static Stream<RuntimeException> failuresOfThePrimary() {
+        return Stream.of(new EphemerisUnavailableException("Horizons cannot be reached"));
     }
 
     private static Body sunAt(Vector3 position) {
