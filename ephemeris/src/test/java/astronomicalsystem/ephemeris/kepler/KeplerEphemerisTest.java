@@ -36,8 +36,10 @@ class KeplerEphemerisTest {
     private static final double CIRCULAR_SPEED = Math.sqrt(GRAVITATIONAL_CONSTANT);
     // The mean motion √(G·2/2³) is √G/2, so a quarter turn takes (π/2)/(√G/2) = π/√G days
     private static final double QUARTER_PERIOD_DAYS = Math.PI / Math.sqrt(GRAVITATIONAL_CONSTANT);
+    // A Julian date near J2000 is resolved to about 5e-10 days, in which these bodies move a few 1e-12 AU
+    private static final double TOLERANCE = 1e-10;
     private static final RecursiveComparisonConfiguration CLOSE_ENOUGH = RecursiveComparisonConfiguration.builder()
-            .withComparatorForType(new DoubleComparator(1e-12), Double.class)
+            .withComparatorForType(new DoubleComparator(TOLERANCE), Double.class)
             .build();
 
     @Test
