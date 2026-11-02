@@ -53,6 +53,16 @@ class SolarSystemTest {
                 .containsOnly(SOME_ENTRY.state().position());
     }
 
+    @Test
+    void whenHorizonsCannotBeReachedTheBodiesAreOnTheirMeanOrbits() {
+        when(horizons.entryOf(any())).thenThrow(new EphemerisUnavailableException("Horizons cannot be reached"));
+        EphemerisSource SUT = SolarSystem.withFallback(horizons);
+
+        List<Body> bodies = SUT.bodiesAt(DATE);
+
+        assertThat(bodies).isEqualTo(SolarSystem.meanOrbits().bodiesAt(DATE));
+    }
+
     private static HorizonsQuery query(String command) {
         return new HorizonsQuery(new HorizonsCommand(command), DATE);
     }
