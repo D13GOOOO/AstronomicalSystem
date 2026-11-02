@@ -9,6 +9,12 @@ import org.jetbrains.annotations.NotNull;
  */
 public record GravitationalParameter(double auCubedPerDaySquared) {
 
+    /**
+     * Newton's constant in AU³ per solar mass per day squared: the square of Gauss's constant
+     * {@code k = 0.01720209895}.
+     */
+    public static final double GRAVITATIONAL_CONSTANT = 2.959122082855911e-4;
+
     public GravitationalParameter {
         Quantities.requirePositiveFinite(auCubedPerDaySquared, "Gravitational parameter");
     }
@@ -18,6 +24,6 @@ public record GravitationalParameter(double auCubedPerDaySquared) {
      *         {@code central}
      */
     public static @NotNull GravitationalParameter of(@NotNull Mass central, @NotNull Mass orbiting) {
-        return new GravitationalParameter(1.0);
+        return new GravitationalParameter(GRAVITATIONAL_CONSTANT * central.plus(orbiting).solarMasses());
     }
 }
