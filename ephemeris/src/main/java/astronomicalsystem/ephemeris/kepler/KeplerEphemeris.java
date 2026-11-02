@@ -5,6 +5,7 @@ import astronomicalsystem.core.math.Vector3;
 import astronomicalsystem.core.orbit.StateVector;
 import astronomicalsystem.core.time.JulianDate;
 import astronomicalsystem.ephemeris.BodyProperties;
+import astronomicalsystem.ephemeris.EphemerisSource;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -13,7 +14,7 @@ import java.util.stream.Stream;
 /**
  * Bodies on two-body orbits around a central body, from elements given at a common epoch.
  */
-public final class KeplerEphemeris {
+public final class KeplerEphemeris implements EphemerisSource {
 
     private static final StateVector AT_REST_IN_THE_ORIGIN = new StateVector(Vector3.ZERO, Vector3.ZERO);
 
@@ -32,6 +33,7 @@ public final class KeplerEphemeris {
      * @return the central body followed by the orbiting ones, in the order of the orbits, with the
      *         centre of mass of all of them at rest in the origin
      */
+    @Override
     public @NotNull List<Body> bodiesAt(@NotNull JulianDate date) {
         double daysSinceEpoch = date.days() - epochOfElements.days();
         List<Body> aroundTheCentralBody = Stream.concat(Stream.of(centralBody.in(AT_REST_IN_THE_ORIGIN)),
