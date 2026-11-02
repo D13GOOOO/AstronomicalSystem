@@ -62,7 +62,17 @@ public record OrbitalElements(double semiMajorAxis,
      * @return the elements of the same two-body orbit {@code days} after the epoch of these
      */
     public @NotNull OrbitalElements propagated(double days, @NotNull GravitationalParameter gravitationalParameter) {
-        return this;
+        // Only the mean anomaly changes, and linearly in time: the constructor reduces it again
+        return new OrbitalElements(semiMajorAxis, eccentricity, inclination, longitudeOfAscendingNode,
+                argumentOfPeriapsis, meanAnomaly + meanMotion(gravitationalParameter) * days);
+    }
+
+    /**
+     * @return {@code √(μ/a³)}, in radians per day: from Kepler's third law {@code n²a³ = μ}
+     */
+    private double meanMotion(@NotNull GravitationalParameter gravitationalParameter) {
+        return Math.sqrt(gravitationalParameter.auCubedPerDaySquared()
+                / (semiMajorAxis * semiMajorAxis * semiMajorAxis));
     }
 
     /**
