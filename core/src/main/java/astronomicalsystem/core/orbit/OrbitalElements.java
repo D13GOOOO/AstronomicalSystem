@@ -85,10 +85,8 @@ public record OrbitalElements(double semiMajorAxis,
         double sin = Math.sin(eccentricAnomaly);
         double e = eccentricity.value();
         double semiMinorAxis = semiMajorAxis * Math.sqrt(1.0 - e * e);
-        double meanMotion = Math.sqrt(gravitationalParameter.auCubedPerDaySquared()
-                / (semiMajorAxis * semiMajorAxis * semiMajorAxis));
         // dE/dt, from the derivative of Kepler's equation: n = (1 - e cos E) dE/dt
-        double eccentricAnomalyRate = meanMotion / (1.0 - e * cos);
+        double eccentricAnomalyRate = meanMotion(gravitationalParameter) / (1.0 - e * cos);
         Vector3 position = new Vector3(semiMajorAxis * (cos - e), semiMinorAxis * sin, 0.0);
         Vector3 velocity = new Vector3(-semiMajorAxis * sin, semiMinorAxis * cos, 0.0).times(eccentricAnomalyRate);
         return new StateVector(position, velocity);
