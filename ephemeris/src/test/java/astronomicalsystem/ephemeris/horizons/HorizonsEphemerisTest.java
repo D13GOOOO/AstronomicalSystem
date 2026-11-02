@@ -1,0 +1,48 @@
+package astronomicalsystem.ephemeris.horizons;
+
+import astronomicalsystem.core.body.Body;
+import astronomicalsystem.core.body.BodyKind;
+import astronomicalsystem.core.body.BodyName;
+import astronomicalsystem.core.body.Mass;
+import astronomicalsystem.core.body.Radius;
+import astronomicalsystem.core.math.Vector3;
+import astronomicalsystem.core.orbit.StateVector;
+import astronomicalsystem.core.time.JulianDate;
+import astronomicalsystem.ephemeris.BodyProperties;
+import astronomicalsystem.ephemeris.EphemerisEntry;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+class HorizonsEphemerisTest {
+
+    private static final JulianDate DATE = new JulianDate(2461041.5);
+    private static final HorizonsTarget SUN = new HorizonsTarget(
+            new BodyProperties(new BodyName("Sun"), BodyKind.STAR, new Mass(1.0), new Radius(4.65e-3)),
+            new HorizonsCommand("10"));
+    private static final HorizonsTarget EARTH = new HorizonsTarget(
+            new BodyProperties(new BodyName("Earth"), BodyKind.PLANET, new Mass(3.0e-6), new Radius(4.26e-5)),
+            new HorizonsCommand("3"));
+    private static final StateVector SUN_STATE =
+            new StateVector(new Vector3(-0.003, -0.005, 0.0001), new Vector3(7.0e-6, 2.0e-7, -1.0e-7));
+    private static final StateVector EARTH_STATE =
+            new StateVector(new Vector3(-0.18, 0.96, 0.0001), new Vector3(-0.0172, -0.0031, 0.0));
+
+    private final Horizons horizons = mock();
+    private final HorizonsEphemeris SUT = new HorizonsEphemeris(horizons, List.of(SUN, EARTH));
+
+    @Test
+    void everyTargetIsWhereHorizonsPutsItAtTheDate() {
+        when(horizons.entryOf(new HorizonsQuery(SUN.command(), DATE))).thenReturn(new EphemerisEntry(DATE, SUN_STATE));
+        when(horizons.entryOf(new HorizonsQuery(EARTH.command(), DATE)))
+                .thenReturn(new EphemerisEntry(DATE, EARTH_STATE));
+
+        List<Body> bodies = SUT.bodiesAt(DATE);
+
+        assertThat(bodies).containsExactly(SUN.body().in(SUN_STATE), EARTH.body().in(EARTH_STATE));
+    }
+}
