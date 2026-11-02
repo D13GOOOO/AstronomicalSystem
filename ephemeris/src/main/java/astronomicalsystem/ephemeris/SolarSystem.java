@@ -7,6 +7,8 @@ import astronomicalsystem.core.body.Radius;
 import astronomicalsystem.core.orbit.Eccentricity;
 import astronomicalsystem.core.orbit.OrbitalElements;
 import astronomicalsystem.core.time.JulianDate;
+import astronomicalsystem.ephemeris.horizons.Horizons;
+import astronomicalsystem.ephemeris.horizons.HorizonsEphemeris;
 import astronomicalsystem.ephemeris.kepler.KeplerEphemeris;
 import astronomicalsystem.ephemeris.kepler.KeplerOrbit;
 import org.jetbrains.annotations.NotNull;
@@ -70,6 +72,13 @@ public final class SolarSystem {
      */
     public static @NotNull KeplerEphemeris meanOrbits() {
         return new KeplerEphemeris(SUN, J2000, MEAN_ORBITS);
+    }
+
+    /**
+     * @return the Sun and the barycentres of the planetary systems where Horizons puts them
+     */
+    public static @NotNull EphemerisSource fromHorizons(@NotNull Horizons horizons) {
+        return new HorizonsEphemeris(horizons, List.of());
     }
 
     private static @NotNull BodyProperties planet(@NotNull String name, double gmKm3PerS2, double meanRadiusKm) {
