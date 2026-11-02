@@ -12,13 +12,19 @@ import java.util.List;
 public final class FallbackEphemeris implements EphemerisSource {
 
     private final @NotNull EphemerisSource primary;
+    private final @NotNull EphemerisSource fallback;
 
     public FallbackEphemeris(@NotNull EphemerisSource primary, @NotNull EphemerisSource fallback) {
         this.primary = primary;
+        this.fallback = fallback;
     }
 
     @Override
     public @NotNull List<Body> bodiesAt(@NotNull JulianDate date) {
-        return primary.bodiesAt(date);
+        try {
+            return primary.bodiesAt(date);
+        } catch (EphemerisUnavailableException e) {
+            return fallback.bodiesAt(date);
+        }
     }
 }
