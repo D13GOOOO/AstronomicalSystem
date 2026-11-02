@@ -8,7 +8,9 @@ import astronomicalsystem.core.orbit.Eccentricity;
 import astronomicalsystem.core.orbit.OrbitalElements;
 import astronomicalsystem.core.time.JulianDate;
 import astronomicalsystem.ephemeris.horizons.Horizons;
+import astronomicalsystem.ephemeris.horizons.HorizonsCommand;
 import astronomicalsystem.ephemeris.horizons.HorizonsEphemeris;
+import astronomicalsystem.ephemeris.horizons.HorizonsTarget;
 import astronomicalsystem.ephemeris.kepler.KeplerEphemeris;
 import astronomicalsystem.ephemeris.kepler.KeplerOrbit;
 import org.jetbrains.annotations.NotNull;
@@ -64,6 +66,11 @@ public final class SolarSystem {
             new KeplerOrbit(NEPTUNE,
                     standish(30.06992276, 0.00859048, 1.77004347, -55.12002969, 44.96476227, 131.78422574)));
 
+    // Horizons numbers the barycentre of each planetary system from 1 to 8, outwards from the Sun
+    private static final List<HorizonsTarget> HORIZONS_TARGETS = List.of(target(SUN, "10"), target(MERCURY, "1"),
+            target(VENUS, "2"), target(EARTH, "3"), target(MARS, "4"), target(JUPITER, "5"), target(SATURN, "6"),
+            target(URANUS, "7"), target(NEPTUNE, "8"));
+
     private SolarSystem() {
     }
 
@@ -78,12 +85,16 @@ public final class SolarSystem {
      * @return the Sun and the barycentres of the planetary systems where Horizons puts them
      */
     public static @NotNull EphemerisSource fromHorizons(@NotNull Horizons horizons) {
-        return new HorizonsEphemeris(horizons, List.of());
+        return new HorizonsEphemeris(horizons, HORIZONS_TARGETS);
     }
 
     private static @NotNull BodyProperties planet(@NotNull String name, double gmKm3PerS2, double meanRadiusKm) {
         return new BodyProperties(new BodyName(name), BodyKind.PLANET, new Mass(gmKm3PerS2 / SUN_GM_KM3_PER_S2),
                 radius(meanRadiusKm));
+    }
+
+    private static @NotNull HorizonsTarget target(@NotNull BodyProperties body, @NotNull String command) {
+        return new HorizonsTarget(body, new HorizonsCommand(command));
     }
 
     private static @NotNull Radius radius(double kilometres) {
