@@ -59,6 +59,17 @@ class KeplerEphemerisTest {
     }
 
     @Test
+    void theCentreOfMassRestsAtTheOrigin() {
+        KeplerEphemeris SUT = new KeplerEphemeris(SUN, J2000, List.of(new KeplerOrbit(TWIN, CIRCLE_OF_RADIUS_TWO)));
+
+        List<Body> bodies = SUT.bodiesAt(J2000);
+
+        assertThat(bodies).usingRecursiveComparison(CLOSE_ENOUGH).isEqualTo(List.of(
+                SUN.in(new StateVector(new Vector3(-1.0, 0.0, 0.0), new Vector3(0.0, -CIRCULAR_SPEED / 2.0, 0.0))),
+                TWIN.in(new StateVector(new Vector3(1.0, 0.0, 0.0), new Vector3(0.0, CIRCULAR_SPEED / 2.0, 0.0)))));
+    }
+
+    @Test
     void changingTheListOfOrbitsAfterwardsDoesNotChangeTheEphemeris() {
         List<KeplerOrbit> orbits = new ArrayList<>(List.of(new KeplerOrbit(TWIN, CIRCLE_OF_RADIUS_TWO)));
         KeplerEphemeris SUT = new KeplerEphemeris(SUN, J2000, orbits);
