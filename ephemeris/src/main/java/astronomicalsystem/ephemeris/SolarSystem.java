@@ -31,26 +31,35 @@ public final class SolarSystem {
     private static final BodyProperties SUN =
             new BodyProperties(new BodyName("Sun"), BodyKind.STAR, new Mass(1.0), radius(695_700.0));
 
-    // Each planet stands for its whole system: the mass includes the moons and the elements describe
-    // the barycentre, which for the Earth is the Earth-Moon barycentre
-    private static final List<KeplerOrbit> PLANETS = List.of(
-            new KeplerOrbit(planet("Mercury", 22_031.868551, 2_439.4),
+    // Each planet stands for its whole system: the mass includes the moons, and the elements and the
+    // ephemerides describe the barycentre, which for the Earth is the Earth-Moon barycentre
+    private static final BodyProperties MERCURY = planet("Mercury", 22_031.868551, 2_439.4);
+    private static final BodyProperties VENUS = planet("Venus", 324_858.592000, 6_051.8);
+    private static final BodyProperties EARTH = planet("Earth", 398_600.435507 + 4_902.800118, 6_371.0084);
+    private static final BodyProperties MARS = planet("Mars", 42_828.375816, 3_389.50);
+    private static final BodyProperties JUPITER = planet("Jupiter", 126_712_764.100000, 69_911.0);
+    private static final BodyProperties SATURN = planet("Saturn", 37_940_584.841800, 58_232.0);
+    private static final BodyProperties URANUS = planet("Uranus", 5_794_556.400000, 25_362.0);
+    private static final BodyProperties NEPTUNE = planet("Neptune", 6_836_527.100580, 24_622.0);
+
+    private static final List<KeplerOrbit> MEAN_ORBITS = List.of(
+            new KeplerOrbit(MERCURY,
                     standish(0.38709927, 0.20563593, 7.00497902, 252.25032350, 77.45779628, 48.33076593)),
-            new KeplerOrbit(planet("Venus", 324_858.592000, 6_051.8),
+            new KeplerOrbit(VENUS,
                     standish(0.72333566, 0.00677672, 3.39467605, 181.97909950, 131.60246718, 76.67984255)),
             // The table gives I = -0.00001531 and a node at 0: the same plane with a positive
             // inclination has its ascending node on the opposite side, at 180
-            new KeplerOrbit(planet("Earth", 398_600.435507 + 4_902.800118, 6_371.0084),
+            new KeplerOrbit(EARTH,
                     standish(1.00000261, 0.01671123, 0.00001531, 100.46457166, 102.93768193, 180.0)),
-            new KeplerOrbit(planet("Mars", 42_828.375816, 3_389.50),
+            new KeplerOrbit(MARS,
                     standish(1.52371034, 0.09339410, 1.84969142, -4.55343205, -23.94362959, 49.55953891)),
-            new KeplerOrbit(planet("Jupiter", 126_712_764.100000, 69_911.0),
+            new KeplerOrbit(JUPITER,
                     standish(5.20288700, 0.04838624, 1.30439695, 34.39644051, 14.72847983, 100.47390909)),
-            new KeplerOrbit(planet("Saturn", 37_940_584.841800, 58_232.0),
+            new KeplerOrbit(SATURN,
                     standish(9.53667594, 0.05386179, 2.48599187, 49.95424423, 92.59887831, 113.66242448)),
-            new KeplerOrbit(planet("Uranus", 5_794_556.400000, 25_362.0),
+            new KeplerOrbit(URANUS,
                     standish(19.18916464, 0.04725744, 0.77263783, 313.23810451, 170.95427630, 74.01692503)),
-            new KeplerOrbit(planet("Neptune", 6_836_527.100580, 24_622.0),
+            new KeplerOrbit(NEPTUNE,
                     standish(30.06992276, 0.00859048, 1.77004347, -55.12002969, 44.96476227, 131.78422574)));
 
     private SolarSystem() {
@@ -60,7 +69,7 @@ public final class SolarSystem {
      * @return the Sun and the planets on their mean orbits around it
      */
     public static @NotNull KeplerEphemeris meanOrbits() {
-        return new KeplerEphemeris(SUN, J2000, PLANETS);
+        return new KeplerEphemeris(SUN, J2000, MEAN_ORBITS);
     }
 
     private static @NotNull BodyProperties planet(@NotNull String name, double gmKm3PerS2, double meanRadiusKm) {
