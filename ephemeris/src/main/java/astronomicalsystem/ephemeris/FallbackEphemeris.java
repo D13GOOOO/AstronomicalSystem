@@ -11,11 +11,14 @@ import java.util.List;
  */
 public final class FallbackEphemeris implements EphemerisSource {
 
+    private final @NotNull EphemerisSource primary;
+
     public FallbackEphemeris(@NotNull EphemerisSource primary, @NotNull EphemerisSource fallback) {
+        this.primary = primary;
     }
 
     @Override
     public @NotNull List<Body> bodiesAt(@NotNull JulianDate date) {
-        return List.of();
+        return primary.bodiesAt(date);
     }
 }
