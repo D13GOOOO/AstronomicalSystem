@@ -3,6 +3,7 @@ package astronomicalsystem.core.orbit;
 import astronomicalsystem.core.math.Tolerances;
 import astronomicalsystem.core.math.Vector3;
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -143,6 +144,21 @@ class OrbitalElementsTest {
 
         assertThat(propagated).usingRecursiveComparison(CLOSE_ENOUGH)
                 .isEqualTo(inTheEclipticPlane(propagatedMeanAnomaly));
+    }
+
+    @Test
+    void theLongitudesAreMeasuredFromTheReferenceDirection() {
+        double inclination = 0.3;
+        double ascendingNode = 1.0;
+        double argumentOfPeriapsis = 0.5;
+        double meanAnomaly = 0.75;
+
+        OrbitalElements SUT = OrbitalElements.fromLongitudes(SEMI_MAJOR_AXIS, new Eccentricity(ECCENTRICITY),
+                inclination, ascendingNode + argumentOfPeriapsis + meanAnomaly, ascendingNode + argumentOfPeriapsis,
+                ascendingNode);
+
+        assertThat(SUT).isEqualTo(new OrbitalElements(SEMI_MAJOR_AXIS, new Eccentricity(ECCENTRICITY), inclination,
+                ascendingNode, argumentOfPeriapsis, meanAnomaly));
     }
 
     private static OrbitalElements atPeriapsisOriented(double inclinationDegrees, double ascendingNodeDegrees,
