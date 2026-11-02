@@ -7,7 +7,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * Asks a primary source and turns to a fallback when the primary has no usable answer.
+ * Asks a primary source and turns to a fallback when the primary has no usable answer: when it is
+ * unavailable or answers with something that is not an ephemeris.
  */
 public final class FallbackEphemeris implements EphemerisSource {
 
@@ -23,7 +24,7 @@ public final class FallbackEphemeris implements EphemerisSource {
     public @NotNull List<Body> bodiesAt(@NotNull JulianDate date) {
         try {
             return primary.bodiesAt(date);
-        } catch (EphemerisUnavailableException e) {
+        } catch (EphemerisUnavailableException | IllegalArgumentException e) {
             return fallback.bodiesAt(date);
         }
     }
