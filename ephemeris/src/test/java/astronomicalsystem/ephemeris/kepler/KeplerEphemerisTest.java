@@ -34,6 +34,8 @@ class KeplerEphemerisTest {
     private static final OrbitalElements CIRCLE_OF_RADIUS_TWO =
             new OrbitalElements(2.0, new Eccentricity(0.0), 0.0, 0.0, 0.0, 0.0);
     private static final double CIRCULAR_SPEED = Math.sqrt(GRAVITATIONAL_CONSTANT);
+    // The mean motion √(G·2/2³) is √G/2, so a quarter turn takes (π/2)/(√G/2) = π/√G days
+    private static final double QUARTER_PERIOD_DAYS = Math.PI / Math.sqrt(GRAVITATIONAL_CONSTANT);
     private static final RecursiveComparisonConfiguration CLOSE_ENOUGH = RecursiveComparisonConfiguration.builder()
             .withComparatorForType(new DoubleComparator(1e-12), Double.class)
             .build();
@@ -67,6 +69,17 @@ class KeplerEphemerisTest {
         assertThat(bodies).usingRecursiveComparison(CLOSE_ENOUGH).isEqualTo(List.of(
                 SUN.in(new StateVector(new Vector3(-1.0, 0.0, 0.0), new Vector3(0.0, -CIRCULAR_SPEED / 2.0, 0.0))),
                 TWIN.in(new StateVector(new Vector3(1.0, 0.0, 0.0), new Vector3(0.0, CIRCULAR_SPEED / 2.0, 0.0)))));
+    }
+
+    @Test
+    void aQuarterOfAPeriodLaterTheBodiesHaveTurnedByARightAngle() {
+        KeplerEphemeris SUT = new KeplerEphemeris(SUN, J2000, List.of(new KeplerOrbit(TWIN, CIRCLE_OF_RADIUS_TWO)));
+
+        List<Body> bodies = SUT.bodiesAt(new JulianDate(J2000.days() + QUARTER_PERIOD_DAYS));
+
+        assertThat(bodies).usingRecursiveComparison(CLOSE_ENOUGH).isEqualTo(List.of(
+                SUN.in(new StateVector(new Vector3(0.0, -1.0, 0.0), new Vector3(CIRCULAR_SPEED / 2.0, 0.0, 0.0))),
+                TWIN.in(new StateVector(new Vector3(0.0, 1.0, 0.0), new Vector3(-CIRCULAR_SPEED / 2.0, 0.0, 0.0)))));
     }
 
     @Test
