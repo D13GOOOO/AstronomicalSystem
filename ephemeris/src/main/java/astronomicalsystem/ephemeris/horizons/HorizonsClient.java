@@ -1,13 +1,13 @@
 package astronomicalsystem.ephemeris.horizons;
 
 import astronomicalsystem.ephemeris.EphemerisEntry;
-import astronomicalsystem.ephemeris.EphemerisUnavailableException;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Asks NASA JPL Horizons for the state vector of a body at an epoch.
+ * Asks NASA JPL Horizons for the state vector of a body at an epoch, through a transport that
+ * fetches the response and a parser that reads it.
  */
-public final class HorizonsClient {
+public final class HorizonsClient implements Horizons {
 
     private final @NotNull Transport transport;
     private final @NotNull ResponseParser parser;
@@ -17,12 +17,7 @@ public final class HorizonsClient {
         this.parser = parser;
     }
 
-    /**
-     * Returns the entry that Horizons gives for the query.
-     *
-     * @throws EphemerisUnavailableException if Horizons cannot be reached or does not answer
-     * @throws IllegalArgumentException      if the answer is not a single valid state vector
-     */
+    @Override
     public @NotNull EphemerisEntry entryOf(@NotNull HorizonsQuery query) {
         return parser.parse(transport.fetch(query.uri()));
     }
