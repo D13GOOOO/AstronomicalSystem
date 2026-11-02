@@ -93,7 +93,7 @@ public final class SolarSystem {
      *         answer, on their mean orbits
      */
     public static @NotNull EphemerisSource withFallback(@NotNull Horizons horizons) {
-        return fromHorizons(horizons);
+        return new FallbackEphemeris(fromHorizons(horizons), meanOrbits());
     }
 
     private static @NotNull BodyProperties planet(@NotNull String name, double gmKm3PerS2, double meanRadiusKm) {
