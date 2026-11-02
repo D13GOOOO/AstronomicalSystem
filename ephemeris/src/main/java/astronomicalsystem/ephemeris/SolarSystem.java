@@ -18,13 +18,17 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * Catalogue of the Sun and the planets.
- * <p>
- * Sources: masses from the GM values of the JPL ephemeris DE440, each planet together with its
- * moons (https://ssd.jpl.nasa.gov/astro_par.html); mean radii from the IAU 2015 report
- * (https://ssd.jpl.nasa.gov/planets/phys_par.html) and the nominal solar radius of IAU 2015
- * Resolution B3; orbital elements from table 1 of Standish and Williams, mean ecliptic and
- * equinox of J2000, valid from 1800 to 2050 (https://ssd.jpl.nasa.gov/planets/approx_pos.html).
+ * Catalogue of the Sun and the planets. Sources:
+ * <ul>
+ *     <li>masses: GM values of the JPL ephemeris DE440, each planet together with its moons
+ *     (<a href="https://ssd.jpl.nasa.gov/astro_par.html">JPL astrodynamic parameters</a>);</li>
+ *     <li>radii: mean radii of the IAU 2015 report
+ *     (<a href="https://ssd.jpl.nasa.gov/planets/phys_par.html">JPL planetary physical parameters</a>)
+ *     and the nominal solar radius of IAU 2015 Resolution B3;</li>
+ *     <li>orbital elements: table 1 of Standish and Williams, mean ecliptic and equinox of J2000,
+ *     valid from 1800 to 2050
+ *     (<a href="https://ssd.jpl.nasa.gov/planets/approx_pos.html">JPL approximate positions</a>).</li>
+ * </ul>
  */
 public final class SolarSystem {
 

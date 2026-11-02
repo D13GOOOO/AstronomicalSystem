@@ -68,7 +68,7 @@ class SolarSystemTest {
     }
 
     private static List<List<Object>> propertiesOf(List<Body> bodies) {
-        return bodies.stream().map(body -> List.<Object>of(body.name(), body.kind(), body.mass(), body.radius()))
+        return bodies.stream().map(body -> List.of(body.name(), body.kind(), body.mass(), body.radius()))
                 .toList();
     }
 }

@@ -4,7 +4,7 @@ import astronomicalsystem.ephemeris.EphemerisEntry;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Asks NASA JPL Horizons for the state vector of a body at an epoch, through a transport that
+ * Asks NASA JPL Horizons for the state vector of a body at an epoch, through a {@link Transport} that
  * fetches the response and a parser that reads it.
  */
 public final class HorizonsClient implements Horizons {

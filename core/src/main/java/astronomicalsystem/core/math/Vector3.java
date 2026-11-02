@@ -48,7 +48,7 @@ public record Vector3(double x, double y, double z) {
     }
 
     /**
-     * @param angle in radians, counterclockwise when seen from the positive z axis
+     * @param angle in radians, counterclockwise when seen from the positive z-axis
      */
     public @NotNull Vector3 rotatedAboutZ(double angle) {
         double cos = Math.cos(angle);
@@ -57,7 +57,7 @@ public record Vector3(double x, double y, double z) {
     }
 
     /**
-     * @param angle in radians, counterclockwise when seen from the positive x axis
+     * @param angle in radians, counterclockwise when seen from the positive x-axis
      */
     public @NotNull Vector3 rotatedAboutX(double angle) {
         double cos = Math.cos(angle);

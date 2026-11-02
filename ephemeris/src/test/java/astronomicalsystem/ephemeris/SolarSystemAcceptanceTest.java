@@ -1,7 +1,6 @@
 package astronomicalsystem.ephemeris;
 
 import astronomicalsystem.core.body.Body;
-import astronomicalsystem.core.math.Vector3;
 import astronomicalsystem.ephemeris.horizons.HorizonsParser;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
