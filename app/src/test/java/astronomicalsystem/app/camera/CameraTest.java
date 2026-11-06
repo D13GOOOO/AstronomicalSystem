@@ -7,6 +7,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
 
 class CameraTest {
@@ -62,5 +63,23 @@ class CameraTest {
         double apparentSize = SUT.apparentSizeInPixels(size, new ClipPoint(0.0, 0.0, 0.0, depth));
 
         assertThat(apparentSize).isCloseTo(pixels, within(TOLERANCE));
+    }
+
+    // Without a line of sight, or with an up direction along it, the camera has no orientation
+    @ParameterizedTest
+    @CsvSource(textBlock = """
+            0.0, 0.0, 0.0,   0.0, 1.0,  0.0,   Camera eye and target must differ
+            0.0, 0.0, 2.0,   0.0, 0.0,  1.0,   Camera up must not be parallel to the line of sight
+            0.0, 0.0, 2.0,   0.0, 0.0, -3.0,   Camera up must not be parallel to the line of sight
+            0.0, 0.0, 2.0,   0.0, 0.0,  0.0,   Camera up must not be parallel to the line of sight
+            """)
+    void constructorRejectsAnUndefinedOrientation(double eyeX, double eyeY, double eyeZ,
+                                                 double upX, double upY, double upZ, String message) {
+        Vector3 eye = new Vector3(eyeX, eyeY, eyeZ);
+        Vector3 up = new Vector3(upX, upY, upZ);
+
+        assertThatThrownBy(() -> new Camera(eye, ORIGIN, up, RIGHT_ANGLE_LENS, TWO_BY_ONE))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage(message);
     }
 }
