@@ -10,6 +10,7 @@ import astronomicalsystem.core.observer.Observable;
 import astronomicalsystem.core.observer.Observer;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -34,12 +35,18 @@ public class BodiesPresenter implements Observer<List<Body>> {
 
     @Override
     public void update(@NotNull Observable<List<Body>> subject, @NotNull List<Body> state) {
-        view.show(state.stream().map(this::discOf).toList());
+        List<Disc> discs = new ArrayList<>();
+        for (Body body : state) {
+            ClipPoint centre = projection.clipPoint(body.position());
+            if (centre.isInFrontOfTheCamera()) {
+                discs.add(discOf(body, centre));
+            }
+        }
+        view.show(discs);
     }
 
-    private @NotNull Disc discOf(@NotNull Body body) {
+    private @NotNull Disc discOf(@NotNull Body body, @NotNull ClipPoint centre) {
         BodyStyle style = styles.get(body.kind());
-        ClipPoint centre = projection.clipPoint(body.position());
         double apparentDiameter = projection.apparentSizeInPixels(2.0 * body.radius().astronomicalUnits(), centre);
         return new Disc(centre, Math.max(style.minimumDiameter(), apparentDiameter), style.colour());
     }
