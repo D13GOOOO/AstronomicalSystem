@@ -1,0 +1,52 @@
+plugins {
+    id 'astronomicalsystem.java-conventions'
+    id 'application'
+}
+
+def lwjglVersion = '3.4.3'
+def lwjglModules = ['lwjgl', 'lwjgl-glfw', 'lwjgl-opengl']
+// Windows, Linux, and macOS on Intel and Apple silicon
+def lwjglNatives = ['natives-windows', 'natives-linux', 'natives-macos', 'natives-macos-arm64']
+
+dependencies {
+    implementation project(':ephemeris')
+
+    implementation platform("org.lwjgl:lwjgl-bom:$lwjglVersion")
+    lwjglModules.each { module ->
+        implementation "org.lwjgl:$module"
+        lwjglNatives.each { natives -> runtimeOnly "org.lwjgl:$module::$natives" }
+    }
+}
+
+// LWJGL loads its native libraries through JNI, a restricted operation since JDK 24
+def nativeAccess = '--enable-native-access=ALL-UNNAMED'
+
+application {
+    mainClass = 'astronomicalsystem.app.Main'
+    applicationDefaultJvmArgs = [nativeAccess]
+}
+
+// Tests that need a display and a graphics card: they open real windows
+testing {
+    suites {
+        integrationTest(JvmTestSuite) {
+            useJUnitJupiter('5.11.4')
+            dependencies {
+                implementation project()
+                implementation platform("org.lwjgl:lwjgl-bom:$lwjglVersion")
+                implementation 'org.lwjgl:lwjgl-opengl'
+                implementation 'org.assertj:assertj-core:3.27.7'
+            }
+            targets.configureEach {
+                testTask.configure {
+                    jvmArgs nativeAccess
+                    shouldRunAfter tasks.named('test')
+                }
+            }
+        }
+    }
+}
+
+tasks.named('check') {
+    dependsOn testing.suites.integrationTest
+}
