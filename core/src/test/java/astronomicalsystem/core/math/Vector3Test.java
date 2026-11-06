@@ -85,6 +85,25 @@ class Vector3Test {
         assertThat(product).isEqualTo(12.0);
     }
 
+    // The axes in cyclic order give the next one, swapping the factors flips the sign
+    @ParameterizedTest
+    @CsvSource(textBlock = """
+            1.0, 0.0, 0.0,   0.0, 1.0, 0.0,    0.0, 0.0,  1.0
+            0.0, 1.0, 0.0,   0.0, 0.0, 1.0,    1.0, 0.0,  0.0
+            0.0, 0.0, 1.0,   1.0, 0.0, 0.0,    0.0, 1.0,  0.0
+            0.0, 1.0, 0.0,   1.0, 0.0, 0.0,    0.0, 0.0, -1.0
+            1.0, 2.0, 3.0,   4.0, 5.0, 6.0,   -3.0, 6.0, -3.0
+            """)
+    void crossIsPerpendicularToBothFactorsByTheRightHandRule(double x, double y, double z,
+                                                            double otherX, double otherY, double otherZ,
+                                                            double expectedX, double expectedY, double expectedZ) {
+        Vector3 SUT = new Vector3(x, y, z);
+
+        Vector3 product = SUT.cross(new Vector3(otherX, otherY, otherZ));
+
+        assertThat(product).isEqualTo(new Vector3(expectedX, expectedY, expectedZ));
+    }
+
     @Test
     void lengthSquaredSumsSquaresOfComponents() {
         Vector3 SUT = new Vector3(2.0, -3.0, 6.0);
