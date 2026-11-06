@@ -13,11 +13,16 @@ import astronomicalsystem.core.body.Radius;
 import astronomicalsystem.core.math.Vector3;
 import astronomicalsystem.core.observer.Observable;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 import java.util.Map;
 
+import static org.mockito.ArgumentMatchers.anyDouble;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -70,5 +75,20 @@ class BodiesPresenterTest {
         SUT.update(simulation, List.of(SUN));
 
         verify(view).show(List.of(new Disc(SUN_IN_CLIP_SPACE, FORTY_PIXELS, YELLOW)));
+    }
+
+    // On the plane of the eye or behind it: no perspective division is possible
+    @ParameterizedTest
+    @ValueSource(doubles = {0.0, -1.0})
+    void aBodyBehindTheCameraIsNotDrawn(double depth) {
+        ClipPoint behind = new ClipPoint(0.0, 0.0, 0.0, depth);
+        when(projection.clipPoint(SUN.position())).thenReturn(behind);
+        when(projection.clipPoint(EARTH.position())).thenReturn(EARTH_IN_CLIP_SPACE);
+        when(projection.apparentSizeInPixels(EARTH_DIAMETER, EARTH_IN_CLIP_SPACE)).thenReturn(LESS_THAN_A_PIXEL);
+
+        SUT.update(simulation, List.of(SUN, EARTH));
+
+        verify(view).show(List.of(new Disc(EARTH_IN_CLIP_SPACE, PLANET_MINIMUM, BLUE)));
+        verify(projection, never()).apparentSizeInPixels(anyDouble(), eq(behind));
     }
 }
