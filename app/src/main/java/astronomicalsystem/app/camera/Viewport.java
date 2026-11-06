@@ -13,4 +13,8 @@ public record Viewport(int width, int height) {
             throw new IllegalArgumentException("Viewport height must be positive");
         }
     }
+
+    double aspectRatio() {
+        return (double) width / height;
+    }
 }

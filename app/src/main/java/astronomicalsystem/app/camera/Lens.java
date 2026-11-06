@@ -21,4 +21,20 @@ public record Lens(double verticalFieldOfView, double near, double far) {
             throw new IllegalArgumentException("Far plane must be finite and beyond the near plane");
         }
     }
+
+    /**
+     * @return 1 / tan(fov / 2): how much the image is magnified compared with a right-angle lens
+     */
+    double focalFactor() {
+        return 1.0 / Math.tan(verticalFieldOfView / 2.0);
+    }
+
+    /**
+     * @param depth distance in front of the camera, along its line of sight
+     * @return the z clip coordinate, which divided by the depth goes from -1 on the near plane to 1
+     *         on the far plane
+     */
+    double clipZ(double depth) {
+        return (depth * (far + near) - 2.0 * far * near) / (far - near);
+    }
 }

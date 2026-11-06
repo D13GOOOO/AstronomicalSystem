@@ -10,14 +10,33 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class Camera {
 
+    private final Vector3 eye;
+    // Orthonormal right-handed basis of the camera: right x imageUp = -forward, as in OpenGL, where the
+    // camera looks down its negative z-axis
+    private final Vector3 right;
+    private final Vector3 imageUp;
+    private final Vector3 forward;
+    private final Lens lens;
+    private final double aspectRatio;
+
     public Camera(@NotNull Vector3 eye, @NotNull Vector3 target, @NotNull Vector3 up, @NotNull Lens lens,
                   @NotNull Viewport viewport) {
+        this.eye = eye;
+        this.forward = target.minus(eye).normalized();
+        this.right = forward.cross(up).normalized();
+        this.imageUp = right.cross(forward);
+        this.lens = lens;
+        this.aspectRatio = viewport.aspectRatio();
     }
 
     /**
      * @return where the point lands in the clip coordinates of OpenGL
      */
     public @NotNull ClipPoint clipPoint(@NotNull Vector3 point) {
-        return new ClipPoint(0.0, 0.0, 0.0, 0.0);
+        Vector3 offset = point.minus(eye);
+        double depth = offset.dot(forward);
+        double focalFactor = lens.focalFactor();
+        return new ClipPoint(focalFactor / aspectRatio * offset.dot(right), focalFactor * offset.dot(imageUp),
+                lens.clipZ(depth), depth);
     }
 }
