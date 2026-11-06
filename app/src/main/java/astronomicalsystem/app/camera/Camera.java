@@ -23,9 +23,17 @@ public final class Camera {
 
     public Camera(@NotNull Vector3 eye, @NotNull Vector3 target, @NotNull Vector3 up, @NotNull Lens lens,
                   @NotNull Viewport viewport) {
+        Vector3 lineOfSight = target.minus(eye);
+        if (lineOfSight.lengthSquared() == 0.0) {
+            throw new IllegalArgumentException("Camera eye and target must differ");
+        }
+        Vector3 side = lineOfSight.cross(up);
+        if (side.lengthSquared() == 0.0) {
+            throw new IllegalArgumentException("Camera up must not be parallel to the line of sight");
+        }
         this.eye = eye;
-        this.forward = target.minus(eye).normalized();
-        this.right = forward.cross(up).normalized();
+        this.forward = lineOfSight.normalized();
+        this.right = side.normalized();
         this.imageUp = right.cross(forward);
         this.lens = lens;
         this.aspectRatio = viewport.aspectRatio();
