@@ -12,7 +12,7 @@ import java.util.List;
  * State of a running simulation: the bodies of the system and how they evolve.
  * Collisions are resolved on creation and after every step, so no two bodies ever overlap.
  */
-public class Simulation {
+public class Simulation implements Advanceable {
 
     private final Integrator integrator;
     private final CollisionResolver collisions;
@@ -32,6 +32,7 @@ public class Simulation {
         return bodies;
     }
 
+    @Override
     public void advance(@NotNull TimeStep timeStep) {
         bodies = List.copyOf(collisions.resolve(integrator.step(bodies, timeStep)));
     }
