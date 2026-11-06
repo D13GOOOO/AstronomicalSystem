@@ -13,6 +13,8 @@ public class FixedStepTimeline {
     private final Advanceable simulation;
     private final TimeStep step;
     private final TimeWarp warp;
+    // Simulated time already elapsed but shorter than a step, in days: it is spent in a later frame
+    private double pendingDays;
 
     public FixedStepTimeline(@NotNull Advanceable simulation, @NotNull TimeStep step, @NotNull TimeWarp warp) {
         this.simulation = simulation;
@@ -25,9 +27,10 @@ public class FixedStepTimeline {
      *                    finite
      */
     public void elapse(double realSeconds) {
-        long steps = (long) Math.floor(realSeconds * warp.daysPerSecond() / step.days());
-        for (long i = 0; i < steps; i++) {
+        pendingDays += realSeconds * warp.daysPerSecond();
+        while (pendingDays >= step.days()) {
             simulation.advance(step);
+            pendingDays -= step.days();
         }
     }
 }
