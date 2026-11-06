@@ -1,6 +1,7 @@
 package astronomicalsystem.app.presenter;
 
 import astronomicalsystem.app.camera.Projection;
+import astronomicalsystem.app.view.ClipPoint;
 import astronomicalsystem.app.view.Disc;
 import astronomicalsystem.app.view.SceneView;
 import astronomicalsystem.core.body.Body;
@@ -38,6 +39,8 @@ public class BodiesPresenter implements Observer<List<Body>> {
 
     private @NotNull Disc discOf(@NotNull Body body) {
         BodyStyle style = styles.get(body.kind());
-        return new Disc(projection.clipPoint(body.position()), style.minimumDiameter(), style.colour());
+        ClipPoint centre = projection.clipPoint(body.position());
+        double apparentDiameter = projection.apparentSizeInPixels(2.0 * body.radius().astronomicalUnits(), centre);
+        return new Disc(centre, Math.max(style.minimumDiameter(), apparentDiameter), style.colour());
     }
 }
