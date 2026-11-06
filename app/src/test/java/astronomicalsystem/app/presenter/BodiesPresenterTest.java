@@ -56,10 +56,8 @@ class BodiesPresenterTest {
 
     @Test
     void everyBodyIsADiscWithTheStyleOfItsKind() {
-        when(projection.clipPoint(SUN.position())).thenReturn(SUN_IN_CLIP_SPACE);
-        when(projection.clipPoint(EARTH.position())).thenReturn(EARTH_IN_CLIP_SPACE);
-        when(projection.apparentSizeInPixels(SUN_DIAMETER, SUN_IN_CLIP_SPACE)).thenReturn(LESS_THAN_A_PIXEL);
-        when(projection.apparentSizeInPixels(EARTH_DIAMETER, EARTH_IN_CLIP_SPACE)).thenReturn(LESS_THAN_A_PIXEL);
+        givenTheCameraSees(SUN, SUN_DIAMETER, SUN_IN_CLIP_SPACE, LESS_THAN_A_PIXEL);
+        givenTheCameraSees(EARTH, EARTH_DIAMETER, EARTH_IN_CLIP_SPACE, LESS_THAN_A_PIXEL);
 
         SUT.update(simulation, List.of(SUN, EARTH));
 
@@ -69,8 +67,7 @@ class BodiesPresenterTest {
 
     @Test
     void aBodyLargerThanTheMinimumIsDrawnAtItsApparentSize() {
-        when(projection.clipPoint(SUN.position())).thenReturn(SUN_IN_CLIP_SPACE);
-        when(projection.apparentSizeInPixels(SUN_DIAMETER, SUN_IN_CLIP_SPACE)).thenReturn(FORTY_PIXELS);
+        givenTheCameraSees(SUN, SUN_DIAMETER, SUN_IN_CLIP_SPACE, FORTY_PIXELS);
 
         SUT.update(simulation, List.of(SUN));
 
@@ -83,12 +80,16 @@ class BodiesPresenterTest {
     void aBodyBehindTheCameraIsNotDrawn(double depth) {
         ClipPoint behind = new ClipPoint(0.0, 0.0, 0.0, depth);
         when(projection.clipPoint(SUN.position())).thenReturn(behind);
-        when(projection.clipPoint(EARTH.position())).thenReturn(EARTH_IN_CLIP_SPACE);
-        when(projection.apparentSizeInPixels(EARTH_DIAMETER, EARTH_IN_CLIP_SPACE)).thenReturn(LESS_THAN_A_PIXEL);
+        givenTheCameraSees(EARTH, EARTH_DIAMETER, EARTH_IN_CLIP_SPACE, LESS_THAN_A_PIXEL);
 
         SUT.update(simulation, List.of(SUN, EARTH));
 
         verify(view).show(List.of(new Disc(EARTH_IN_CLIP_SPACE, PLANET_MINIMUM, BLUE)));
         verify(projection, never()).apparentSizeInPixels(anyDouble(), eq(behind));
+    }
+
+    private void givenTheCameraSees(Body body, double diameter, ClipPoint centre, double apparentSize) {
+        when(projection.clipPoint(body.position())).thenReturn(centre);
+        when(projection.apparentSizeInPixels(diameter, centre)).thenReturn(apparentSize);
     }
 }
