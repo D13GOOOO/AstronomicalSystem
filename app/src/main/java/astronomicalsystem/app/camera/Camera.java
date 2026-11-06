@@ -39,4 +39,13 @@ public final class Camera {
         return new ClipPoint(focalFactor / aspectRatio * offset.dot(right), focalFactor * offset.dot(imageUp),
                 lens.clipZ(depth), depth);
     }
+
+    /**
+     * @param size   length across the line of sight, in AU
+     * @param centre clip point of the middle of the length; precondition: in front of the camera
+     * @return how many pixels the length spans in the image
+     */
+    public double apparentSizeInPixels(double size, @NotNull ClipPoint centre) {
+        return 0.0;
+    }
 }
