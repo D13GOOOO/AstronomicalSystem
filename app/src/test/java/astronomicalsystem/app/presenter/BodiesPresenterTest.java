@@ -33,6 +33,8 @@ class BodiesPresenterTest {
     private static final ClipPoint SUN_IN_CLIP_SPACE = new ClipPoint(0.0, 0.0, 0.5, 2.0);
     private static final ClipPoint EARTH_IN_CLIP_SPACE = new ClipPoint(0.5, 0.0, 0.5, 2.0);
     private static final double LESS_THAN_A_PIXEL = 0.25;
+    // Seen from close by, larger than the minimum of its style
+    private static final double FORTY_PIXELS = 40.0;
 
     private static final Colour YELLOW = new Colour(1.0, 1.0, 0.0);
     private static final Colour BLUE = new Colour(0.0, 0.0, 1.0);
@@ -58,5 +60,15 @@ class BodiesPresenterTest {
 
         verify(view).show(List.of(new Disc(SUN_IN_CLIP_SPACE, STAR_MINIMUM, YELLOW),
                 new Disc(EARTH_IN_CLIP_SPACE, PLANET_MINIMUM, BLUE)));
+    }
+
+    @Test
+    void aBodyLargerThanTheMinimumIsDrawnAtItsApparentSize() {
+        when(projection.clipPoint(SUN.position())).thenReturn(SUN_IN_CLIP_SPACE);
+        when(projection.apparentSizeInPixels(SUN_DIAMETER, SUN_IN_CLIP_SPACE)).thenReturn(FORTY_PIXELS);
+
+        SUT.update(simulation, List.of(SUN));
+
+        verify(view).show(List.of(new Disc(SUN_IN_CLIP_SPACE, FORTY_PIXELS, YELLOW)));
     }
 }
