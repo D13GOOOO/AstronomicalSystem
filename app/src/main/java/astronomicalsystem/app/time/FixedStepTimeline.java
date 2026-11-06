@@ -25,5 +25,9 @@ public class FixedStepTimeline {
      *                    finite
      */
     public void elapse(double realSeconds) {
+        long steps = (long) Math.floor(realSeconds * warp.daysPerSecond() / step.days());
+        for (long i = 0; i < steps; i++) {
+            simulation.advance(step);
+        }
     }
 }
