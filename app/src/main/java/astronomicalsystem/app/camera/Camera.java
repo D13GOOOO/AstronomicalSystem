@@ -18,6 +18,8 @@ public final class Camera {
     private final Vector3 forward;
     private final Lens lens;
     private final double aspectRatio;
+    // Normalised device coordinates go from -1 to 1: one unit is half the height of the image
+    private final double pixelsPerDeviceUnit;
 
     public Camera(@NotNull Vector3 eye, @NotNull Vector3 target, @NotNull Vector3 up, @NotNull Lens lens,
                   @NotNull Viewport viewport) {
@@ -27,6 +29,7 @@ public final class Camera {
         this.imageUp = right.cross(forward);
         this.lens = lens;
         this.aspectRatio = viewport.aspectRatio();
+        this.pixelsPerDeviceUnit = viewport.height() / 2.0;
     }
 
     /**
@@ -46,6 +49,6 @@ public final class Camera {
      * @return how many pixels the length spans in the image
      */
     public double apparentSizeInPixels(double size, @NotNull ClipPoint centre) {
-        return 0.0;
+        return size * lens.focalFactor() / centre.w() * pixelsPerDeviceUnit;
     }
 }
