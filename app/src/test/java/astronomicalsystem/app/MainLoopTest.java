@@ -34,4 +34,19 @@ class MainLoopTest {
         inOrder.verify(timeline).elapse(A_QUARTER_OF_A_SECOND);
         inOrder.verifyNoMoreInteractions();
     }
+
+    @Test
+    void everyFrameIsDrawnAfterTheTimeHasElapsed() {
+        when(window.shouldClose()).thenReturn(false, false, true);
+        when(clock.seconds()).thenReturn(START, START + HALF_A_SECOND,
+                START + HALF_A_SECOND + A_QUARTER_OF_A_SECOND);
+
+        SUT.run();
+
+        InOrder inOrder = inOrder(timeline, window);
+        inOrder.verify(timeline).elapse(HALF_A_SECOND);
+        inOrder.verify(window).drawFrame();
+        inOrder.verify(timeline).elapse(A_QUARTER_OF_A_SECOND);
+        inOrder.verify(window).drawFrame();
+    }
 }
