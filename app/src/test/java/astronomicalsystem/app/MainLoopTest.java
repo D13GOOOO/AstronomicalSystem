@@ -23,9 +23,7 @@ class MainLoopTest {
 
     @Test
     void everyFrameElapsesTheRealTimeSinceThePreviousOne() {
-        when(window.shouldClose()).thenReturn(false, false, true);
-        when(clock.seconds()).thenReturn(START, START + HALF_A_SECOND,
-                START + HALF_A_SECOND + A_QUARTER_OF_A_SECOND);
+        givenTwoFramesBeforeTheWindowCloses();
 
         SUT.run();
 
@@ -37,9 +35,7 @@ class MainLoopTest {
 
     @Test
     void everyFrameIsDrawnAfterTheTimeHasElapsed() {
-        when(window.shouldClose()).thenReturn(false, false, true);
-        when(clock.seconds()).thenReturn(START, START + HALF_A_SECOND,
-                START + HALF_A_SECOND + A_QUARTER_OF_A_SECOND);
+        givenTwoFramesBeforeTheWindowCloses();
 
         SUT.run();
 
@@ -48,5 +44,11 @@ class MainLoopTest {
         inOrder.verify(window).drawFrame();
         inOrder.verify(timeline).elapse(A_QUARTER_OF_A_SECOND);
         inOrder.verify(window).drawFrame();
+    }
+
+    private void givenTwoFramesBeforeTheWindowCloses() {
+        when(window.shouldClose()).thenReturn(false, false, true);
+        when(clock.seconds()).thenReturn(START, START + HALF_A_SECOND,
+                START + HALF_A_SECOND + A_QUARTER_OF_A_SECOND);
     }
 }
