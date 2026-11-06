@@ -26,6 +26,7 @@ public class MainLoop {
             double frame = clock.seconds();
             timeline.elapse(frame - previousFrame);
             previousFrame = frame;
+            window.drawFrame();
         }
     }
 }
