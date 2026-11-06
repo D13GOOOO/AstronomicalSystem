@@ -4,6 +4,10 @@ import org.junit.jupiter.api.Test;
 import org.lwjgl.opengl.GL;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.lwjgl.glfw.GLFW.GLFW_FALSE;
+import static org.lwjgl.glfw.GLFW.GLFW_RESIZABLE;
+import static org.lwjgl.glfw.GLFW.glfwGetCurrentContext;
+import static org.lwjgl.glfw.GLFW.glfwGetWindowAttrib;
 import static org.lwjgl.opengl.GL11.GL_DEPTH_BUFFER_BIT;
 import static org.lwjgl.opengl.GL11.GL_DEPTH_COMPONENT;
 import static org.lwjgl.opengl.GL11.GL_FLOAT;
@@ -55,6 +59,16 @@ class GlfwWindowIntegrationTest {
             SUT.drawFrame(() -> glReadPixels(0, 0, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, depthSeenByTheContent));
 
             assertThat(depthSeenByTheContent[0]).isEqualTo(FARTHEST);
+        }
+    }
+
+    // The camera has a fixed viewport, so far
+    @Test
+    void theWindowCannotBeResized() {
+        try (GlfwWindow SUT = GlfwWindow.open(TITLE, WIDTH, HEIGHT)) {
+            long windowOfTheCurrentContext = glfwGetCurrentContext();
+
+            assertThat(glfwGetWindowAttrib(windowOfTheCurrentContext, GLFW_RESIZABLE)).isEqualTo(GLFW_FALSE);
         }
     }
 
