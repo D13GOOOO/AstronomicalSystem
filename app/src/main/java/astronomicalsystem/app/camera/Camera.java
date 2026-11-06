@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
  * Perspective camera that looks at a target from an eye, with a given direction pointing up in the
  * image.
  */
-public final class Camera {
+public final class Camera implements Projection {
 
     private final Vector3 eye;
     // Orthonormal right-handed basis of the camera: right x imageUp = -forward, as in OpenGL, where the
@@ -40,9 +40,7 @@ public final class Camera {
         this.pixelsPerDeviceUnit = viewport.height() / 2.0;
     }
 
-    /**
-     * @return where the point lands in the clip coordinates of OpenGL
-     */
+    @Override
     public @NotNull ClipPoint clipPoint(@NotNull Vector3 point) {
         Vector3 offset = point.minus(eye);
         double depth = offset.dot(forward);
@@ -51,11 +49,7 @@ public final class Camera {
                 lens.clipZ(depth), depth);
     }
 
-    /**
-     * @param size   length across the line of sight, in AU
-     * @param centre clip point of the middle of the length; precondition: in front of the camera
-     * @return how many pixels the length spans in the image
-     */
+    @Override
     public double apparentSizeInPixels(double size, @NotNull ClipPoint centre) {
         return size * lens.focalFactor() / centre.w() * pixelsPerDeviceUnit;
     }

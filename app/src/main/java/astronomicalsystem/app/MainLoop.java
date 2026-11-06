@@ -2,6 +2,7 @@ package astronomicalsystem.app;
 
 import astronomicalsystem.app.time.Clock;
 import astronomicalsystem.app.time.Timeline;
+import astronomicalsystem.app.view.Drawable;
 import astronomicalsystem.app.view.Window;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,11 +14,14 @@ public class MainLoop {
     private final Window window;
     private final Clock clock;
     private final Timeline timeline;
+    private final Drawable scene;
 
-    public MainLoop(@NotNull Window window, @NotNull Clock clock, @NotNull Timeline timeline) {
+    public MainLoop(@NotNull Window window, @NotNull Clock clock, @NotNull Timeline timeline,
+                    @NotNull Drawable scene) {
         this.window = window;
         this.clock = clock;
         this.timeline = timeline;
+        this.scene = scene;
     }
 
     public void run() {
@@ -26,7 +30,7 @@ public class MainLoop {
             double frame = clock.seconds();
             timeline.elapse(frame - previousFrame);
             previousFrame = frame;
-            window.drawFrame();
+            window.drawFrame(scene);
         }
     }
 }
