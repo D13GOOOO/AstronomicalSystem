@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+import static org.lwjgl.opengl.GL11.GL_DEPTH_TEST;
 import static org.lwjgl.opengl.GL11.GL_FLOAT;
 import static org.lwjgl.opengl.GL11.GL_POINTS;
 import static org.lwjgl.opengl.GL11.glDrawArrays;
@@ -68,6 +69,8 @@ public final class GlDiscs implements SceneView, Drawable, AutoCloseable {
         glBindVertexArray(0);
         // Lets the vertex shader set the size of each point
         glEnable(GL_PROGRAM_POINT_SIZE);
+        // Nearer discs hide farther ones, whatever the order they are drawn in
+        glEnable(GL_DEPTH_TEST);
         return new GlDiscs(program, vertexArray, buffer);
     }
 
