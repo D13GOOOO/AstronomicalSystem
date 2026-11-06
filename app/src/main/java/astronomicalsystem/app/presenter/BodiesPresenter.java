@@ -1,6 +1,7 @@
 package astronomicalsystem.app.presenter;
 
 import astronomicalsystem.app.camera.Projection;
+import astronomicalsystem.app.view.Disc;
 import astronomicalsystem.app.view.SceneView;
 import astronomicalsystem.core.body.Body;
 import astronomicalsystem.core.body.BodyKind;
@@ -32,5 +33,11 @@ public class BodiesPresenter implements Observer<List<Body>> {
 
     @Override
     public void update(@NotNull Observable<List<Body>> subject, @NotNull List<Body> state) {
+        view.show(state.stream().map(this::discOf).toList());
+    }
+
+    private @NotNull Disc discOf(@NotNull Body body) {
+        BodyStyle style = styles.get(body.kind());
+        return new Disc(projection.clipPoint(body.position()), style.minimumDiameter(), style.colour());
     }
 }
