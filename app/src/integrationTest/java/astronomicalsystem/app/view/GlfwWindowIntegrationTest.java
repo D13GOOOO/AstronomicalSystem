@@ -15,6 +15,8 @@ class GlfwWindowIntegrationTest {
     private static final String TITLE = "Integration test";
     private static final int WIDTH = 320;
     private static final int HEIGHT = 240;
+    private static final Drawable NOTHING = () -> {
+    };
 
     @Test
     void theContextIsOpenGl33CoreProfile() {
@@ -28,7 +30,7 @@ class GlfwWindowIntegrationTest {
     @Test
     void aFrameIsDrawnWithoutErrorsAndTheWindowStaysOpen() {
         try (GlfwWindow SUT = GlfwWindow.open(TITLE, WIDTH, HEIGHT)) {
-            SUT.drawFrame();
+            SUT.drawFrame(NOTHING);
 
             assertThat(glGetError()).isEqualTo(GL_NO_ERROR);
             assertThat(SUT.shouldClose()).isFalse();

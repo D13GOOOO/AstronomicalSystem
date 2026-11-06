@@ -86,8 +86,9 @@ public final class GlfwWindow implements Window, AutoCloseable {
     }
 
     @Override
-    public void drawFrame() {
+    public void drawFrame(@NotNull Drawable content) {
         glClear(GL_COLOR_BUFFER_BIT);
+        content.draw();
         glfwSwapBuffers(handle);
         glfwPollEvents();
     }

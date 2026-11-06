@@ -4,6 +4,7 @@ import astronomicalsystem.app.time.FixedStepTimeline;
 import astronomicalsystem.app.time.SystemClock;
 import astronomicalsystem.app.time.Timeline;
 import astronomicalsystem.app.time.TimeWarp;
+import astronomicalsystem.app.view.Drawable;
 import astronomicalsystem.app.view.GlfwWindow;
 import astronomicalsystem.core.orbit.GravitationalParameter;
 import astronomicalsystem.core.physics.MergingCollisions;
@@ -36,6 +37,8 @@ public final class Main {
     private static final TimeStep ONE_HOUR = new TimeStep(1.0 / 24.0);
     // Mercury goes round the Sun in about nine seconds, the Earth in about thirty-seven
     private static final TimeWarp TEN_DAYS_PER_SECOND = new TimeWarp(10.0);
+    private static final Drawable NOTHING_YET = () -> {
+    };
 
     private Main() {
     }
@@ -48,7 +51,7 @@ public final class Main {
                 new MergingCollisions(), solarSystem.bodiesAt(JulianDate.at(Instant.now())));
         Timeline timeline = new FixedStepTimeline(simulation, ONE_HOUR, TEN_DAYS_PER_SECOND);
         try (GlfwWindow window = GlfwWindow.open(TITLE, WIDTH, HEIGHT)) {
-            new MainLoop(window, new SystemClock(), timeline).run();
+            new MainLoop(window, new SystemClock(), timeline, NOTHING_YET).run();
         }
     }
 }
