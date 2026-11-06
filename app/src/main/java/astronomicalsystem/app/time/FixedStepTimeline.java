@@ -7,8 +7,12 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Lets simulated time flow with real time, sped up by a time warp, always in steps of the same
  * length: a symplectic integrator keeps its energy only with a constant step.
+ * A frame longer than a second (the application was blocked) counts as one second: catching up
+ * with the whole pause would take a burst of steps that blocks the application again.
  */
 public class FixedStepTimeline {
+
+    private static final double LONGEST_FRAME_SECONDS = 1.0;
 
     private final Advanceable simulation;
     private final TimeStep step;
@@ -27,7 +31,7 @@ public class FixedStepTimeline {
      *                    finite
      */
     public void elapse(double realSeconds) {
-        pendingDays += realSeconds * warp.daysPerSecond();
+        pendingDays += Math.min(realSeconds, LONGEST_FRAME_SECONDS) * warp.daysPerSecond();
         while (pendingDays >= step.days()) {
             simulation.advance(step);
             pendingDays -= step.days();
