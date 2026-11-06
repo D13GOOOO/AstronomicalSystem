@@ -21,5 +21,11 @@ public class MainLoop {
     }
 
     public void run() {
+        double previousFrame = clock.seconds();
+        while (!window.shouldClose()) {
+            double frame = clock.seconds();
+            timeline.elapse(frame - previousFrame);
+            previousFrame = frame;
+        }
     }
 }
