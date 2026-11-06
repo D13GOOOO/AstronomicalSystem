@@ -28,6 +28,9 @@ class GlDiscsIntegrationTest {
     // One step of an 8-bit colour channel
     private static final float ONE_LEVEL = 1.0f / 255.0f;
     private static final ClipPoint MIDDLE_OF_THE_IMAGE = new ClipPoint(0.0, 0.0, 0.0, 1.0);
+    // In the middle of the image, a quarter of the depth range in front of and behind the centre
+    private static final ClipPoint NEARER = new ClipPoint(0.0, 0.0, -0.5, 1.0);
+    private static final ClipPoint FARTHER = new ClipPoint(0.0, 0.0, 0.5, 1.0);
     private static final double TWENTY_PIXELS = 20.0;
     // From the centre of the disc, 8.5 px right and 8.5 px up: 12 px away, outside the circle of
     // radius 10 but inside the square that encloses it
@@ -46,6 +49,20 @@ class GlDiscsIntegrationTest {
             assertThat(pixelAt(centre[0], centre[1])).containsExactly(RED, withPrecision(ONE_LEVEL));
             assertThat(pixelAt(centre[0] + DIAGONAL_OFFSET, centre[1] + DIAGONAL_OFFSET))
                     .containsExactly(BLACK, withPrecision(ONE_LEVEL));
+        }
+    }
+
+    @Test
+    void aNearerDiscHidesAFartherOneDrawnAfterIt() {
+        try (GlfwWindow window = GlfwWindow.open(TITLE, WIDTH, HEIGHT); GlDiscs SUT = GlDiscs.create()) {
+            SUT.show(List.of(new Disc(NEARER, TWENTY_PIXELS, new Colour(1.0, 0.0, 0.0)),
+                    new Disc(FARTHER, TWENTY_PIXELS, new Colour(0.0, 0.0, 1.0))));
+            clearToBlack();
+
+            SUT.draw();
+
+            int[] centre = centreOfTheImage();
+            assertThat(pixelAt(centre[0], centre[1])).containsExactly(RED, withPrecision(ONE_LEVEL));
         }
     }
 
