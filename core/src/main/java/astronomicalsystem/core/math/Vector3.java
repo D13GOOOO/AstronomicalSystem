@@ -31,6 +31,10 @@ public record Vector3(double x, double y, double z) {
         return x * other.x + y * other.y + z * other.z;
     }
 
+    public @NotNull Vector3 cross(@NotNull Vector3 other) {
+        return ZERO;
+    }
+
     public double lengthSquared() {
         return dot(this);
     }
