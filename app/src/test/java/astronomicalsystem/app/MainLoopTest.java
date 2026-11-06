@@ -8,6 +8,9 @@ import org.mockito.InOrder;
 
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 class MainLoopTest {
@@ -44,6 +47,16 @@ class MainLoopTest {
         inOrder.verify(window).drawFrame();
         inOrder.verify(timeline).elapse(A_QUARTER_OF_A_SECOND);
         inOrder.verify(window).drawFrame();
+    }
+
+    @Test
+    void noFrameRunsInAWindowAlreadyClosed() {
+        when(window.shouldClose()).thenReturn(true);
+
+        SUT.run();
+
+        verifyNoInteractions(timeline);
+        verify(window, never()).drawFrame();
     }
 
     private void givenTwoFramesBeforeTheWindowCloses() {
