@@ -12,6 +12,7 @@ import java.util.stream.Stream;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 class ObservableCameraRigTest {
 
@@ -22,6 +23,7 @@ class ObservableCameraRigTest {
     private static final double QUARTER_TURN = Math.PI / 2.0;
     private static final double HALF_THE_DISTANCE = 0.5;
     private static final Viewport SQUARE = new Viewport(100, 100);
+    private static final double SAME_DISTANCE = 1.0;
 
     private final Observer<Projection> observer = mock();
     private final ObservableCameraRig SUT = new ObservableCameraRig(TARGET, ON_THE_ECLIPTIC, RIGHT_ANGLE_LENS,
@@ -42,5 +44,22 @@ class ObservableCameraRigTest {
         change.accept(SUT);
 
         verify(observer).update(SUT, SUT.getState());
+    }
+
+    static Stream<Arguments> operationsThatChangeNothing() {
+        return Stream.of(
+                Arguments.of(Named.of("no rotation", (Consumer<CameraRig>) rig -> rig.orbitBy(0.0, 0.0))),
+                Arguments.of(Named.of("no zoom", (Consumer<CameraRig>) rig -> rig.zoomBy(SAME_DISTANCE))),
+                Arguments.of(Named.of("same viewport", (Consumer<CameraRig>) rig -> rig.resize(TWO_BY_ONE))));
+    }
+
+    @ParameterizedTest
+    @MethodSource("operationsThatChangeNothing")
+    void anOperationThatChangesNothingNotifiesNobody(Consumer<CameraRig> operation) {
+        SUT.addObserver(observer);
+
+        operation.accept(SUT);
+
+        verifyNoInteractions(observer);
     }
 }
