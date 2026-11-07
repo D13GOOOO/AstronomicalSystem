@@ -33,6 +33,7 @@ public class CameraControlsPresenter implements InputHandler {
 
     @Override
     public void pointerReleased() {
+        dragging = false;
     }
 
     @Override
