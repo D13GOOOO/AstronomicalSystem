@@ -5,6 +5,7 @@ import astronomicalsystem.app.view.InputView;
 import org.junit.jupiter.api.Test;
 
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
@@ -16,6 +17,8 @@ class CameraControlsPresenterTest {
     private static final double GRAB_Y = 100.0;
     private static final double TWENTY_PIXELS_RIGHT_AND_TEN_UP_X = 120.0;
     private static final double TWENTY_PIXELS_RIGHT_AND_TEN_UP_Y = 90.0;
+    private static final double TWENTY_MORE_PIXELS_RIGHT_AND_TEN_MORE_UP_X = 140.0;
+    private static final double TWENTY_MORE_PIXELS_RIGHT_AND_TEN_MORE_UP_Y = 80.0;
     private static final double AZIMUTH_FOR_TWENTY_PIXELS_RIGHT = -0.1;
     private static final double ELEVATION_FOR_TEN_PIXELS_UP = -0.05;
 
@@ -52,5 +55,16 @@ class CameraControlsPresenterTest {
         SUT.pointerMoved(TWENTY_PIXELS_RIGHT_AND_TEN_UP_X, TWENTY_PIXELS_RIGHT_AND_TEN_UP_Y);
 
         verifyNoInteractions(camera);
+    }
+
+    // Each movement turns the camera by its own length, not by the distance from the grab
+    @Test
+    void everyMovementOfADragTurnsTheCameraByItsOwnLength() {
+        SUT.pointerPressed(GRAB_X, GRAB_Y);
+        SUT.pointerMoved(TWENTY_PIXELS_RIGHT_AND_TEN_UP_X, TWENTY_PIXELS_RIGHT_AND_TEN_UP_Y);
+
+        SUT.pointerMoved(TWENTY_MORE_PIXELS_RIGHT_AND_TEN_MORE_UP_X, TWENTY_MORE_PIXELS_RIGHT_AND_TEN_MORE_UP_Y);
+
+        verify(camera, times(2)).orbitBy(AZIMUTH_FOR_TWENTY_PIXELS_RIGHT, ELEVATION_FOR_TEN_PIXELS_UP);
     }
 }
