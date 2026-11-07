@@ -1,6 +1,7 @@
 package astronomicalsystem.app.presenter;
 
 import astronomicalsystem.app.camera.CameraModel;
+import astronomicalsystem.app.camera.Viewport;
 import astronomicalsystem.app.view.InputHandler;
 import astronomicalsystem.app.view.InputView;
 import org.jetbrains.annotations.NotNull;
@@ -57,5 +58,6 @@ public class CameraControlsPresenter implements InputHandler {
 
     @Override
     public void resized(int width, int height) {
+        camera.resize(new Viewport(width, height));
     }
 }
