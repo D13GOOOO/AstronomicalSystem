@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 class CameraControlsPresenterTest {
 
@@ -34,5 +35,12 @@ class CameraControlsPresenterTest {
         SUT.pointerMoved(TWENTY_PIXELS_RIGHT_AND_TEN_UP_X, TWENTY_PIXELS_RIGHT_AND_TEN_UP_Y);
 
         verify(camera).orbitBy(AZIMUTH_FOR_TWENTY_PIXELS_RIGHT, ELEVATION_FOR_TEN_PIXELS_UP);
+    }
+
+    @Test
+    void movingThePointerWithoutPressingLeavesTheCameraAlone() {
+        SUT.pointerMoved(TWENTY_PIXELS_RIGHT_AND_TEN_UP_X, TWENTY_PIXELS_RIGHT_AND_TEN_UP_Y);
+
+        verifyNoInteractions(camera);
     }
 }
