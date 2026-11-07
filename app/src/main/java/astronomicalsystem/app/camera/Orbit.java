@@ -39,4 +39,13 @@ public record Orbit(double distance, double azimuth, double elevation) {
         return target.plus(new Vector3(alongTheEcliptic * Math.sin(azimuth), -alongTheEcliptic * Math.cos(azimuth),
                 distance * Math.sin(elevation)));
     }
+
+    /**
+     * @param azimuthAngle   added to the azimuth, in radians; precondition: finite
+     * @param elevationAngle added to the elevation, in radians, which stops at the limit; precondition:
+     *                       finite
+     */
+    public @NotNull Orbit rotated(double azimuthAngle, double elevationAngle) {
+        return this;
+    }
 }

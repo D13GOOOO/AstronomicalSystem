@@ -12,6 +12,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class OrbitTest {
 
     private static final double TOLERANCE = 1e-12;
+    private static final double DISTANCE = 2.0;
     private static final RecursiveComparisonConfiguration CLOSE_ENOUGH = RecursiveComparisonConfiguration.builder()
             .withComparatorForType((a, b) -> Math.abs(a - b) < TOLERANCE ? 0 : Double.compare(a, b), Double.class)
             .build();
@@ -67,5 +68,22 @@ class OrbitTest {
         Vector3 eye = SUT.eye(new Vector3(targetX, targetY, targetZ));
 
         assertThat(eye).usingRecursiveComparison(CLOSE_ENOUGH).isEqualTo(new Vector3(eyeX, eyeY, eyeZ));
+    }
+
+    // Starting from azimuth 1 and elevation 0.5 rad; the elevation stops at +-89 degrees
+    @ParameterizedTest
+    @CsvSource(textBlock = """
+             0.25,  0.25,   1.25,  0.75
+            -2.0,  -1.0,   -1.0,  -0.5
+             0.0,   1.5,    1.0,   1.5533430342749532
+             0.0,  -3.0,    1.0,  -1.5533430342749532
+            """)
+    void rotatingTurnsTheAnglesUpToTheElevationLimit(double azimuthAngle, double elevationAngle,
+                                                     double azimuth, double elevation) {
+        Orbit SUT = new Orbit(DISTANCE, 1.0, 0.5);
+
+        Orbit rotated = SUT.rotated(azimuthAngle, elevationAngle);
+
+        assertThat(rotated).usingRecursiveComparison(CLOSE_ENOUGH).isEqualTo(new Orbit(DISTANCE, azimuth, elevation));
     }
 }
