@@ -31,8 +31,7 @@ public class CameraControlsPresenter implements InputHandler {
     @Override
     public void pointerPressed(double x, double y) {
         dragging = true;
-        previousX = x;
-        previousY = y;
+        rememberPointerAt(x, y);
     }
 
     @Override
@@ -47,8 +46,7 @@ public class CameraControlsPresenter implements InputHandler {
         }
         // Turning the scene the way the pointer goes takes the camera the opposite way around
         camera.orbitBy(-(x - previousX) / PIXELS_PER_RADIAN, (y - previousY) / PIXELS_PER_RADIAN);
-        previousX = x;
-        previousY = y;
+        rememberPointerAt(x, y);
     }
 
     @Override
@@ -63,5 +61,10 @@ public class CameraControlsPresenter implements InputHandler {
             return;
         }
         camera.resize(new Viewport(width, height));
+    }
+
+    private void rememberPointerAt(double x, double y) {
+        previousX = x;
+        previousY = y;
     }
 }
