@@ -35,6 +35,8 @@ public record Orbit(double distance, double azimuth, double elevation) {
      * @return where the camera stands when it orbits the target
      */
     public @NotNull Vector3 eye(@NotNull Vector3 target) {
-        return target;
+        double alongTheEcliptic = distance * Math.cos(elevation);
+        return target.plus(new Vector3(alongTheEcliptic * Math.sin(azimuth), -alongTheEcliptic * Math.cos(azimuth),
+                distance * Math.sin(elevation)));
     }
 }
