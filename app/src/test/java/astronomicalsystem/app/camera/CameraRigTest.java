@@ -3,7 +3,14 @@ package astronomicalsystem.app.camera;
 import astronomicalsystem.app.view.ClipPoint;
 import astronomicalsystem.core.math.Vector3;
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
+import org.junit.jupiter.api.Named;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+
+import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -21,6 +28,9 @@ class CameraRigTest {
     private static final Vector3 EAST_OF_THE_TARGET = TARGET.plus(new Vector3(1.0, 0.0, 0.0));
     private static final double QUARTER_TURN = Math.PI / 2.0;
     private static final double HALF_THE_DISTANCE = 0.5;
+    private static final double SAME_DISTANCE = 1.0;
+    private static final Orbit AS_FAR_AS_POSSIBLE = new Orbit(100.0, 0.0, 0.0);
+    private static final double TWICE_AS_FAR = 2.0;
     // 2 AU away on the ecliptic, looking along the positive y-axis
     private static final Orbit ON_THE_ECLIPTIC = new Orbit(2.0, 0.0, 0.0);
     // Focal factor 1, depth from 1 to 3 AU: the target, 2 AU away, has z = w / 2
@@ -66,5 +76,33 @@ class CameraRigTest {
 
         assertThat(SUT.camera().clipPoint(EAST_OF_THE_TARGET)).usingRecursiveComparison(CLOSE_ENOUGH)
                 .isEqualTo(new ClipPoint(1.0, 0.0, 1.0, 2.0));
+    }
+
+    // Nothing turns, nothing moves closer or farther, the image keeps its size
+    static Stream<Arguments> operationsThatChangeNothing() {
+        return Stream.of(
+                Arguments.of(Named.of("no rotation", (Consumer<CameraRig>) rig -> rig.orbitBy(0.0, 0.0))),
+                Arguments.of(Named.of("no zoom", (Consumer<CameraRig>) rig -> rig.zoomBy(SAME_DISTANCE))),
+                Arguments.of(Named.of("same viewport", (Consumer<CameraRig>) rig -> rig.resize(TWO_BY_ONE))));
+    }
+
+    @ParameterizedTest
+    @MethodSource("operationsThatChangeNothing")
+    void theCameraStaysTheSameObjectUntilTheRigChanges(Consumer<CameraRig> operation) {
+        Projection before = SUT.camera();
+
+        operation.accept(SUT);
+
+        assertThat(SUT.camera()).isSameAs(before);
+    }
+
+    @Test
+    void theCameraStaysTheSameObjectWhenTheZoomIsAtItsLimit() {
+        CameraRig farthest = new CameraRig(TARGET, AS_FAR_AS_POSSIBLE, RIGHT_ANGLE_LENS, TWO_BY_ONE);
+        Projection before = farthest.camera();
+
+        farthest.zoomBy(TWICE_AS_FAR);
+
+        assertThat(farthest.camera()).isSameAs(before);
     }
 }
