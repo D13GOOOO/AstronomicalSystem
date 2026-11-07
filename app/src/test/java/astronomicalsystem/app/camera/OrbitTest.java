@@ -86,4 +86,20 @@ class OrbitTest {
 
         assertThat(rotated).usingRecursiveComparison(CLOSE_ENOUGH).isEqualTo(new Orbit(DISTANCE, azimuth, elevation));
     }
+
+    // Starting 2 AU away; the distance stops at 0.02 and 100 AU
+    @ParameterizedTest
+    @CsvSource(textBlock = """
+            0.5,     1.0
+            2.0,     4.0
+            0.001,   0.02
+            100.0, 100.0
+            """)
+    void zoomingScalesTheDistanceUpToItsLimits(double factor, double distance) {
+        Orbit SUT = new Orbit(DISTANCE, 1.0, 0.5);
+
+        Orbit zoomed = SUT.zoomed(factor);
+
+        assertThat(zoomed).isEqualTo(new Orbit(distance, 1.0, 0.5));
+    }
 }

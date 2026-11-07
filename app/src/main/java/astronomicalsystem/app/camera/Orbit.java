@@ -49,4 +49,12 @@ public record Orbit(double distance, double azimuth, double elevation) {
         double turnedElevation = Math.clamp(elevation + elevationAngle, -ELEVATION_LIMIT, ELEVATION_LIMIT);
         return new Orbit(distance, azimuth + azimuthAngle, turnedElevation);
     }
+
+    /**
+     * @param factor multiplies the distance, which stops at the limits; precondition: positive and
+     *               finite
+     */
+    public @NotNull Orbit zoomed(double factor) {
+        return this;
+    }
 }
