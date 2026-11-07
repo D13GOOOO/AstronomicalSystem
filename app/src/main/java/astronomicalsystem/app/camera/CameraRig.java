@@ -14,7 +14,7 @@ public class CameraRig {
     private final Vector3 target;
     private Orbit orbit;
     private final Lens lens;
-    private final Viewport viewport;
+    private Viewport viewport;
 
     public CameraRig(@NotNull Vector3 target, @NotNull Orbit orbit, @NotNull Lens lens, @NotNull Viewport viewport) {
         this.target = target;
@@ -51,5 +51,6 @@ public class CameraRig {
      * Fits the image to a new size, for example after the window has been resized.
      */
     public void resize(@NotNull Viewport newViewport) {
+        viewport = newViewport;
     }
 }
