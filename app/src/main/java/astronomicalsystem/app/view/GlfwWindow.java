@@ -1,23 +1,32 @@
 package astronomicalsystem.app.view;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.opengl.GL;
+import org.lwjgl.system.Callback;
 
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MAJOR;
 import static org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MINOR;
+import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT;
 import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_CORE_PROFILE;
 import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_FORWARD_COMPAT;
 import static org.lwjgl.glfw.GLFW.GLFW_OPENGL_PROFILE;
+import static org.lwjgl.glfw.GLFW.GLFW_PRESS;
+import static org.lwjgl.glfw.GLFW.GLFW_RELEASE;
 import static org.lwjgl.glfw.GLFW.GLFW_TRUE;
 import static org.lwjgl.glfw.GLFW.glfwCreateWindow;
 import static org.lwjgl.glfw.GLFW.glfwDestroyWindow;
+import static org.lwjgl.glfw.GLFW.glfwGetCursorPos;
 import static org.lwjgl.glfw.GLFW.glfwInit;
 import static org.lwjgl.glfw.GLFW.glfwMakeContextCurrent;
 import static org.lwjgl.glfw.GLFW.glfwPollEvents;
+import static org.lwjgl.glfw.GLFW.glfwSetCursorPosCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetErrorCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetFramebufferSizeCallback;
+import static org.lwjgl.glfw.GLFW.glfwSetMouseButtonCallback;
+import static org.lwjgl.glfw.GLFW.glfwSetScrollCallback;
 import static org.lwjgl.glfw.GLFW.glfwSwapBuffers;
 import static org.lwjgl.glfw.GLFW.glfwSwapInterval;
 import static org.lwjgl.glfw.GLFW.glfwTerminate;
@@ -98,8 +107,33 @@ public final class GlfwWindow implements Window, InputView, AutoCloseable {
         glfwPollEvents();
     }
 
+    /**
+     * Reports what the user does to the handler; a later handler replaces it. The pointer and the
+     * wheel are not covered by the integration tests, since GLFW cannot simulate them: they are
+     * checked by running the application.
+     */
     @Override
     public void addHandlers(@NotNull InputHandler handler) {
+        free(glfwSetFramebufferSizeCallback(handle, (window, width, height) -> {
+            glViewport(0, 0, width, height);
+            handler.resized(width, height);
+        }));
+        free(glfwSetMouseButtonCallback(handle, (window, button, action, modifiers) -> {
+            if (button != GLFW_MOUSE_BUTTON_LEFT) {
+                return;
+            }
+            if (action == GLFW_PRESS) {
+                double[] x = new double[1];
+                double[] y = new double[1];
+                glfwGetCursorPos(window, x, y);
+                handler.pointerPressed(x[0], y[0]);
+            } else if (action == GLFW_RELEASE) {
+                handler.pointerReleased();
+            }
+        }));
+        free(glfwSetCursorPosCallback(handle, (window, x, y) -> handler.pointerMoved(x, y)));
+        // Only the vertical wheel; the horizontal one of touchpads is ignored
+        free(glfwSetScrollCallback(handle, (window, horizontal, vertical) -> handler.scrolled(vertical)));
     }
 
     @Override
@@ -107,6 +141,13 @@ public final class GlfwWindow implements Window, InputView, AutoCloseable {
         glfwFreeCallbacks(handle);
         glfwDestroyWindow(handle);
         terminateGlfw();
+    }
+
+    // Each callback set in GLFW lives in native memory until it is freed
+    private static void free(@Nullable Callback replaced) {
+        if (replaced != null) {
+            replaced.free();
+        }
     }
 
     private static void terminateGlfw() {
