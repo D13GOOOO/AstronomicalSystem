@@ -8,4 +8,23 @@ package astronomicalsystem.app.camera;
  * @param elevation angle above the ecliptic, in radians
  */
 public record Orbit(double distance, double azimuth, double elevation) {
+
+    // Close enough to see a planet as a disc, far enough to see the orbit of Neptune (30 AU)
+    private static final double NEAREST = 0.02;
+    private static final double FARTHEST = 100.0;
+    // Short of the poles, where the ecliptic north would be parallel to the line of sight
+    private static final double ELEVATION_LIMIT = Math.toRadians(89.0);
+
+    public Orbit {
+        // Written so that NaN fails the comparisons
+        if (!(distance >= NEAREST && distance <= FARTHEST)) {
+            throw new IllegalArgumentException("Orbit distance must be between 0.02 and 100 AU");
+        }
+        if (!Double.isFinite(azimuth)) {
+            throw new IllegalArgumentException("Orbit azimuth must be finite");
+        }
+        if (!(Math.abs(elevation) <= ELEVATION_LIMIT)) {
+            throw new IllegalArgumentException("Orbit elevation must be within 89 degrees of the ecliptic");
+        }
+    }
 }
