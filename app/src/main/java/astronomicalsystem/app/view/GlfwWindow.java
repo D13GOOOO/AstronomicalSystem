@@ -152,9 +152,6 @@ public final class GlfwWindow implements Window, InputView, AutoCloseable {
 
     private static void terminateGlfw() {
         glfwTerminate();
-        GLFWErrorCallback previous = glfwSetErrorCallback(null);
-        if (previous != null) {
-            previous.free();
-        }
+        free(glfwSetErrorCallback(null));
     }
 }
