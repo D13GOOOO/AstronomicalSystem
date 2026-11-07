@@ -1,5 +1,7 @@
 package astronomicalsystem.app.view;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.lwjgl.opengl.GL;
 
@@ -36,71 +38,71 @@ class GlfwWindowIntegrationTest {
     private static final float NEAREST = 0.0f;
     private static final float FARTHEST = 1.0f;
 
+    private GlfwWindow SUT;
+
+    @BeforeEach
+    void openTheWindow() {
+        SUT = GlfwWindow.open(TITLE, WIDTH, HEIGHT);
+    }
+
+    @AfterEach
+    void closeTheWindow() {
+        SUT.close();
+    }
+
     @Test
     void theContextIsOpenGl33CoreProfile() {
-        try (GlfwWindow SUT = GlfwWindow.open(TITLE, WIDTH, HEIGHT)) {
-            assertThat(GL.getCapabilities().OpenGL33).isTrue();
-            assertThat(glGetInteger(GL_CONTEXT_PROFILE_MASK) & GL_CONTEXT_CORE_PROFILE_BIT)
-                    .isEqualTo(GL_CONTEXT_CORE_PROFILE_BIT);
-        }
+        assertThat(GL.getCapabilities().OpenGL33).isTrue();
+        assertThat(glGetInteger(GL_CONTEXT_PROFILE_MASK) & GL_CONTEXT_CORE_PROFILE_BIT)
+                .isEqualTo(GL_CONTEXT_CORE_PROFILE_BIT);
     }
 
     @Test
     void aFrameIsDrawnWithoutErrorsAndTheWindowStaysOpen() {
-        try (GlfwWindow SUT = GlfwWindow.open(TITLE, WIDTH, HEIGHT)) {
-            SUT.drawFrame(NOTHING);
+        SUT.drawFrame(NOTHING);
 
-            assertThat(glGetError()).isEqualTo(GL_NO_ERROR);
-            assertThat(SUT.shouldClose()).isFalse();
-        }
+        assertThat(glGetError()).isEqualTo(GL_NO_ERROR);
+        assertThat(SUT.shouldClose()).isFalse();
     }
 
     @Test
     void theContentIsDrawnOnAClearedDepthBuffer() {
-        try (GlfwWindow SUT = GlfwWindow.open(TITLE, WIDTH, HEIGHT)) {
-            fillTheDepthBufferWith(NEAREST);
-            float[] depthSeenByTheContent = new float[1];
+        fillTheDepthBufferWith(NEAREST);
+        float[] depthSeenByTheContent = new float[1];
 
-            SUT.drawFrame(() -> glReadPixels(0, 0, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, depthSeenByTheContent));
+        SUT.drawFrame(() -> glReadPixels(0, 0, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, depthSeenByTheContent));
 
-            assertThat(depthSeenByTheContent[0]).isEqualTo(FARTHEST);
-        }
+        assertThat(depthSeenByTheContent[0]).isEqualTo(FARTHEST);
     }
 
     // The camera follows the size of the window
     @Test
     void theWindowCanBeResized() {
-        try (GlfwWindow SUT = GlfwWindow.open(TITLE, WIDTH, HEIGHT)) {
-            long windowOfTheCurrentContext = glfwGetCurrentContext();
+        long windowOfTheCurrentContext = glfwGetCurrentContext();
 
-            assertThat(glfwGetWindowAttrib(windowOfTheCurrentContext, GLFW_RESIZABLE)).isEqualTo(GLFW_TRUE);
-        }
+        assertThat(glfwGetWindowAttrib(windowOfTheCurrentContext, GLFW_RESIZABLE)).isEqualTo(GLFW_TRUE);
     }
 
     @Test
     void theImageFillsTheResizedWindow() {
-        try (GlfwWindow SUT = GlfwWindow.open(TITLE, WIDTH, HEIGHT)) {
-            glfwSetWindowSize(glfwGetCurrentContext(), NEW_WIDTH, NEW_HEIGHT);
+        glfwSetWindowSize(glfwGetCurrentContext(), NEW_WIDTH, NEW_HEIGHT);
 
-            SUT.drawFrame(NOTHING);
+        SUT.drawFrame(NOTHING);
 
-            int[] viewport = new int[4];
-            glGetIntegerv(GL_VIEWPORT, viewport);
-            assertThat(viewport).containsExactly(0, 0, NEW_WIDTH, NEW_HEIGHT);
-        }
+        int[] viewport = new int[4];
+        glGetIntegerv(GL_VIEWPORT, viewport);
+        assertThat(viewport).containsExactly(0, 0, NEW_WIDTH, NEW_HEIGHT);
     }
 
     @Test
     void theHandlerLearnsTheNewSizeOfTheImage() {
-        try (GlfwWindow SUT = GlfwWindow.open(TITLE, WIDTH, HEIGHT)) {
-            SizeRecorder handler = new SizeRecorder();
-            SUT.addHandlers(handler);
-            glfwSetWindowSize(glfwGetCurrentContext(), NEW_WIDTH, NEW_HEIGHT);
+        SizeRecorder handler = new SizeRecorder();
+        SUT.addHandlers(handler);
+        glfwSetWindowSize(glfwGetCurrentContext(), NEW_WIDTH, NEW_HEIGHT);
 
-            SUT.drawFrame(NOTHING);
+        SUT.drawFrame(NOTHING);
 
-            assertThat(handler.lastSize()).containsExactly(NEW_WIDTH, NEW_HEIGHT);
-        }
+        assertThat(handler.lastSize()).containsExactly(NEW_WIDTH, NEW_HEIGHT);
     }
 
     private static void fillTheDepthBufferWith(float depth) {
