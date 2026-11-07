@@ -55,6 +55,6 @@ public record Orbit(double distance, double azimuth, double elevation) {
      *               finite
      */
     public @NotNull Orbit zoomed(double factor) {
-        return this;
+        return new Orbit(Math.clamp(distance * factor, NEAREST, FARTHEST), azimuth, elevation);
     }
 }
