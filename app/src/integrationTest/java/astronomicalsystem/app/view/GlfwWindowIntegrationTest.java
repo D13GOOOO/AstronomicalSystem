@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.lwjgl.opengl.GL;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.lwjgl.glfw.GLFW.GLFW_FALSE;
+import static org.lwjgl.glfw.GLFW.GLFW_TRUE;
 import static org.lwjgl.glfw.GLFW.GLFW_RESIZABLE;
 import static org.lwjgl.glfw.GLFW.glfwGetCurrentContext;
 import static org.lwjgl.glfw.GLFW.glfwGetWindowAttrib;
@@ -62,13 +62,13 @@ class GlfwWindowIntegrationTest {
         }
     }
 
-    // The camera has a fixed viewport, so far
+    // The camera follows the size of the window
     @Test
-    void theWindowCannotBeResized() {
+    void theWindowCanBeResized() {
         try (GlfwWindow SUT = GlfwWindow.open(TITLE, WIDTH, HEIGHT)) {
             long windowOfTheCurrentContext = glfwGetCurrentContext();
 
-            assertThat(glfwGetWindowAttrib(windowOfTheCurrentContext, GLFW_RESIZABLE)).isEqualTo(GLFW_FALSE);
+            assertThat(glfwGetWindowAttrib(windowOfTheCurrentContext, GLFW_RESIZABLE)).isEqualTo(GLFW_TRUE);
         }
     }
 
