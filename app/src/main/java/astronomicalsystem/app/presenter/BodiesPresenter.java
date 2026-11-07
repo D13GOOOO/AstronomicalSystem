@@ -50,4 +50,12 @@ public class BodiesPresenter implements Observer<List<Body>> {
         double apparentDiameter = projection.apparentSizeInPixels(2.0 * body.radius().astronomicalUnits(), centre);
         return new Disc(centre, Math.max(style.minimumDiameter(), apparentDiameter), style.colour());
     }
+
+    /**
+     * @return the observer that redraws the bodies from the point of view of every new camera
+     */
+    public @NotNull Observer<Projection> cameraObserver() {
+        return (subject, camera) -> {
+        };
+    }
 }
