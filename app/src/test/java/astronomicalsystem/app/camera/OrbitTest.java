@@ -3,6 +3,7 @@ package astronomicalsystem.app.camera;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class OrbitTest {
@@ -24,5 +25,17 @@ class OrbitTest {
         assertThatThrownBy(() -> new Orbit(distance, azimuth, elevation))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage(message);
+    }
+
+    // The limits themselves, any number of turns, and 89 degrees = 1.5533430342749532 rad
+    @ParameterizedTest
+    @CsvSource(textBlock = """
+            0.02,   0.0,      0.0
+            100.0,  0.0,      0.0
+            1.0,    -100.0,   1.5533430342749532
+            1.0,    100.0,   -1.5533430342749532
+            """)
+    void constructorAcceptsPositionsWithinTheLimits(double distance, double azimuth, double elevation) {
+        assertThatNoException().isThrownBy(() -> new Orbit(distance, azimuth, elevation));
     }
 }
