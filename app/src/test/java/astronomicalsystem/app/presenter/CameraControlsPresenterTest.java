@@ -3,7 +3,12 @@ package astronomicalsystem.app.presenter;
 import astronomicalsystem.app.camera.CameraModel;
 import astronomicalsystem.app.view.InputView;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.ArgumentCaptor;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -13,6 +18,7 @@ class CameraControlsPresenterTest {
 
     // 200 pixels of drag turn the camera by one radian. Dragging right turns the scene to the right,
     // so the camera goes the other way; dragging down lifts the camera above the scene
+    private static final double TOLERANCE = 1e-12;
     private static final double GRAB_X = 100.0;
     private static final double GRAB_Y = 100.0;
     private static final double TWENTY_PIXELS_RIGHT_AND_TEN_UP_X = 120.0;
@@ -66,5 +72,22 @@ class CameraControlsPresenterTest {
         SUT.pointerMoved(TWENTY_MORE_PIXELS_RIGHT_AND_TEN_MORE_UP_X, TWENTY_MORE_PIXELS_RIGHT_AND_TEN_MORE_UP_Y);
 
         verify(camera, times(2)).orbitBy(AZIMUTH_FOR_TWENTY_PIXELS_RIGHT, ELEVATION_FOR_TEN_PIXELS_UP);
+    }
+
+    // Every step of the wheel away from the user brings the camera 10% closer; towards the user it
+    // undoes one such step; half steps come from touchpads
+    @ParameterizedTest
+    @CsvSource(textBlock = """
+             1.0,  0.9
+            -1.0,  1.1111111111111112
+             2.0,  0.81
+             0.5,  0.9486832980505138
+            """)
+    void theWheelMovesTheCameraCloserOrFarther(double steps, double factor) {
+        SUT.scrolled(steps);
+
+        ArgumentCaptor<Double> zoom = ArgumentCaptor.forClass(Double.class);
+        verify(camera).zoomBy(zoom.capture());
+        assertThat(zoom.getValue()).isCloseTo(factor, within(TOLERANCE));
     }
 }
