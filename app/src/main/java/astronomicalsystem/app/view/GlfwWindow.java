@@ -37,7 +37,7 @@ import static org.lwjgl.system.MemoryUtil.NULL;
  * Not covered by unit tests, since it needs a display and a graphics card: see the integration
  * tests.
  */
-public final class GlfwWindow implements Window, AutoCloseable {
+public final class GlfwWindow implements Window, InputView, AutoCloseable {
 
     private static final int OPENGL_MAJOR_VERSION = 3;
     private static final int OPENGL_MINOR_VERSION = 3;
@@ -96,6 +96,10 @@ public final class GlfwWindow implements Window, AutoCloseable {
         content.draw();
         glfwSwapBuffers(handle);
         glfwPollEvents();
+    }
+
+    @Override
+    public void addHandlers(@NotNull InputHandler handler) {
     }
 
     @Override

@@ -90,9 +90,54 @@ class GlfwWindowIntegrationTest {
         }
     }
 
+    @Test
+    void theHandlerLearnsTheNewSizeOfTheImage() {
+        try (GlfwWindow SUT = GlfwWindow.open(TITLE, WIDTH, HEIGHT)) {
+            SizeRecorder handler = new SizeRecorder();
+            SUT.addHandlers(handler);
+            glfwSetWindowSize(glfwGetCurrentContext(), NEW_WIDTH, NEW_HEIGHT);
+
+            SUT.drawFrame(NOTHING);
+
+            assertThat(handler.lastSize()).containsExactly(NEW_WIDTH, NEW_HEIGHT);
+        }
+    }
+
     private static void fillTheDepthBufferWith(float depth) {
         glClearDepth(depth);
         glClear(GL_DEPTH_BUFFER_BIT);
         glClearDepth(FARTHEST);
+    }
+
+    // Remembers the last size it was told; GLFW cannot be given a mock, it needs real callbacks
+    private static final class SizeRecorder implements InputHandler {
+
+        private final int[] size = new int[2];
+
+        int[] lastSize() {
+            return size.clone();
+        }
+
+        @Override
+        public void resized(int width, int height) {
+            size[0] = width;
+            size[1] = height;
+        }
+
+        @Override
+        public void pointerPressed(double x, double y) {
+        }
+
+        @Override
+        public void pointerReleased() {
+        }
+
+        @Override
+        public void pointerMoved(double x, double y) {
+        }
+
+        @Override
+        public void scrolled(double steps) {
+        }
     }
 }
