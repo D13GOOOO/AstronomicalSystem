@@ -15,9 +15,9 @@ public class CameraControlsPresenter implements InputHandler {
 
     private final CameraModel camera;
     private boolean dragging;
-    // Where the pointer was grabbed
-    private double grabX;
-    private double grabY;
+    // Where the pointer was at the previous event of the drag
+    private double previousX;
+    private double previousY;
 
     public CameraControlsPresenter(@NotNull InputView view, @NotNull CameraModel camera) {
         this.camera = camera;
@@ -27,8 +27,8 @@ public class CameraControlsPresenter implements InputHandler {
     @Override
     public void pointerPressed(double x, double y) {
         dragging = true;
-        grabX = x;
-        grabY = y;
+        previousX = x;
+        previousY = y;
     }
 
     @Override
@@ -42,7 +42,9 @@ public class CameraControlsPresenter implements InputHandler {
             return;
         }
         // Turning the scene the way the pointer goes takes the camera the opposite way around
-        camera.orbitBy(-(x - grabX) / PIXELS_PER_RADIAN, (y - grabY) / PIXELS_PER_RADIAN);
+        camera.orbitBy(-(x - previousX) / PIXELS_PER_RADIAN, (y - previousY) / PIXELS_PER_RADIAN);
+        previousX = x;
+        previousY = y;
     }
 
     @Override
