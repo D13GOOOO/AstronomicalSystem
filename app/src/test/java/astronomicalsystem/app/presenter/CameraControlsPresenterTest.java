@@ -1,6 +1,7 @@
 package astronomicalsystem.app.presenter;
 
 import astronomicalsystem.app.camera.CameraModel;
+import astronomicalsystem.app.camera.Viewport;
 import astronomicalsystem.app.view.InputView;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -19,6 +20,8 @@ class CameraControlsPresenterTest {
     // 200 pixels of drag turn the camera by one radian. Dragging right turns the scene to the right,
     // so the camera goes the other way; dragging down lifts the camera above the scene
     private static final double TOLERANCE = 1e-12;
+    private static final int NEW_WIDTH = 640;
+    private static final int NEW_HEIGHT = 480;
     private static final double GRAB_X = 100.0;
     private static final double GRAB_Y = 100.0;
     private static final double TWENTY_PIXELS_RIGHT_AND_TEN_UP_X = 120.0;
@@ -89,5 +92,12 @@ class CameraControlsPresenterTest {
         ArgumentCaptor<Double> zoom = ArgumentCaptor.forClass(Double.class);
         verify(camera).zoomBy(zoom.capture());
         assertThat(zoom.getValue()).isCloseTo(factor, within(TOLERANCE));
+    }
+
+    @Test
+    void theImageFollowsTheSizeOfTheWindow() {
+        SUT.resized(NEW_WIDTH, NEW_HEIGHT);
+
+        verify(camera).resize(new Viewport(NEW_WIDTH, NEW_HEIGHT));
     }
 }
