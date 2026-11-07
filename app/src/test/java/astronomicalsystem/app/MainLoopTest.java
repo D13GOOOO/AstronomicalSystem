@@ -2,10 +2,12 @@ package astronomicalsystem.app;
 
 import astronomicalsystem.app.time.Clock;
 import astronomicalsystem.app.time.Timeline;
+import astronomicalsystem.app.view.Drawable;
 import astronomicalsystem.app.view.Window;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -22,7 +24,8 @@ class MainLoopTest {
     private final Window window = mock();
     private final Clock clock = mock();
     private final Timeline timeline = mock();
-    private final MainLoop SUT = new MainLoop(window, clock, timeline);
+    private final Drawable scene = mock();
+    private final MainLoop SUT = new MainLoop(window, clock, timeline, scene);
 
     @Test
     void everyFrameElapsesTheRealTimeSinceThePreviousOne() {
@@ -44,9 +47,9 @@ class MainLoopTest {
 
         InOrder inOrder = inOrder(timeline, window);
         inOrder.verify(timeline).elapse(HALF_A_SECOND);
-        inOrder.verify(window).drawFrame();
+        inOrder.verify(window).drawFrame(scene);
         inOrder.verify(timeline).elapse(A_QUARTER_OF_A_SECOND);
-        inOrder.verify(window).drawFrame();
+        inOrder.verify(window).drawFrame(scene);
     }
 
     @Test
@@ -56,7 +59,7 @@ class MainLoopTest {
         SUT.run();
 
         verifyNoInteractions(timeline);
-        verify(window, never()).drawFrame();
+        verify(window, never()).drawFrame(any());
     }
 
     private void givenTwoFramesBeforeTheWindowCloses() {
