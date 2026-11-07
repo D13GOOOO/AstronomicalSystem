@@ -44,5 +44,6 @@ public class CameraRig {
      *               finite
      */
     public void zoomBy(double factor) {
+        orbit = orbit.zoomed(factor);
     }
 }
