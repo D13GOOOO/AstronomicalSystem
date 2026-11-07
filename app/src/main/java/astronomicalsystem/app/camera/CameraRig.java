@@ -9,10 +9,21 @@ import org.jetbrains.annotations.NotNull;
  */
 public class CameraRig {
 
+    private static final Vector3 ECLIPTIC_NORTH = new Vector3(0.0, 0.0, 1.0);
+
+    private final Vector3 target;
+    private final Orbit orbit;
+    private final Lens lens;
+    private final Viewport viewport;
+
     public CameraRig(@NotNull Vector3 target, @NotNull Orbit orbit, @NotNull Lens lens, @NotNull Viewport viewport) {
+        this.target = target;
+        this.orbit = orbit;
+        this.lens = lens;
+        this.viewport = viewport;
     }
 
     public @NotNull Projection camera() {
-        throw new UnsupportedOperationException("not yet implemented");
+        return new Camera(orbit.eye(target), target, ECLIPTIC_NORTH, lens, viewport);
     }
 }
