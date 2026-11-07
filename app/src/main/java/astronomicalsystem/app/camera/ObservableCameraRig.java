@@ -22,20 +22,23 @@ public class ObservableCameraRig extends CameraRig implements Observable<Project
 
     @Override
     public void orbitBy(double azimuthAngle, double elevationAngle) {
+        Projection before = camera();
         super.orbitBy(azimuthAngle, elevationAngle);
-        notifyObservers();
+        notifyObserversIfChangedFrom(before);
     }
 
     @Override
     public void zoomBy(double factor) {
+        Projection before = camera();
         super.zoomBy(factor);
-        notifyObservers();
+        notifyObserversIfChangedFrom(before);
     }
 
     @Override
     public void resize(@NotNull Viewport newViewport) {
+        Projection before = camera();
         super.resize(newViewport);
-        notifyObservers();
+        notifyObserversIfChangedFrom(before);
     }
 
     @Override
@@ -53,5 +56,12 @@ public class ObservableCameraRig extends CameraRig implements Observable<Project
     @Override
     public @NotNull Projection getState() {
         return camera();
+    }
+
+    // The rig replaces its camera only when it changes, so a different object means a new picture
+    private void notifyObserversIfChangedFrom(@NotNull Projection before) {
+        if (camera() != before) {
+            notifyObservers();
+        }
     }
 }
