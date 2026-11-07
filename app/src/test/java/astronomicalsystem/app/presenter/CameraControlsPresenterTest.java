@@ -43,4 +43,14 @@ class CameraControlsPresenterTest {
 
         verifyNoInteractions(camera);
     }
+
+    @Test
+    void releasingTheButtonEndsTheDrag() {
+        SUT.pointerPressed(GRAB_X, GRAB_Y);
+        SUT.pointerReleased();
+
+        SUT.pointerMoved(TWENTY_PIXELS_RIGHT_AND_TEN_UP_X, TWENTY_PIXELS_RIGHT_AND_TEN_UP_Y);
+
+        verifyNoInteractions(camera);
+    }
 }
