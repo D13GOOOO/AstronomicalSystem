@@ -58,6 +58,10 @@ public class CameraControlsPresenter implements InputHandler {
 
     @Override
     public void resized(int width, int height) {
+        // A minimised window has no image to fit
+        if (width <= 0 || height <= 0) {
+            return;
+        }
         camera.resize(new Viewport(width, height));
     }
 }
