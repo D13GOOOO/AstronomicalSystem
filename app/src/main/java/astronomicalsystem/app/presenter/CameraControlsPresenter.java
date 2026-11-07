@@ -14,6 +14,7 @@ public class CameraControlsPresenter implements InputHandler {
     private static final double PIXELS_PER_RADIAN = 200.0;
 
     private final CameraModel camera;
+    private boolean dragging;
     // Where the pointer was grabbed
     private double grabX;
     private double grabY;
@@ -25,6 +26,7 @@ public class CameraControlsPresenter implements InputHandler {
 
     @Override
     public void pointerPressed(double x, double y) {
+        dragging = true;
         grabX = x;
         grabY = y;
     }
@@ -35,6 +37,9 @@ public class CameraControlsPresenter implements InputHandler {
 
     @Override
     public void pointerMoved(double x, double y) {
+        if (!dragging) {
+            return;
+        }
         // Turning the scene the way the pointer goes takes the camera the opposite way around
         camera.orbitBy(-(x - grabX) / PIXELS_PER_RADIAN, (y - grabY) / PIXELS_PER_RADIAN);
     }
