@@ -46,6 +46,7 @@ public record Orbit(double distance, double azimuth, double elevation) {
      *                       finite
      */
     public @NotNull Orbit rotated(double azimuthAngle, double elevationAngle) {
-        return this;
+        double turnedElevation = Math.clamp(elevation + elevationAngle, -ELEVATION_LIMIT, ELEVATION_LIMIT);
+        return new Orbit(distance, azimuth + azimuthAngle, turnedElevation);
     }
 }
