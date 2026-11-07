@@ -17,6 +17,7 @@ import static org.lwjgl.glfw.GLFW.glfwInit;
 import static org.lwjgl.glfw.GLFW.glfwMakeContextCurrent;
 import static org.lwjgl.glfw.GLFW.glfwPollEvents;
 import static org.lwjgl.glfw.GLFW.glfwSetErrorCallback;
+import static org.lwjgl.glfw.GLFW.glfwSetFramebufferSizeCallback;
 import static org.lwjgl.glfw.GLFW.glfwSwapBuffers;
 import static org.lwjgl.glfw.GLFW.glfwSwapInterval;
 import static org.lwjgl.glfw.GLFW.glfwTerminate;
@@ -26,6 +27,7 @@ import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
 import static org.lwjgl.opengl.GL11.GL_DEPTH_BUFFER_BIT;
 import static org.lwjgl.opengl.GL11.glClear;
 import static org.lwjgl.opengl.GL11.glClearColor;
+import static org.lwjgl.opengl.GL11.glViewport;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
 /**
@@ -78,6 +80,8 @@ public final class GlfwWindow implements Window, AutoCloseable {
         glfwSwapInterval(VERTICAL_SYNC);
         GL.createCapabilities();
         glClearColor(BACKGROUND_RED, BACKGROUND_GREEN, BACKGROUND_BLUE, OPAQUE);
+        // The image always fills the window
+        glfwSetFramebufferSizeCallback(handle, (window, newWidth, newHeight) -> glViewport(0, 0, newWidth, newHeight));
         return new GlfwWindow(handle);
     }
 
