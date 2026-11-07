@@ -100,4 +100,17 @@ class CameraControlsPresenterTest {
 
         verify(camera).resize(new Viewport(NEW_WIDTH, NEW_HEIGHT));
     }
+
+    // A minimised window has an empty image: the camera keeps its last size
+    @ParameterizedTest
+    @CsvSource(textBlock = """
+              0,   0
+              0, 480
+            640,   0
+            """)
+    void anEmptyWindowLeavesTheCameraAlone(int width, int height) {
+        SUT.resized(width, height);
+
+        verifyNoInteractions(camera);
+    }
 }
