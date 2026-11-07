@@ -38,6 +38,7 @@ class BodiesPresenterTest {
     private static final ClipPoint SUN_IN_CLIP_SPACE = new ClipPoint(0.0, 0.0, 0.5, 2.0);
     private static final ClipPoint EARTH_IN_CLIP_SPACE = new ClipPoint(0.5, 0.0, 0.5, 2.0);
     private static final double LESS_THAN_A_PIXEL = 0.25;
+    private static final ClipPoint SUN_SEEN_FROM_ELSEWHERE = new ClipPoint(0.25, 0.25, 0.5, 2.0);
     // Seen from close by, larger than the minimum of its style
     private static final double FORTY_PIXELS = 40.0;
 
@@ -52,6 +53,8 @@ class BodiesPresenterTest {
     private final SceneView view = mock();
     private final Projection projection = mock();
     private final Observable<List<Body>> simulation = mock();
+    private final Projection movedCamera = mock();
+    private final Observable<Projection> cameraRig = mock();
     private final BodiesPresenter SUT = new BodiesPresenter(view, projection, STYLES);
 
     @Test
@@ -91,5 +94,17 @@ class BodiesPresenterTest {
     private void givenTheCameraSees(Body body, double diameter, ClipPoint centre, double apparentSize) {
         when(projection.clipPoint(body.position())).thenReturn(centre);
         when(projection.apparentSizeInPixels(diameter, centre)).thenReturn(apparentSize);
+    }
+
+    @Test
+    void theBodiesAreRedrawnFromThePointOfViewOfANewCamera() {
+        givenTheCameraSees(SUN, SUN_DIAMETER, SUN_IN_CLIP_SPACE, LESS_THAN_A_PIXEL);
+        when(movedCamera.clipPoint(SUN.position())).thenReturn(SUN_SEEN_FROM_ELSEWHERE);
+        when(movedCamera.apparentSizeInPixels(SUN_DIAMETER, SUN_SEEN_FROM_ELSEWHERE)).thenReturn(LESS_THAN_A_PIXEL);
+        SUT.update(simulation, List.of(SUN));
+
+        SUT.cameraObserver().update(cameraRig, movedCamera);
+
+        verify(view).show(List.of(new Disc(SUN_SEEN_FROM_ELSEWHERE, STAR_MINIMUM, YELLOW)));
     }
 }
