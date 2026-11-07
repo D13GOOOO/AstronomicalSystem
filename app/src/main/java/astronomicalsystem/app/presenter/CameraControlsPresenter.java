@@ -11,7 +11,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public class CameraControlsPresenter implements InputHandler {
 
+    private final CameraModel camera;
+
     public CameraControlsPresenter(@NotNull InputView view, @NotNull CameraModel camera) {
+        this.camera = camera;
+        view.addHandlers(this);
     }
 
     @Override
