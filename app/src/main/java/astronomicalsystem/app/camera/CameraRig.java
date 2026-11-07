@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
  * Camera that orbits a fixed target, with the ecliptic north up in the image: its position, its
  * lens and the size of the image it fills.
  */
-public class CameraRig {
+public class CameraRig implements CameraModel {
 
     private static final Vector3 ECLIPTIC_NORTH = new Vector3(0.0, 0.0, 1.0);
 
@@ -33,29 +33,17 @@ public class CameraRig {
         return camera;
     }
 
-    /**
-     * Moves the camera around the target.
-     *
-     * @param azimuthAngle   in radians; precondition: finite
-     * @param elevationAngle in radians, up to the limit of the orbit; precondition: finite
-     */
+    @Override
     public void orbitBy(double azimuthAngle, double elevationAngle) {
         change(orbit.rotated(azimuthAngle, elevationAngle), viewport);
     }
 
-    /**
-     * Moves the camera towards or away from the target.
-     *
-     * @param factor multiplies the distance, up to the limits of the orbit; precondition: positive and
-     *               finite
-     */
+    @Override
     public void zoomBy(double factor) {
         change(orbit.zoomed(factor), viewport);
     }
 
-    /**
-     * Fits the image to a new size, for example after the window has been resized.
-     */
+    @Override
     public void resize(@NotNull Viewport newViewport) {
         change(orbit, newViewport);
     }

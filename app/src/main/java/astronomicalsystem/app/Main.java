@@ -1,10 +1,12 @@
 package astronomicalsystem.app;
 
-import astronomicalsystem.app.camera.Camera;
 import astronomicalsystem.app.camera.Lens;
+import astronomicalsystem.app.camera.ObservableCameraRig;
+import astronomicalsystem.app.camera.Orbit;
 import astronomicalsystem.app.camera.Viewport;
 import astronomicalsystem.app.presenter.BodiesPresenter;
 import astronomicalsystem.app.presenter.BodyStyle;
+import astronomicalsystem.app.presenter.CameraControlsPresenter;
 import astronomicalsystem.app.time.FixedStepTimeline;
 import astronomicalsystem.app.time.SystemClock;
 import astronomicalsystem.app.time.Timeline;
@@ -47,10 +49,11 @@ public final class Main {
     // Mercury goes round the Sun in about nine seconds, the Earth in about thirty-seven
     private static final TimeWarp TEN_DAYS_PER_SECOND = new TimeWarp(10.0);
 
-    // 8 AU from the barycentre, 35 degrees above the ecliptic, with the ecliptic north up: the orbit
-    // of Jupiter fills the image
-    private static final Camera CAMERA = new Camera(new Vector3(0.0, -6.5, 4.6), Vector3.ZERO,
-            new Vector3(0.0, 0.0, 1.0), new Lens(Math.toRadians(45.0), 0.01, 1000.0), new Viewport(WIDTH, HEIGHT));
+    // The camera turns around the barycentre; it starts 8 AU away and 35 degrees above the ecliptic,
+    // where the orbit of Jupiter fills the image
+    private static final Vector3 BARYCENTRE = Vector3.ZERO;
+    private static final Orbit FIRST_VIEW = new Orbit(8.0, 0.0, Math.toRadians(35.0));
+    private static final Lens LENS = new Lens(Math.toRadians(45.0), 0.01, 1000.0);
     private static final Map<BodyKind, BodyStyle> STYLES = Map.of(
             BodyKind.STAR, new BodyStyle(new Colour(1.0, 0.85, 0.45), 16.0),
             BodyKind.PLANET, new BodyStyle(new Colour(0.55, 0.75, 1.0), 7.0),
@@ -70,7 +73,12 @@ public final class Main {
         Timeline timeline = new FixedStepTimeline(simulation, ONE_HOUR, TEN_DAYS_PER_SECOND);
         // The scene needs the OpenGL context of the window
         try (GlfwWindow window = GlfwWindow.open(TITLE, WIDTH, HEIGHT); GlDiscs scene = GlDiscs.create()) {
-            simulation.addObserver(new BodiesPresenter(scene, CAMERA, STYLES));
+            ObservableCameraRig camera = new ObservableCameraRig(BARYCENTRE, FIRST_VIEW, LENS,
+                    new Viewport(WIDTH, HEIGHT));
+            BodiesPresenter bodies = new BodiesPresenter(scene, camera.camera(), STYLES);
+            simulation.addObserver(bodies);
+            camera.addObserver(bodies.cameraObserver());
+            new CameraControlsPresenter(window, camera);
             simulation.notifyObservers();
             new MainLoop(window, new SystemClock(), timeline, scene).run();
         }
