@@ -1,5 +1,7 @@
 package astronomicalsystem.app.view;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -36,34 +38,47 @@ class GlDiscsIntegrationTest {
     // radius 10 but inside the square that encloses it
     private static final int DIAGONAL_OFFSET = 8;
 
+    // Gives the OpenGL context
+    private GlfwWindow window;
+    private GlDiscs SUT;
+
+    @BeforeEach
+    void openAWindow() {
+        window = GlfwWindow.open(TITLE, WIDTH, HEIGHT);
+        SUT = GlDiscs.create();
+    }
+
+    // The buffers are deleted while the context still exists
+    @AfterEach
+    void closeTheWindow() {
+        SUT.close();
+        window.close();
+    }
+
     @Test
     void aDiscIsDrawnAsARoundSpotOfItsColour() {
-        try (GlfwWindow window = GlfwWindow.open(TITLE, WIDTH, HEIGHT); GlDiscs SUT = GlDiscs.create()) {
-            SUT.show(List.of(new Disc(MIDDLE_OF_THE_IMAGE, TWENTY_PIXELS, new Colour(1.0, 0.0, 0.0))));
-            clearToBlack();
+        SUT.show(List.of(new Disc(MIDDLE_OF_THE_IMAGE, TWENTY_PIXELS, new Colour(1.0, 0.0, 0.0))));
+        clearToBlack();
 
-            SUT.draw();
+        SUT.draw();
 
-            int[] centre = centreOfTheImage();
-            assertThat(glGetError()).isEqualTo(GL_NO_ERROR);
-            assertThat(pixelAt(centre[0], centre[1])).containsExactly(RED, withPrecision(ONE_LEVEL));
-            assertThat(pixelAt(centre[0] + DIAGONAL_OFFSET, centre[1] + DIAGONAL_OFFSET))
-                    .containsExactly(BLACK, withPrecision(ONE_LEVEL));
-        }
+        int[] centre = centreOfTheImage();
+        assertThat(glGetError()).isEqualTo(GL_NO_ERROR);
+        assertThat(pixelAt(centre[0], centre[1])).containsExactly(RED, withPrecision(ONE_LEVEL));
+        assertThat(pixelAt(centre[0] + DIAGONAL_OFFSET, centre[1] + DIAGONAL_OFFSET))
+                .containsExactly(BLACK, withPrecision(ONE_LEVEL));
     }
 
     @Test
     void aNearerDiscHidesAFartherOneDrawnAfterIt() {
-        try (GlfwWindow window = GlfwWindow.open(TITLE, WIDTH, HEIGHT); GlDiscs SUT = GlDiscs.create()) {
-            SUT.show(List.of(new Disc(NEARER, TWENTY_PIXELS, new Colour(1.0, 0.0, 0.0)),
-                    new Disc(FARTHER, TWENTY_PIXELS, new Colour(0.0, 0.0, 1.0))));
-            clearToBlack();
+        SUT.show(List.of(new Disc(NEARER, TWENTY_PIXELS, new Colour(1.0, 0.0, 0.0)),
+                new Disc(FARTHER, TWENTY_PIXELS, new Colour(0.0, 0.0, 1.0))));
+        clearToBlack();
 
-            SUT.draw();
+        SUT.draw();
 
-            int[] centre = centreOfTheImage();
-            assertThat(pixelAt(centre[0], centre[1])).containsExactly(RED, withPrecision(ONE_LEVEL));
-        }
+        int[] centre = centreOfTheImage();
+        assertThat(pixelAt(centre[0], centre[1])).containsExactly(RED, withPrecision(ONE_LEVEL));
     }
 
     private static void clearToBlack() {

@@ -90,7 +90,7 @@ public final class GlfwWindow implements Window, InputView, AutoCloseable {
         GL.createCapabilities();
         glClearColor(BACKGROUND_RED, BACKGROUND_GREEN, BACKGROUND_BLUE, OPAQUE);
         // The image always fills the window
-        glfwSetFramebufferSizeCallback(handle, (window, newWidth, newHeight) -> glViewport(0, 0, newWidth, newHeight));
+        free(glfwSetFramebufferSizeCallback(handle, (window, newWidth, newHeight) -> glViewport(0, 0, newWidth, newHeight)));
         return new GlfwWindow(handle);
     }
 
