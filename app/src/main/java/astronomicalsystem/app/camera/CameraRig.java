@@ -26,4 +26,13 @@ public class CameraRig {
     public @NotNull Projection camera() {
         return new Camera(orbit.eye(target), target, ECLIPTIC_NORTH, lens, viewport);
     }
+
+    /**
+     * Moves the camera around the target.
+     *
+     * @param azimuthAngle   in radians; precondition: finite
+     * @param elevationAngle in radians, up to the limit of the orbit; precondition: finite
+     */
+    public void orbitBy(double azimuthAngle, double elevationAngle) {
+    }
 }
