@@ -12,6 +12,9 @@ import org.jetbrains.annotations.NotNull;
 public class CameraControlsPresenter implements InputHandler {
 
     private static final double PIXELS_PER_RADIAN = 200.0;
+    // Each step of the wheel scales the distance by the same ratio, so zooming feels the same at
+    // every scale, from a planet to the whole solar system
+    private static final double DISTANCE_RATIO_PER_STEP = 0.9;
 
     private final CameraModel camera;
     private boolean dragging;
@@ -49,6 +52,7 @@ public class CameraControlsPresenter implements InputHandler {
 
     @Override
     public void scrolled(double steps) {
+        camera.zoomBy(Math.pow(DISTANCE_RATIO_PER_STEP, steps));
     }
 
     @Override
