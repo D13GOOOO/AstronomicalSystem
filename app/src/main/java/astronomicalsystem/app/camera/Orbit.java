@@ -1,5 +1,8 @@
 package astronomicalsystem.app.camera;
 
+import astronomicalsystem.core.math.Vector3;
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Position of a camera on a sphere around its target, in the ecliptic frame.
  *
@@ -26,5 +29,12 @@ public record Orbit(double distance, double azimuth, double elevation) {
         if (!(Math.abs(elevation) <= ELEVATION_LIMIT)) {
             throw new IllegalArgumentException("Orbit elevation must be within 89 degrees of the ecliptic");
         }
+    }
+
+    /**
+     * @return where the camera stands when it orbits the target
+     */
+    public @NotNull Vector3 eye(@NotNull Vector3 target) {
+        return target;
     }
 }

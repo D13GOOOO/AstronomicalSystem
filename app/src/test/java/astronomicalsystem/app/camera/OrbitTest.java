@@ -1,12 +1,20 @@
 package astronomicalsystem.app.camera;
 
+import astronomicalsystem.core.math.Vector3;
+import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class OrbitTest {
+
+    private static final double TOLERANCE = 1e-12;
+    private static final RecursiveComparisonConfiguration CLOSE_ENOUGH = RecursiveComparisonConfiguration.builder()
+            .withComparatorForType((a, b) -> Math.abs(a - b) < TOLERANCE ? 0 : Double.compare(a, b), Double.class)
+            .build();
 
     // 89.5 degrees = 1.5620696805349264 rad, just beyond the limit of 89 degrees
     @ParameterizedTest
@@ -37,5 +45,27 @@ class OrbitTest {
             """)
     void constructorAcceptsPositionsWithinTheLimits(double distance, double azimuth, double elevation) {
         assertThatNoException().isThrownBy(() -> new Orbit(distance, azimuth, elevation));
+    }
+
+    // eye = target + distance (cos e sin a, -cos e cos a, sin e): azimuth 0 from the negative y-axis,
+    // a quarter turn (1.5707963267948966) from the positive x-axis, half a turn (3.141592653589793)
+    // from the positive y-axis; 30 degrees (0.5235987755982988) above the ecliptic rises by half the
+    // distance and comes closer by cos 30 = 0.8660254037844386
+    @ParameterizedTest
+    @CsvSource(textBlock = """
+            0.0, 0.0, 0.0,   2.0, 0.0,                0.0,                  0.0, -2.0,                0.0
+            0.0, 0.0, 0.0,   2.0, 1.5707963267948966, 0.0,                  2.0,  0.0,                0.0
+            0.0, 0.0, 0.0,   2.0, 3.141592653589793,  0.0,                  0.0,  2.0,                0.0
+            0.0, 0.0, 0.0,   2.0, 0.0,                0.5235987755982988,   0.0, -1.7320508075688772, 1.0
+            1.0, 1.0, 1.0,   2.0, 0.0,                0.0,                  1.0, -1.0,                1.0
+            """)
+    void theEyeLiesOnTheSphereAroundTheTarget(double targetX, double targetY, double targetZ,
+                                              double distance, double azimuth, double elevation,
+                                              double eyeX, double eyeY, double eyeZ) {
+        Orbit SUT = new Orbit(distance, azimuth, elevation);
+
+        Vector3 eye = SUT.eye(new Vector3(targetX, targetY, targetZ));
+
+        assertThat(eye).usingRecursiveComparison(CLOSE_ENOUGH).isEqualTo(new Vector3(eyeX, eyeY, eyeZ));
     }
 }
