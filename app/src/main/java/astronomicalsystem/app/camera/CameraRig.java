@@ -36,4 +36,13 @@ public class CameraRig {
     public void orbitBy(double azimuthAngle, double elevationAngle) {
         orbit = orbit.rotated(azimuthAngle, elevationAngle);
     }
+
+    /**
+     * Moves the camera towards or away from the target.
+     *
+     * @param factor multiplies the distance, up to the limits of the orbit; precondition: positive and
+     *               finite
+     */
+    public void zoomBy(double factor) {
+    }
 }
