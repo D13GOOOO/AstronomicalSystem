@@ -46,4 +46,10 @@ public class CameraRig {
     public void zoomBy(double factor) {
         orbit = orbit.zoomed(factor);
     }
+
+    /**
+     * Fits the image to a new size, for example after the window has been resized.
+     */
+    public void resize(@NotNull Viewport newViewport) {
+    }
 }

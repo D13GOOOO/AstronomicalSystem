@@ -26,6 +26,7 @@ class CameraRigTest {
     // Focal factor 1, depth from 1 to 3 AU: the target, 2 AU away, has z = w / 2
     private static final Lens RIGHT_ANGLE_LENS = new Lens(Math.PI / 2.0, 1.0, 3.0);
     private static final Viewport TWO_BY_ONE = new Viewport(200, 100);
+    private static final Viewport SQUARE = new Viewport(100, 100);
 
     private final CameraRig SUT = new CameraRig(TARGET, ON_THE_ECLIPTIC, RIGHT_ANGLE_LENS, TWO_BY_ONE);
 
@@ -56,5 +57,14 @@ class CameraRigTest {
 
         assertThat(SUT.camera().clipPoint(TARGET)).usingRecursiveComparison(CLOSE_ENOUGH)
                 .isEqualTo(new ClipPoint(0.0, 0.0, -1.0, 1.0));
+    }
+
+    // On a square image the horizontal focal factor is no longer halved by the aspect ratio
+    @Test
+    void resizingFitsTheImageToTheNewViewport() {
+        SUT.resize(SQUARE);
+
+        assertThat(SUT.camera().clipPoint(EAST_OF_THE_TARGET)).usingRecursiveComparison(CLOSE_ENOUGH)
+                .isEqualTo(new ClipPoint(1.0, 0.0, 1.0, 2.0));
     }
 }
