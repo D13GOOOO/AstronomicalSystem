@@ -12,7 +12,7 @@ public class CameraRig {
     private static final Vector3 ECLIPTIC_NORTH = new Vector3(0.0, 0.0, 1.0);
 
     private final Vector3 target;
-    private final Orbit orbit;
+    private Orbit orbit;
     private final Lens lens;
     private final Viewport viewport;
 
@@ -34,5 +34,6 @@ public class CameraRig {
      * @param elevationAngle in radians, up to the limit of the orbit; precondition: finite
      */
     public void orbitBy(double azimuthAngle, double elevationAngle) {
+        orbit = orbit.rotated(azimuthAngle, elevationAngle);
     }
 }
