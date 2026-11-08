@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 public class TimeControlsPresenter implements KeyboardHandler {
 
     public TimeControlsPresenter(@NotNull KeyboardView view, @NotNull TimeControls time) {
+        view.addHandlers(this);
     }
 
     @Override
