@@ -81,4 +81,13 @@ class FixedStepTimelineTest {
 
         verifyNoInteractions(simulation);
     }
+
+    @Test
+    void theSecondPauseLetsTimeFlowAgainAtTheSameWarp() {
+        SUT.togglePause();
+        SUT.togglePause();
+        SUT.elapse(TWO_STEPS_IN_REAL_SECONDS);
+
+        verify(simulation, times(2)).advance(QUARTER_OF_A_DAY);
+    }
 }
