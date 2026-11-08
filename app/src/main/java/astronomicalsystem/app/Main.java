@@ -7,9 +7,9 @@ import astronomicalsystem.app.camera.Viewport;
 import astronomicalsystem.app.presenter.BodiesPresenter;
 import astronomicalsystem.app.presenter.BodyStyle;
 import astronomicalsystem.app.presenter.CameraControlsPresenter;
+import astronomicalsystem.app.presenter.TimeControlsPresenter;
 import astronomicalsystem.app.time.FixedStepTimeline;
 import astronomicalsystem.app.time.SystemClock;
-import astronomicalsystem.app.time.Timeline;
 import astronomicalsystem.app.time.TimeWarp;
 import astronomicalsystem.app.view.Colour;
 import astronomicalsystem.app.view.GlDiscs;
@@ -46,7 +46,8 @@ public final class Main {
     private static final double NO_SOFTENING = 0.0;
     // About 2100 steps along the orbit of Mercury, the fastest planet
     private static final TimeStep ONE_HOUR = new TimeStep(1.0 / 24.0);
-    // Mercury goes round the Sun in about nine seconds, the Earth in about thirty-seven
+    // Mercury goes round the Sun in about nine seconds, the Earth in about thirty-seven; the user
+    // doubles or halves it with + and -, and pauses it with the space bar
     private static final TimeWarp TEN_DAYS_PER_SECOND = new TimeWarp(10.0);
 
     // The camera turns around the barycentre; it starts 8 AU away and 35 degrees above the ecliptic,
@@ -70,7 +71,7 @@ public final class Main {
         ObservableSimulation simulation = new ObservableSimulation(
                 new VelocityVerlet(new NewtonianGravity(GravitationalParameter.GRAVITATIONAL_CONSTANT, NO_SOFTENING)),
                 new MergingCollisions(), solarSystem.bodiesAt(JulianDate.at(Instant.now())));
-        Timeline timeline = new FixedStepTimeline(simulation, ONE_HOUR, TEN_DAYS_PER_SECOND);
+        FixedStepTimeline timeline = new FixedStepTimeline(simulation, ONE_HOUR, TEN_DAYS_PER_SECOND);
         // The scene needs the OpenGL context of the window
         try (GlfwWindow window = GlfwWindow.open(TITLE, WIDTH, HEIGHT); GlDiscs scene = GlDiscs.create()) {
             ObservableCameraRig camera = new ObservableCameraRig(BARYCENTRE, FIRST_VIEW, LENS,
@@ -79,6 +80,7 @@ public final class Main {
             simulation.addObserver(bodies);
             camera.addObserver(bodies.cameraObserver());
             new CameraControlsPresenter(window, camera);
+            new TimeControlsPresenter(window, timeline);
             simulation.notifyObservers();
             new MainLoop(window, new SystemClock(), timeline, scene).run();
         }
