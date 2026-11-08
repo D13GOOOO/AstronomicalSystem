@@ -32,6 +32,14 @@ class TimeFlowPresenterTest {
         verify(view).show(List.of(NEW_YEAR_2026_IN_UTC, "10 d/s"));
     }
 
+    // The speed it will flow at again
+    @Test
+    void aPauseIsShownNextToTheSpeed() {
+        SUT.update(timeline, new TimeFlow(NEW_YEAR_2026, TEN_DAYS_PER_SECOND, true));
+
+        verify(view).show(List.of(NEW_YEAR_2026_IN_UTC, "10 d/s, paused"));
+    }
+
     // Below a day per second the speed is given in hours per second; at most two decimals
     @ParameterizedTest
     @CsvSource(textBlock = """
