@@ -48,6 +48,13 @@ class FixedStepTimelineTest {
         assertThat(SUT.timeFlow().date()).isEqualTo(A_DAY_LATER);
     }
 
+    @Test
+    void theTimeFlowTellsAPause() {
+        SUT.togglePause();
+
+        assertThat(SUT.timeFlow().paused()).isTrue();
+    }
+
     @ParameterizedTest
     @CsvSource(textBlock = """
             0.0625, 0
