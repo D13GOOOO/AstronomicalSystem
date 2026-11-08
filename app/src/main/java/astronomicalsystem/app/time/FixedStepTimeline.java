@@ -53,4 +53,8 @@ public class FixedStepTimeline implements Timeline, TimeControls {
             warp = new TimeWarp(slower);
         }
     }
+
+    @Override
+    public void togglePause() {
+    }
 }

@@ -14,4 +14,9 @@ public interface TimeControls {
      * Halves the time warp.
      */
     void slowDown();
+
+    /**
+     * Stops simulated time, or lets it flow again at the same warp.
+     */
+    void togglePause();
 }

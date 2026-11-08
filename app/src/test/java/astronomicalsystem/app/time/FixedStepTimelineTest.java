@@ -9,6 +9,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 class FixedStepTimelineTest {
 
@@ -22,6 +23,7 @@ class FixedStepTimelineTest {
     private static final int STEPS_IN_ONE_REAL_SECOND = 8;
     // At two days per second, 0.25 s of real time is two steps
     private static final double TWO_STEPS_IN_REAL_SECONDS = 0.25;
+    private static final double HALF_A_SECOND = 0.5;
 
     private final Advanceable simulation = mock();
     private final FixedStepTimeline SUT = new FixedStepTimeline(simulation, QUARTER_OF_A_DAY, TWO_DAYS_PER_SECOND);
@@ -70,5 +72,13 @@ class FixedStepTimelineTest {
         SUT.elapse(TWO_STEPS_IN_REAL_SECONDS);
 
         verify(simulation).advance(QUARTER_OF_A_DAY);
+    }
+
+    @Test
+    void aPauseStopsSimulatedTime() {
+        SUT.togglePause();
+        SUT.elapse(HALF_A_SECOND);
+
+        verifyNoInteractions(simulation);
     }
 }
