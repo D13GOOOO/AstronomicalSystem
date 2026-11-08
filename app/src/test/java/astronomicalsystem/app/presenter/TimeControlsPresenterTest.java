@@ -7,12 +7,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 class TimeControlsPresenterTest {
 
@@ -40,6 +42,15 @@ class TimeControlsPresenterTest {
         SUT.characterTyped(codePoint);
 
         command.accept(verify(time));
+    }
+
+    @ParameterizedTest
+    // Also a letter outside ASCII: e with an acute accent
+    @ValueSource(ints = {'a', '0', '_', 'é'})
+    void anyOtherCharacterLeavesTimeAlone(int codePoint) {
+        SUT.characterTyped(codePoint);
+
+        verifyNoInteractions(time);
     }
 
     private static Named<Integer> character(char typed) {
