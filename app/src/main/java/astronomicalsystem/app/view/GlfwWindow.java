@@ -22,6 +22,7 @@ import static org.lwjgl.glfw.GLFW.glfwGetCursorPos;
 import static org.lwjgl.glfw.GLFW.glfwInit;
 import static org.lwjgl.glfw.GLFW.glfwMakeContextCurrent;
 import static org.lwjgl.glfw.GLFW.glfwPollEvents;
+import static org.lwjgl.glfw.GLFW.glfwSetCharCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetCursorPosCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetErrorCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetFramebufferSizeCallback;
@@ -46,7 +47,7 @@ import static org.lwjgl.system.MemoryUtil.NULL;
  * Not covered by unit tests, since it needs a display and a graphics card: see the integration
  * tests.
  */
-public final class GlfwWindow implements Window, InputView, AutoCloseable {
+public final class GlfwWindow implements Window, InputView, KeyboardView, AutoCloseable {
 
     private static final int OPENGL_MAJOR_VERSION = 3;
     private static final int OPENGL_MINOR_VERSION = 3;
@@ -134,6 +135,14 @@ public final class GlfwWindow implements Window, InputView, AutoCloseable {
         free(glfwSetCursorPosCallback(handle, (window, x, y) -> handler.pointerMoved(x, y)));
         // Only the vertical wheel; the horizontal one of touchpads is ignored
         free(glfwSetScrollCallback(handle, (window, horizontal, vertical) -> handler.scrolled(vertical)));
+    }
+
+    /**
+     * Reports the characters the user types to the handler; a later handler replaces it.
+     */
+    @Override
+    public void addHandlers(@NotNull KeyboardHandler handler) {
+        free(glfwSetCharCallback(handle, (window, codePoint) -> handler.characterTyped(codePoint)));
     }
 
     @Override
