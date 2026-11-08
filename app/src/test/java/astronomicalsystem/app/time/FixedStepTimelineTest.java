@@ -51,4 +51,13 @@ class FixedStepTimelineTest {
 
         verify(simulation, times(STEPS_IN_ONE_REAL_SECOND)).advance(QUARTER_OF_A_DAY);
     }
+
+    // At four days per second, half a step of real time at two days per second is a whole step
+    @Test
+    void speedingUpDoublesTheWarp() {
+        SUT.speedUp();
+        SUT.elapse(HALF_A_STEP_IN_REAL_SECONDS);
+
+        verify(simulation).advance(QUARTER_OF_A_DAY);
+    }
 }

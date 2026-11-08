@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  * A frame longer than a second (the application was blocked) counts as one second: catching up
  * with the whole pause would take a burst of steps that blocks the application again.
  */
-public class FixedStepTimeline implements Timeline {
+public class FixedStepTimeline implements Timeline, TimeControls {
 
     private static final double LONGEST_FRAME_SECONDS = 1.0;
 
@@ -33,5 +33,9 @@ public class FixedStepTimeline implements Timeline {
             simulation.advance(step);
             pendingDays -= step.days();
         }
+    }
+
+    @Override
+    public void speedUp() {
     }
 }
