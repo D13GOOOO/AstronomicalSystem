@@ -4,7 +4,8 @@ plugins {
 }
 
 def lwjglVersion = '3.4.3'
-def lwjglModules = ['lwjgl', 'lwjgl-glfw', 'lwjgl-opengl']
+// stb_truetype draws the text of the head-up display
+def lwjglModules = ['lwjgl', 'lwjgl-glfw', 'lwjgl-opengl', 'lwjgl-stb']
 // Windows, Linux, and macOS on Intel and Apple silicon
 def lwjglNatives = ['natives-windows', 'natives-linux', 'natives-macos', 'natives-macos-arm64']
 
