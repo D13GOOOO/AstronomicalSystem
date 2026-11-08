@@ -2,6 +2,7 @@ package astronomicalsystem.app.time;
 
 import astronomicalsystem.core.physics.TimeStep;
 import astronomicalsystem.core.simulation.Advanceable;
+import astronomicalsystem.core.time.JulianDate;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -29,7 +30,11 @@ public class FixedStepTimeline implements Timeline, TimeControls {
     // Simulated time already elapsed but shorter than a step, in days: it is spent in a later frame
     private double pendingDays;
 
-    public FixedStepTimeline(@NotNull Advanceable simulation, @NotNull TimeStep step, @NotNull TimeWarp warp) {
+    /**
+     * @param start date of the simulation when the timeline begins
+     */
+    public FixedStepTimeline(@NotNull Advanceable simulation, @NotNull JulianDate start, @NotNull TimeStep step,
+                             @NotNull TimeWarp warp) {
         this.simulation = simulation;
         this.step = step;
         this.warp = warp;
@@ -45,6 +50,10 @@ public class FixedStepTimeline implements Timeline, TimeControls {
             simulation.advance(step);
             pendingDays -= step.days();
         }
+    }
+
+    public @NotNull TimeFlow timeFlow() {
+        return null;
     }
 
     @Override

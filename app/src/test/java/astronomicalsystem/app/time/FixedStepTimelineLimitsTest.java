@@ -2,6 +2,7 @@ package astronomicalsystem.app.time;
 
 import astronomicalsystem.core.physics.TimeStep;
 import astronomicalsystem.core.simulation.Advanceable;
+import astronomicalsystem.core.time.JulianDate;
 import org.junit.jupiter.api.Named;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -16,6 +17,7 @@ import static org.mockito.Mockito.verify;
 // Each case starts from its own warp, next to one of the limits
 class FixedStepTimelineLimitsTest {
 
+    private static final JulianDate START_OF_2026 = new JulianDate(2461041.5);
     private static final TimeStep ONE_SIXTY_FOURTH_OF_A_DAY = new TimeStep(1.0 / 64.0);
 
     private final Advanceable simulation = mock();
@@ -34,7 +36,8 @@ class FixedStepTimelineLimitsTest {
     @MethodSource("changesBeyondTheLimits")
     void theWarpStaysWhereAChangeWouldTakeItBeyondItsLimits(TimeWarp nextToALimit, Consumer<TimeControls> change,
                                                              double oneStepInRealSeconds) {
-        FixedStepTimeline SUT = new FixedStepTimeline(simulation, ONE_SIXTY_FOURTH_OF_A_DAY, nextToALimit);
+        FixedStepTimeline SUT = new FixedStepTimeline(simulation, START_OF_2026, ONE_SIXTY_FOURTH_OF_A_DAY,
+                nextToALimit);
 
         change.accept(SUT);
         SUT.elapse(oneStepInRealSeconds);

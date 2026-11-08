@@ -68,10 +68,11 @@ public final class Main {
     public static void main(String[] args) {
         EphemerisSource solarSystem = SolarSystem.withFallback(
                 new HorizonsClient(new JdkHttpTransport(HORIZONS_TIMEOUT), new HorizonsParser()));
+        JulianDate now = JulianDate.at(Instant.now());
         ObservableSimulation simulation = new ObservableSimulation(
                 new VelocityVerlet(new NewtonianGravity(GravitationalParameter.GRAVITATIONAL_CONSTANT, NO_SOFTENING)),
-                new MergingCollisions(), solarSystem.bodiesAt(JulianDate.at(Instant.now())));
-        FixedStepTimeline timeline = new FixedStepTimeline(simulation, ONE_HOUR, TEN_DAYS_PER_SECOND);
+                new MergingCollisions(), solarSystem.bodiesAt(now));
+        FixedStepTimeline timeline = new FixedStepTimeline(simulation, now, ONE_HOUR, TEN_DAYS_PER_SECOND);
         // The scene needs the OpenGL context of the window
         try (GlfwWindow window = GlfwWindow.open(TITLE, WIDTH, HEIGHT); GlDiscs scene = GlDiscs.create()) {
             ObservableCameraRig camera = new ObservableCameraRig(BARYCENTRE, FIRST_VIEW, LENS,
