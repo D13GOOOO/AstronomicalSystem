@@ -25,6 +25,7 @@ public class TimeFlowPresenter implements Observer<TimeFlow> {
     // Up to two decimals, without trailing zeros
     private static final String SPEED_PATTERN = "0.##";
     private static final double HOURS_PER_DAY = 24.0;
+    private static final String PAUSED = ", paused";
 
     private final TextView view;
 
@@ -34,11 +35,19 @@ public class TimeFlowPresenter implements Observer<TimeFlow> {
 
     @Override
     public void update(@NotNull Observable<TimeFlow> subject, @NotNull TimeFlow state) {
-        view.show(List.of(formatDate(state.date()), formatSpeed(state.warp())));
+        view.show(List.of(formatDate(state.date()), formatFlow(state)));
     }
 
     private static @NotNull String formatDate(@NotNull JulianDate date) {
         return DATE_IN_UTC.format(date.toInstant());
+    }
+
+    private static @NotNull String formatFlow(@NotNull TimeFlow flow) {
+        String speed = formatSpeed(flow.warp());
+        if (flow.paused()) {
+            return speed + PAUSED;
+        }
+        return speed;
     }
 
     private static @NotNull String formatSpeed(@NotNull TimeWarp warp) {
