@@ -3,13 +3,18 @@ package astronomicalsystem.app.view;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.lwjgl.glfw.GLFWCharCallback;
 import org.lwjgl.opengl.GL;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.lwjgl.glfw.GLFW.GLFW_TRUE;
 import static org.lwjgl.glfw.GLFW.GLFW_RESIZABLE;
 import static org.lwjgl.glfw.GLFW.glfwGetCurrentContext;
 import static org.lwjgl.glfw.GLFW.glfwGetWindowAttrib;
+import static org.lwjgl.glfw.GLFW.glfwSetCharCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowSize;
 import static org.lwjgl.opengl.GL11.GL_DEPTH_BUFFER_BIT;
 import static org.lwjgl.opengl.GL11.GL_DEPTH_COMPONENT;
@@ -37,6 +42,7 @@ class GlfwWindowIntegrationTest {
     // Window depths go from 0, on the near plane, to 1, on the far plane
     private static final float NEAREST = 0.0f;
     private static final float FARTHEST = 1.0f;
+    private static final int PLUS = '+';
 
     private GlfwWindow SUT;
 
@@ -103,6 +109,24 @@ class GlfwWindowIntegrationTest {
         SUT.drawFrame(NOTHING);
 
         assertThat(handler.lastSize()).containsExactly(NEW_WIDTH, NEW_HEIGHT);
+    }
+
+    @Test
+    void theHandlerLearnsWhatTheUserTypes() {
+        List<Integer> typed = new ArrayList<>();
+        SUT.addHandlers(typed::add);
+
+        type(PLUS);
+
+        assertThat(typed).containsExactly(PLUS);
+    }
+
+    // GLFW cannot simulate the keyboard: the callback that the window set is taken back and called
+    private static void type(int codePoint) {
+        long window = glfwGetCurrentContext();
+        try (GLFWCharCallback callbackOfTheWindow = glfwSetCharCallback(window, null)) {
+            callbackOfTheWindow.invoke(window, codePoint);
+        }
     }
 
     private static void fillTheDepthBufferWith(float depth) {

@@ -7,13 +7,16 @@ import astronomicalsystem.app.camera.Viewport;
 import astronomicalsystem.app.presenter.BodiesPresenter;
 import astronomicalsystem.app.presenter.BodyStyle;
 import astronomicalsystem.app.presenter.CameraControlsPresenter;
-import astronomicalsystem.app.time.FixedStepTimeline;
+import astronomicalsystem.app.presenter.TimeControlsPresenter;
+import astronomicalsystem.app.presenter.TimeFlowPresenter;
+import astronomicalsystem.app.time.ObservableTimeline;
 import astronomicalsystem.app.time.SystemClock;
-import astronomicalsystem.app.time.Timeline;
 import astronomicalsystem.app.time.TimeWarp;
 import astronomicalsystem.app.view.Colour;
 import astronomicalsystem.app.view.GlDiscs;
+import astronomicalsystem.app.view.GlText;
 import astronomicalsystem.app.view.GlfwWindow;
+import astronomicalsystem.app.view.Layers;
 import astronomicalsystem.core.body.BodyKind;
 import astronomicalsystem.core.math.Vector3;
 import astronomicalsystem.core.orbit.GravitationalParameter;
@@ -31,6 +34,7 @@ import astronomicalsystem.ephemeris.horizons.JdkHttpTransport;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -46,7 +50,8 @@ public final class Main {
     private static final double NO_SOFTENING = 0.0;
     // About 2100 steps along the orbit of Mercury, the fastest planet
     private static final TimeStep ONE_HOUR = new TimeStep(1.0 / 24.0);
-    // Mercury goes round the Sun in about nine seconds, the Earth in about thirty-seven
+    // Mercury goes round the Sun in about nine seconds, the Earth in about thirty-seven; the user
+    // doubles or halves it with + and -, and pauses it with the space bar
     private static final TimeWarp TEN_DAYS_PER_SECOND = new TimeWarp(10.0);
 
     // The camera turns around the barycentre; it starts 8 AU away and 35 degrees above the ecliptic,
@@ -67,20 +72,25 @@ public final class Main {
     public static void main(String[] args) {
         EphemerisSource solarSystem = SolarSystem.withFallback(
                 new HorizonsClient(new JdkHttpTransport(HORIZONS_TIMEOUT), new HorizonsParser()));
+        JulianDate now = JulianDate.at(Instant.now());
         ObservableSimulation simulation = new ObservableSimulation(
                 new VelocityVerlet(new NewtonianGravity(GravitationalParameter.GRAVITATIONAL_CONSTANT, NO_SOFTENING)),
-                new MergingCollisions(), solarSystem.bodiesAt(JulianDate.at(Instant.now())));
-        Timeline timeline = new FixedStepTimeline(simulation, ONE_HOUR, TEN_DAYS_PER_SECOND);
-        // The scene needs the OpenGL context of the window
-        try (GlfwWindow window = GlfwWindow.open(TITLE, WIDTH, HEIGHT); GlDiscs scene = GlDiscs.create()) {
+                new MergingCollisions(), solarSystem.bodiesAt(now));
+        ObservableTimeline timeline = new ObservableTimeline(simulation, now, ONE_HOUR, TEN_DAYS_PER_SECOND);
+        // The scene and the text need the OpenGL context of the window
+        try (GlfwWindow window = GlfwWindow.open(TITLE, WIDTH, HEIGHT); GlDiscs scene = GlDiscs.create();
+             GlText headUpDisplay = GlText.create()) {
             ObservableCameraRig camera = new ObservableCameraRig(BARYCENTRE, FIRST_VIEW, LENS,
                     new Viewport(WIDTH, HEIGHT));
             BodiesPresenter bodies = new BodiesPresenter(scene, camera.camera(), STYLES);
             simulation.addObserver(bodies);
             camera.addObserver(bodies.cameraObserver());
             new CameraControlsPresenter(window, camera);
+            timeline.addObserver(new TimeFlowPresenter(headUpDisplay));
+            new TimeControlsPresenter(window, timeline);
             simulation.notifyObservers();
-            new MainLoop(window, new SystemClock(), timeline, scene).run();
+            timeline.notifyObservers();
+            new MainLoop(window, new SystemClock(), timeline, new Layers(List.of(scene, headUpDisplay))).run();
         }
     }
 }
