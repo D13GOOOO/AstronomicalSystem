@@ -9,4 +9,9 @@ public interface TimeControls {
      * Doubles the time warp.
      */
     void speedUp();
+
+    /**
+     * Halves the time warp.
+     */
+    void slowDown();
 }

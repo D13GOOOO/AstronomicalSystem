@@ -20,6 +20,8 @@ class FixedStepTimelineTest {
     private static final double A_STALLED_FRAME_IN_REAL_SECONDS = 10.0;
     // One real second is two simulated days, eight steps of a quarter of a day
     private static final int STEPS_IN_ONE_REAL_SECOND = 8;
+    // At two days per second, 0.25 s of real time is two steps
+    private static final double TWO_STEPS_IN_REAL_SECONDS = 0.25;
 
     private final Advanceable simulation = mock();
     private final FixedStepTimeline SUT = new FixedStepTimeline(simulation, QUARTER_OF_A_DAY, TWO_DAYS_PER_SECOND);
@@ -57,6 +59,15 @@ class FixedStepTimelineTest {
     void speedingUpDoublesTheWarp() {
         SUT.speedUp();
         SUT.elapse(HALF_A_STEP_IN_REAL_SECONDS);
+
+        verify(simulation).advance(QUARTER_OF_A_DAY);
+    }
+
+    // At one day per second, the time of two steps at two days per second is only one step
+    @Test
+    void slowingDownHalvesTheWarp() {
+        SUT.slowDown();
+        SUT.elapse(TWO_STEPS_IN_REAL_SECONDS);
 
         verify(simulation).advance(QUARTER_OF_A_DAY);
     }
