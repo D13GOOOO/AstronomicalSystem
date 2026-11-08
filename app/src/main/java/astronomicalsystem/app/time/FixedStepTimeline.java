@@ -14,6 +14,7 @@ public class FixedStepTimeline implements Timeline, TimeControls {
 
     private static final double LONGEST_FRAME_SECONDS = 1.0;
     private static final double SPEED_RATIO = 2.0;
+    private static final double FASTEST_DAYS_PER_SECOND = 365.25;
 
     private final Advanceable simulation;
     private final TimeStep step;
@@ -38,7 +39,10 @@ public class FixedStepTimeline implements Timeline, TimeControls {
 
     @Override
     public void speedUp() {
-        warp = new TimeWarp(warp.daysPerSecond() * SPEED_RATIO);
+        double faster = warp.daysPerSecond() * SPEED_RATIO;
+        if (faster <= FASTEST_DAYS_PER_SECOND) {
+            warp = new TimeWarp(faster);
+        }
     }
 
     @Override
