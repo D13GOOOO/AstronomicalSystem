@@ -20,6 +20,7 @@ public class FixedStepTimeline implements Timeline, TimeControls {
     private final Advanceable simulation;
     private final TimeStep step;
     private TimeWarp warp;
+    private boolean paused;
     // Simulated time already elapsed but shorter than a step, in days: it is spent in a later frame
     private double pendingDays;
 
@@ -31,6 +32,9 @@ public class FixedStepTimeline implements Timeline, TimeControls {
 
     @Override
     public void elapse(double realSeconds) {
+        if (paused) {
+            return;
+        }
         pendingDays += Math.min(realSeconds, LONGEST_FRAME_SECONDS) * warp.daysPerSecond();
         while (pendingDays >= step.days()) {
             simulation.advance(step);
@@ -56,5 +60,6 @@ public class FixedStepTimeline implements Timeline, TimeControls {
 
     @Override
     public void togglePause() {
+        paused = !paused;
     }
 }
