@@ -8,12 +8,15 @@ import astronomicalsystem.app.presenter.BodiesPresenter;
 import astronomicalsystem.app.presenter.BodyStyle;
 import astronomicalsystem.app.presenter.CameraControlsPresenter;
 import astronomicalsystem.app.presenter.TimeControlsPresenter;
-import astronomicalsystem.app.time.FixedStepTimeline;
+import astronomicalsystem.app.presenter.TimeFlowPresenter;
+import astronomicalsystem.app.time.ObservableTimeline;
 import astronomicalsystem.app.time.SystemClock;
 import astronomicalsystem.app.time.TimeWarp;
 import astronomicalsystem.app.view.Colour;
 import astronomicalsystem.app.view.GlDiscs;
+import astronomicalsystem.app.view.GlText;
 import astronomicalsystem.app.view.GlfwWindow;
+import astronomicalsystem.app.view.Layers;
 import astronomicalsystem.core.body.BodyKind;
 import astronomicalsystem.core.math.Vector3;
 import astronomicalsystem.core.orbit.GravitationalParameter;
@@ -31,6 +34,7 @@ import astronomicalsystem.ephemeris.horizons.JdkHttpTransport;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -72,18 +76,21 @@ public final class Main {
         ObservableSimulation simulation = new ObservableSimulation(
                 new VelocityVerlet(new NewtonianGravity(GravitationalParameter.GRAVITATIONAL_CONSTANT, NO_SOFTENING)),
                 new MergingCollisions(), solarSystem.bodiesAt(now));
-        FixedStepTimeline timeline = new FixedStepTimeline(simulation, now, ONE_HOUR, TEN_DAYS_PER_SECOND);
-        // The scene needs the OpenGL context of the window
-        try (GlfwWindow window = GlfwWindow.open(TITLE, WIDTH, HEIGHT); GlDiscs scene = GlDiscs.create()) {
+        ObservableTimeline timeline = new ObservableTimeline(simulation, now, ONE_HOUR, TEN_DAYS_PER_SECOND);
+        // The scene and the text need the OpenGL context of the window
+        try (GlfwWindow window = GlfwWindow.open(TITLE, WIDTH, HEIGHT); GlDiscs scene = GlDiscs.create();
+             GlText headUpDisplay = GlText.create()) {
             ObservableCameraRig camera = new ObservableCameraRig(BARYCENTRE, FIRST_VIEW, LENS,
                     new Viewport(WIDTH, HEIGHT));
             BodiesPresenter bodies = new BodiesPresenter(scene, camera.camera(), STYLES);
             simulation.addObserver(bodies);
             camera.addObserver(bodies.cameraObserver());
             new CameraControlsPresenter(window, camera);
+            timeline.addObserver(new TimeFlowPresenter(headUpDisplay));
             new TimeControlsPresenter(window, timeline);
             simulation.notifyObservers();
-            new MainLoop(window, new SystemClock(), timeline, scene).run();
+            timeline.notifyObservers();
+            new MainLoop(window, new SystemClock(), timeline, new Layers(List.of(scene, headUpDisplay))).run();
         }
     }
 }
