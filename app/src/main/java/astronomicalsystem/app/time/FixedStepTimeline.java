@@ -43,5 +43,6 @@ public class FixedStepTimeline implements Timeline, TimeControls {
 
     @Override
     public void slowDown() {
+        warp = new TimeWarp(warp.daysPerSecond() / SPEED_RATIO);
     }
 }
