@@ -6,12 +6,12 @@ package astronomicalsystem.app.time;
 public interface TimeControls {
 
     /**
-     * Doubles the time warp.
+     * Doubles the time warp, unless it would become faster than the fastest one allowed.
      */
     void speedUp();
 
     /**
-     * Halves the time warp.
+     * Halves the time warp, unless it would become slower than the slowest one allowed.
      */
     void slowDown();
 
