@@ -58,6 +58,16 @@ class GlTextIntegrationTest {
         assertThat(brightestRedInTheTopLeftCorner()).isGreaterThan(HALF_BRIGHT);
     }
 
+    @Test
+    void noLinesLeaveTheImageDark() {
+        SUT.show(List.of());
+        clearToBlack();
+
+        SUT.draw();
+
+        assertThat(brightestRedInTheTopLeftCorner()).isZero();
+    }
+
     private static void clearToBlack() {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
