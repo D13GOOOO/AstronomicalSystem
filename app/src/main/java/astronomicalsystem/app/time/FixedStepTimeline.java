@@ -30,6 +30,9 @@ public class FixedStepTimeline implements Timeline, TimeControls {
     private boolean paused;
     // Simulated time already elapsed but shorter than a step, in days: it is spent in a later frame
     private double pendingDays;
+    // The date is the start plus this many steps: adding each step to a Julian date would round it
+    // every time, and the errors would pile up
+    private long stepsTaken;
 
     /**
      * @param start date of the simulation when the timeline begins
@@ -51,11 +54,13 @@ public class FixedStepTimeline implements Timeline, TimeControls {
         while (pendingDays >= step.days()) {
             simulation.advance(step);
             pendingDays -= step.days();
+            stepsTaken++;
         }
     }
 
     public @NotNull TimeFlow timeFlow() {
-        return new TimeFlow(start, warp, paused);
+        JulianDate date = new JulianDate(start.days() + stepsTaken * step.days());
+        return new TimeFlow(date, warp, paused);
     }
 
     @Override
