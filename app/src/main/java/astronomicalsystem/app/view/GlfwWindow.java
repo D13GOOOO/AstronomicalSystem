@@ -137,10 +137,12 @@ public final class GlfwWindow implements Window, InputView, KeyboardView, AutoCl
         free(glfwSetScrollCallback(handle, (window, horizontal, vertical) -> handler.scrolled(vertical)));
     }
 
+    /**
+     * Reports the characters the user types to the handler; a later handler replaces it.
+     */
     @Override
     public void addHandlers(@NotNull KeyboardHandler handler) {
-        free(glfwSetCharCallback(handle, (window, codePoint) -> {
-        }));
+        free(glfwSetCharCallback(handle, (window, codePoint) -> handler.characterTyped(codePoint)));
     }
 
     @Override
