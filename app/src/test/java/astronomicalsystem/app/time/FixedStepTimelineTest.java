@@ -2,10 +2,12 @@ package astronomicalsystem.app.time;
 
 import astronomicalsystem.core.physics.TimeStep;
 import astronomicalsystem.core.simulation.Advanceable;
+import astronomicalsystem.core.time.JulianDate;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -13,6 +15,8 @@ import static org.mockito.Mockito.verifyNoInteractions;
 
 class FixedStepTimelineTest {
 
+    private static final JulianDate START_OF_2026 = new JulianDate(2461041.5);
+    private static final JulianDate A_DAY_LATER = new JulianDate(2461042.5);
     private static final TimeStep QUARTER_OF_A_DAY = new TimeStep(0.25);
     private static final TimeWarp TWO_DAYS_PER_SECOND = new TimeWarp(2.0);
     // At two days per second, 0.0625 s of real time is 0.125 d of simulated time
@@ -26,7 +30,30 @@ class FixedStepTimelineTest {
     private static final double HALF_A_SECOND = 0.5;
 
     private final Advanceable simulation = mock();
-    private final FixedStepTimeline SUT = new FixedStepTimeline(simulation, QUARTER_OF_A_DAY, TWO_DAYS_PER_SECOND);
+    private final FixedStepTimeline SUT = new FixedStepTimeline(simulation, START_OF_2026, QUARTER_OF_A_DAY,
+            TWO_DAYS_PER_SECOND);
+
+    @Test
+    void theTimeFlowStartsFromTheFirstDateAtTheFirstWarp() {
+        TimeFlow flow = SUT.timeFlow();
+
+        assertThat(flow).isEqualTo(new TimeFlow(START_OF_2026, TWO_DAYS_PER_SECOND, false));
+    }
+
+    // Half a second at two days per second: four steps of a quarter of a day
+    @Test
+    void theDateMovesOnByTheStepsTaken() {
+        SUT.elapse(HALF_A_SECOND);
+
+        assertThat(SUT.timeFlow().date()).isEqualTo(A_DAY_LATER);
+    }
+
+    @Test
+    void theTimeFlowTellsAPause() {
+        SUT.togglePause();
+
+        assertThat(SUT.timeFlow().paused()).isTrue();
+    }
 
     @ParameterizedTest
     @CsvSource(textBlock = """

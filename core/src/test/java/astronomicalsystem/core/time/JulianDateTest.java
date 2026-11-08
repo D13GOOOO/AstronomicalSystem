@@ -47,4 +47,18 @@ class JulianDateTest {
 
         assertThat(date.days()).isCloseTo(julianDate, within(TWO_UNITS_IN_THE_LAST_PLACE));
     }
+
+    // UTC = TDB - 69.184 s; a Julian date of this century is a few hundredths of a millisecond off
+    // the second it stands for, so the instant is rounded to the millisecond
+    @ParameterizedTest
+    @CsvSource(textBlock = """
+            2461041.500800741,  2026-01-01T00:00:00Z
+            2461042.000800741,  2026-01-01T12:00:00Z
+            2461041.5424674074, 2026-01-01T01:00:00Z
+            """)
+    void toInstantConvertsBackToUtc(double julianDate, String instant) {
+        JulianDate SUT = new JulianDate(julianDate);
+
+        assertThat(SUT.toInstant()).isEqualTo(Instant.parse(instant));
+    }
 }

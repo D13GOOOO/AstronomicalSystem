@@ -15,6 +15,7 @@ public record JulianDate(double days) {
     // TT - UTC = (TAI - UTC) + 32.184 s, and TAI - UTC is 37 s since the leap second at the end of
     // 2016; TDB differs from TT by less than 2 ms, which is neglected
     private static final double TDB_MINUS_UTC_SECONDS = 69.184;
+    private static final double MILLISECONDS_PER_SECOND = 1000.0;
 
     public JulianDate {
         if (!Double.isFinite(days)) {
@@ -29,5 +30,14 @@ public record JulianDate(double days) {
      */
     public static @NotNull JulianDate at(@NotNull Instant instant) {
         return new JulianDate(UNIX_EPOCH + (instant.getEpochSecond() + TDB_MINUS_UTC_SECONDS) / SECONDS_PER_DAY);
+    }
+
+    /**
+     * @return the UTC instant of this date, to the millisecond; precondition: on or after 1 January
+     * 2017, like {@link #at(Instant)}
+     */
+    public @NotNull Instant toInstant() {
+        double unixSeconds = (days - UNIX_EPOCH) * SECONDS_PER_DAY - TDB_MINUS_UTC_SECONDS;
+        return Instant.ofEpochMilli(Math.round(unixSeconds * MILLISECONDS_PER_SECOND));
     }
 }
