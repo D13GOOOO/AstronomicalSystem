@@ -24,6 +24,7 @@ public class TimeFlowPresenter implements Observer<TimeFlow> {
             Locale.ROOT).withZone(ZoneOffset.UTC);
     // Up to two decimals, without trailing zeros
     private static final String SPEED_PATTERN = "0.##";
+    private static final double HOURS_PER_DAY = 24.0;
 
     private final TextView view;
 
@@ -42,6 +43,10 @@ public class TimeFlowPresenter implements Observer<TimeFlow> {
 
     private static @NotNull String formatSpeed(@NotNull TimeWarp warp) {
         DecimalFormat speed = new DecimalFormat(SPEED_PATTERN, DecimalFormatSymbols.getInstance(Locale.ROOT));
-        return speed.format(warp.daysPerSecond()) + " d/s";
+        double daysPerSecond = warp.daysPerSecond();
+        if (daysPerSecond >= 1.0) {
+            return speed.format(daysPerSecond) + " d/s";
+        }
+        return speed.format(daysPerSecond * HOURS_PER_DAY) + " h/s";
     }
 }
