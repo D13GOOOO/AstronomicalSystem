@@ -20,11 +20,14 @@ class FixedStepTimelineLimitsTest {
 
     private final Advanceable simulation = mock();
 
-    // Doubling 256 d/s would go beyond a year per second (365.25 d/s): one step takes 1/16384 s
+    // Doubling 256 d/s would go beyond a year per second (365.25 d/s): one step takes 1/16384 s.
+    // Halving 1/16 d/s would go below an hour per second (1/24 d/s): one step takes 1/4 s
     static Stream<Arguments> changesBeyondTheLimits() {
         return Stream.of(
                 Arguments.of(new TimeWarp(256.0),
-                        Named.of("speed up", (Consumer<TimeControls>) TimeControls::speedUp), 1.0 / 16384.0));
+                        Named.of("speed up", (Consumer<TimeControls>) TimeControls::speedUp), 1.0 / 16384.0),
+                Arguments.of(new TimeWarp(1.0 / 16.0),
+                        Named.of("slow down", (Consumer<TimeControls>) TimeControls::slowDown), 0.25));
     }
 
     @ParameterizedTest
