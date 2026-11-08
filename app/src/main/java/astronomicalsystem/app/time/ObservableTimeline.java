@@ -24,26 +24,30 @@ public class ObservableTimeline extends FixedStepTimeline implements Observable<
 
     @Override
     public void elapse(double realSeconds) {
+        TimeFlow before = timeFlow();
         super.elapse(realSeconds);
-        notifyObservers();
+        notifyObserversIfChangedFrom(before);
     }
 
     @Override
     public void speedUp() {
+        TimeFlow before = timeFlow();
         super.speedUp();
-        notifyObservers();
+        notifyObserversIfChangedFrom(before);
     }
 
     @Override
     public void slowDown() {
+        TimeFlow before = timeFlow();
         super.slowDown();
-        notifyObservers();
+        notifyObserversIfChangedFrom(before);
     }
 
     @Override
     public void togglePause() {
+        TimeFlow before = timeFlow();
         super.togglePause();
-        notifyObservers();
+        notifyObserversIfChangedFrom(before);
     }
 
     @Override
@@ -61,5 +65,11 @@ public class ObservableTimeline extends FixedStepTimeline implements Observable<
     @Override
     public @NotNull TimeFlow getState() {
         return timeFlow();
+    }
+
+    private void notifyObserversIfChangedFrom(@NotNull TimeFlow before) {
+        if (!timeFlow().equals(before)) {
+            notifyObservers();
+        }
     }
 }
