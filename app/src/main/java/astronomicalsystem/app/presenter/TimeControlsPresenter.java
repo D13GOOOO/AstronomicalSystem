@@ -21,6 +21,7 @@ public class TimeControlsPresenter implements KeyboardHandler {
     public void characterTyped(int codePoint) {
         switch (codePoint) {
             case '+', '=' -> time.speedUp();
+            case '-' -> time.slowDown();
         }
     }
 }
