@@ -16,6 +16,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 class FixedStepTimelineTest {
 
     private static final JulianDate START_OF_2026 = new JulianDate(2461041.5);
+    private static final JulianDate A_DAY_LATER = new JulianDate(2461042.5);
     private static final TimeStep QUARTER_OF_A_DAY = new TimeStep(0.25);
     private static final TimeWarp TWO_DAYS_PER_SECOND = new TimeWarp(2.0);
     // At two days per second, 0.0625 s of real time is 0.125 d of simulated time
@@ -37,6 +38,14 @@ class FixedStepTimelineTest {
         TimeFlow flow = SUT.timeFlow();
 
         assertThat(flow).isEqualTo(new TimeFlow(START_OF_2026, TWO_DAYS_PER_SECOND, false));
+    }
+
+    // Half a second at two days per second: four steps of a quarter of a day
+    @Test
+    void theDateMovesOnByTheStepsTaken() {
+        SUT.elapse(HALF_A_SECOND);
+
+        assertThat(SUT.timeFlow().date()).isEqualTo(A_DAY_LATER);
     }
 
     @ParameterizedTest
