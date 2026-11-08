@@ -10,11 +10,17 @@ import org.jetbrains.annotations.NotNull;
  */
 public class TimeControlsPresenter implements KeyboardHandler {
 
+    private final TimeControls time;
+
     public TimeControlsPresenter(@NotNull KeyboardView view, @NotNull TimeControls time) {
+        this.time = time;
         view.addHandlers(this);
     }
 
     @Override
     public void characterTyped(int codePoint) {
+        switch (codePoint) {
+            case '+', '=' -> time.speedUp();
+        }
     }
 }
