@@ -13,10 +13,11 @@ import org.jetbrains.annotations.NotNull;
 public class FixedStepTimeline implements Timeline, TimeControls {
 
     private static final double LONGEST_FRAME_SECONDS = 1.0;
+    private static final double SPEED_RATIO = 2.0;
 
     private final Advanceable simulation;
     private final TimeStep step;
-    private final TimeWarp warp;
+    private TimeWarp warp;
     // Simulated time already elapsed but shorter than a step, in days: it is spent in a later frame
     private double pendingDays;
 
@@ -37,5 +38,6 @@ public class FixedStepTimeline implements Timeline, TimeControls {
 
     @Override
     public void speedUp() {
+        warp = new TimeWarp(warp.daysPerSecond() * SPEED_RATIO);
     }
 }
