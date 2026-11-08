@@ -69,8 +69,6 @@ public final class GlDiscs implements SceneView, Drawable, AutoCloseable {
         glBindVertexArray(0);
         // Lets the vertex shader set the size of each point
         glEnable(GL_PROGRAM_POINT_SIZE);
-        // Nearer discs hide farther ones, whatever the order they are drawn in
-        glEnable(GL_DEPTH_TEST);
         return new GlDiscs(program, vertexArray, buffer);
     }
 
@@ -81,6 +79,9 @@ public final class GlDiscs implements SceneView, Drawable, AutoCloseable {
 
     @Override
     public void draw() {
+        // Nearer discs hide farther ones, whatever the order they are drawn in; set at every frame,
+        // since other layers may draw without depth
+        glEnable(GL_DEPTH_TEST);
         glUseProgram(program);
         glBindVertexArray(vertexArray);
         glBindBuffer(GL_ARRAY_BUFFER, buffer);
