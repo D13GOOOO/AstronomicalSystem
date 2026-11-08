@@ -9,10 +9,16 @@ import java.util.List;
  */
 public final class Layers implements Drawable {
 
+    private final List<Drawable> bottomToTop;
+
     public Layers(@NotNull List<Drawable> bottomToTop) {
+        this.bottomToTop = List.copyOf(bottomToTop);
     }
 
     @Override
     public void draw() {
+        for (Drawable layer : bottomToTop) {
+            layer.draw();
+        }
     }
 }
