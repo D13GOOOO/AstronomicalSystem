@@ -24,6 +24,7 @@ public class FixedStepTimeline implements Timeline, TimeControls {
     private static final double SLOWEST_DAYS_PER_SECOND = 1.0 / 24.0;
 
     private final Advanceable simulation;
+    private final JulianDate start;
     private final TimeStep step;
     private TimeWarp warp;
     private boolean paused;
@@ -36,6 +37,7 @@ public class FixedStepTimeline implements Timeline, TimeControls {
     public FixedStepTimeline(@NotNull Advanceable simulation, @NotNull JulianDate start, @NotNull TimeStep step,
                              @NotNull TimeWarp warp) {
         this.simulation = simulation;
+        this.start = start;
         this.step = step;
         this.warp = warp;
     }
@@ -53,7 +55,7 @@ public class FixedStepTimeline implements Timeline, TimeControls {
     }
 
     public @NotNull TimeFlow timeFlow() {
-        return null;
+        return new TimeFlow(start, warp, paused);
     }
 
     @Override
