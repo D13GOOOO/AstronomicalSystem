@@ -30,4 +30,12 @@ public record JulianDate(double days) {
     public static @NotNull JulianDate at(@NotNull Instant instant) {
         return new JulianDate(UNIX_EPOCH + (instant.getEpochSecond() + TDB_MINUS_UTC_SECONDS) / SECONDS_PER_DAY);
     }
+
+    /**
+     * @return the UTC instant of this date, to the millisecond; precondition: on or after 1 January
+     * 2017, like {@link #at(Instant)}
+     */
+    public @NotNull Instant toInstant() {
+        throw new UnsupportedOperationException("not yet implemented");
+    }
 }
