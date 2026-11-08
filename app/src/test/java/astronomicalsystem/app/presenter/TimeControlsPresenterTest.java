@@ -30,7 +30,8 @@ class TimeControlsPresenterTest {
         return Stream.of(
                 Arguments.of(character('+'), Named.of("speed up", (Consumer<TimeControls>) TimeControls::speedUp)),
                 Arguments.of(character('='), Named.of("speed up", (Consumer<TimeControls>) TimeControls::speedUp)),
-                Arguments.of(character('-'), Named.of("slow down", (Consumer<TimeControls>) TimeControls::slowDown)));
+                Arguments.of(character('-'), Named.of("slow down", (Consumer<TimeControls>) TimeControls::slowDown)),
+                Arguments.of(character(' '), Named.of("pause", (Consumer<TimeControls>) TimeControls::togglePause)));
     }
 
     @ParameterizedTest
