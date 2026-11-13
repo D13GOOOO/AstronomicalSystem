@@ -19,7 +19,10 @@ public class Forecast implements Observer<List<Body>>, Observable<List<Trajector
     private final List<Observer<List<Trajectory>>> observers = new ArrayList<>();
     private List<Trajectory> trajectories = List.of();
 
-    public Forecast(@NotNull Predictor predictor) {
+    /**
+     * @param updatesPerPrediction precondition: positive
+     */
+    public Forecast(@NotNull Predictor predictor, int updatesPerPrediction) {
         this.predictor = predictor;
     }
 
