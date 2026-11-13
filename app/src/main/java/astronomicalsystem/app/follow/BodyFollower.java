@@ -39,12 +39,27 @@ public class BodyFollower implements Observer<List<Body>>, FollowControls {
 
     @Override
     public void followNext() {
-        focus = new Focus.OnBody(bodies.getFirst().name());
-        aim();
+        follow(place() + 1);
     }
 
     @Override
     public void followPrevious() {
+        follow(place() + bodies.size());
+    }
+
+    // The choices go round a cycle of places: the barycentre at 0, then the bodies from 1
+    private int place() {
+        return switch (focus) {
+            case Focus.Barycentre barycentre -> 0;
+            case Focus.OnBody(BodyName name) -> 1 + bodies.stream().map(Body::name).toList().indexOf(name);
+        };
+    }
+
+    // Any whole number of turns around the cycle lands on the same place
+    private void follow(int place) {
+        int placeInTheCycle = place % (bodies.size() + 1);
+        focus = placeInTheCycle == 0 ? Focus.BARYCENTRE : new Focus.OnBody(bodies.get(placeInTheCycle - 1).name());
+        aim();
     }
 
     private void aim() {
