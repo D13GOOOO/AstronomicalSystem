@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
  * Camera that orbits a fixed target, with the ecliptic north up in the image: its position, its
  * lens and the size of the image it fills.
  */
-public class CameraRig implements CameraModel {
+public class CameraRig implements CameraModel, CameraTarget {
 
     private static final Vector3 ECLIPTIC_NORTH = new Vector3(0.0, 0.0, 1.0);
 
@@ -46,6 +46,10 @@ public class CameraRig implements CameraModel {
     @Override
     public void resize(@NotNull Viewport newViewport) {
         change(orbit, newViewport);
+    }
+
+    @Override
+    public void lookAt(@NotNull Vector3 newTarget) {
     }
 
     private void change(@NotNull Orbit newOrbit, @NotNull Viewport newViewport) {

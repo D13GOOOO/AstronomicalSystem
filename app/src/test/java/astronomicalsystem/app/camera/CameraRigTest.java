@@ -78,6 +78,18 @@ class CameraRigTest {
                 .isEqualTo(new ClipPoint(1.0, 0.0, 1.0, 2.0));
     }
 
+    // The camera moves with its target: 2 AU away on the ecliptic, the new target is in the middle of
+    // the image and the old one, 1 AU to its left, is half the image width from the middle
+    @Test
+    void lookingAtANewTargetMovesTheCameraWithIt() {
+        SUT.lookAt(EAST_OF_THE_TARGET);
+
+        assertThat(SUT.camera().clipPoint(EAST_OF_THE_TARGET)).usingRecursiveComparison(CLOSE_ENOUGH)
+                .isEqualTo(new ClipPoint(0.0, 0.0, 1.0, 2.0));
+        assertThat(SUT.camera().clipPoint(TARGET)).usingRecursiveComparison(CLOSE_ENOUGH)
+                .isEqualTo(new ClipPoint(-0.5, 0.0, 1.0, 2.0));
+    }
+
     // Nothing turns, nothing moves closer or farther, the image keeps its size
     static Stream<Arguments> operationsThatChangeNothing() {
         return Stream.of(
