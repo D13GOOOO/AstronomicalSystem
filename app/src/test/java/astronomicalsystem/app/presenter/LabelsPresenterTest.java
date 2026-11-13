@@ -39,6 +39,8 @@ class LabelsPresenterTest {
     private static final ImagePoint SUN_IN_THE_IMAGE = new ImagePoint(100.0, 50.0);
     private static final ImagePoint EARTH_IN_THE_IMAGE = new ImagePoint(150.0, 50.0);
     private static final double LESS_THAN_A_PIXEL = 0.25;
+    private static final ClipPoint SUN_SEEN_FROM_ELSEWHERE = new ClipPoint(0.25, 0.25, 0.5, 2.0);
+    private static final ImagePoint SUN_ELSEWHERE_IN_THE_IMAGE = new ImagePoint(125.0, 37.5);
     // Seen from close by, larger than the minimum of its style
     private static final double FORTY_PIXELS = 40.0;
 
@@ -53,6 +55,8 @@ class LabelsPresenterTest {
     private final LabelsView view = mock();
     private final Projection projection = mock();
     private final Observable<List<Body>> simulation = mock();
+    private final Projection movedCamera = mock();
+    private final Observable<Projection> cameraRig = mock();
     private final LabelsPresenter SUT = new LabelsPresenter(view, projection, STYLES);
 
     // Four pixels to the right of the edge of the disc: half its diameter plus four from its centre
@@ -88,6 +92,19 @@ class LabelsPresenterTest {
 
         verify(view).show(List.of(new Label(new ImagePoint(158.0, 50.0), "Earth")));
         verify(projection, never()).imagePoint(behind);
+    }
+
+    @Test
+    void theBodiesAreNamedFromThePointOfViewOfANewCamera() {
+        givenTheCameraSees(SUN, SUN_DIAMETER, SUN_IN_CLIP_SPACE, LESS_THAN_A_PIXEL, SUN_IN_THE_IMAGE);
+        when(movedCamera.clipPoint(SUN.position())).thenReturn(SUN_SEEN_FROM_ELSEWHERE);
+        when(movedCamera.apparentSizeInPixels(SUN_DIAMETER, SUN_SEEN_FROM_ELSEWHERE)).thenReturn(LESS_THAN_A_PIXEL);
+        when(movedCamera.imagePoint(SUN_SEEN_FROM_ELSEWHERE)).thenReturn(SUN_ELSEWHERE_IN_THE_IMAGE);
+        SUT.update(simulation, List.of(SUN));
+
+        SUT.cameraObserver().update(cameraRig, movedCamera);
+
+        verify(view).show(List.of(new Label(new ImagePoint(137.0, 37.5), "Sun")));
     }
 
     private void givenTheCameraSees(Body body, double diameter, ClipPoint centre, double apparentSize,

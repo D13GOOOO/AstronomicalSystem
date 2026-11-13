@@ -50,6 +50,11 @@ public class LabelsPresenter implements Observer<List<Body>> {
         view.show(labels);
     }
 
+    public @NotNull Observer<Projection> cameraObserver() {
+        return (subject, camera) -> {
+        };
+    }
+
     private @NotNull Label labelOf(@NotNull Body body, @NotNull ClipPoint centre) {
         double apparentDiameter = projection.apparentSizeInPixels(2.0 * body.radius().astronomicalUnits(), centre);
         double diameter = Math.max(styles.get(body.kind()).minimumDiameter(), apparentDiameter);
