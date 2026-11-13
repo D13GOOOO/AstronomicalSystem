@@ -20,6 +20,7 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 class BodyFollowerTest {
@@ -63,6 +64,18 @@ class BodyFollowerTest {
         SUT.update(simulation, List.of(SUN_LATER, EARTH));
 
         verify(camera).lookAt(SUN_LATER.position());
+    }
+
+    // Merged into a heavier body, whose name the merged body keeps
+    @Test
+    void whenTheFollowedBodyIsGoneTheBarycentreIsFollowed() {
+        SUT.update(simulation, List.of(SUN, EARTH));
+        SUT.followPrevious();
+
+        SUT.update(simulation, List.of(SUN));
+
+        assertThat(SUT.focus()).isEqualTo(Focus.BARYCENTRE);
+        verify(camera, times(2)).lookAt(ORIGIN);
     }
 
     // The barycentre, the Sun, the Earth and the barycentre again, in either direction
