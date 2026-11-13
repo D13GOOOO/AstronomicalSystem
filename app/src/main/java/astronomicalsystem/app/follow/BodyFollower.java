@@ -34,7 +34,8 @@ public class BodyFollower implements Observer<List<Body>>, FollowControls {
     @Override
     public void update(@NotNull Observable<List<Body>> subject, @NotNull List<Body> state) {
         bodies = List.copyOf(state);
-        aim();
+        // The same body if it is still there, the barycentre if it has merged into another one
+        follow(place());
     }
 
     @Override
@@ -47,7 +48,8 @@ public class BodyFollower implements Observer<List<Body>>, FollowControls {
         follow(place() + bodies.size());
     }
 
-    // The choices go round a cycle of places: the barycentre at 0, then the bodies from 1
+    // The choices go round a cycle of places: the barycentre at 0, then the bodies from 1; a body
+    // that is no longer there is at the place of the barycentre
     private int place() {
         return switch (focus) {
             case Focus.Barycentre barycentre -> 0;
@@ -69,6 +71,7 @@ public class BodyFollower implements Observer<List<Body>>, FollowControls {
         });
     }
 
+    // The followed body is always among the latest bodies
     private @NotNull Vector3 positionOf(@NotNull BodyName name) {
         return bodies.stream().filter(body -> body.name().equals(name)).findFirst().orElseThrow().position();
     }
