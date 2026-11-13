@@ -19,6 +19,8 @@ class CornerTest {
             BOTTOM_LEFT,   50.0,   20.0,  10.0,   210.0
             BOTTOM_RIGHT,  100.0,  44.0,  210.0,  186.0
             BOTTOM_RIGHT,  50.0,   20.0,  260.0,  210.0
+            TOP_RIGHT,     100.0,  44.0,  210.0,  10.0
+            TOP_RIGHT,     50.0,   20.0,  260.0,  10.0
             """)
     void aBlockOfTextStartsAMarginAwayFromItsCorner(Corner SUT, float textWidth, float textHeight, float left,
                                                     float top) {
