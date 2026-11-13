@@ -4,11 +4,12 @@ import astronomicalsystem.app.camera.Lens;
 import astronomicalsystem.app.camera.ObservableCameraRig;
 import astronomicalsystem.app.camera.Orbit;
 import astronomicalsystem.app.camera.Viewport;
-import astronomicalsystem.app.follow.BodyFollower;
+import astronomicalsystem.app.follow.ObservableBodyFollower;
 import astronomicalsystem.app.presenter.BodiesPresenter;
 import astronomicalsystem.app.presenter.BodyStyle;
 import astronomicalsystem.app.presenter.CameraControlsPresenter;
 import astronomicalsystem.app.presenter.ControlsHelpPresenter;
+import astronomicalsystem.app.presenter.FocusPresenter;
 import astronomicalsystem.app.presenter.LabelsPresenter;
 import astronomicalsystem.app.presenter.ProvenancePresenter;
 import astronomicalsystem.app.presenter.KeyboardPresenter;
@@ -92,6 +93,7 @@ public final class Main {
             GlText headUpDisplay = new GlText(font, Corner.TOP_LEFT);
             GlText controlsHelp = new GlText(font, Corner.BOTTOM_LEFT);
             GlText provenance = new GlText(font, Corner.BOTTOM_RIGHT);
+            GlText focus = new GlText(font, Corner.TOP_RIGHT);
             GlLabels names = new GlLabels(font);
             ObservableCameraRig camera = new ObservableCameraRig(BARYCENTRE, FIRST_VIEW, LENS,
                     new Viewport(WIDTH, HEIGHT));
@@ -102,8 +104,9 @@ public final class Main {
             simulation.addObserver(labels);
             camera.addObserver(labels.cameraObserver());
             // After the presenters of the bodies: they draw the new bodies before the camera follows them
-            BodyFollower follower = new BodyFollower(camera);
+            ObservableBodyFollower follower = new ObservableBodyFollower(camera);
             simulation.addObserver(follower);
+            follower.addObserver(new FocusPresenter(focus));
             new CameraControlsPresenter(window, camera);
             timeline.addObserver(new TimeFlowPresenter(headUpDisplay));
             new KeyboardPresenter(window, timeline, follower);
@@ -111,7 +114,8 @@ public final class Main {
             new ProvenancePresenter(provenance, initialState.provenance());
             simulation.notifyObservers();
             timeline.notifyObservers();
-            Layers picture = new Layers(List.of(scene, names, headUpDisplay, controlsHelp, provenance));
+            follower.notifyObservers();
+            Layers picture = new Layers(List.of(scene, names, headUpDisplay, focus, controlsHelp, provenance));
             new MainLoop(window, new SystemClock(), timeline, picture).run();
         }
     }
