@@ -10,7 +10,7 @@ import java.util.List;
  */
 public class ControlsHelpPresenter {
 
-    // The controls of CameraControlsPresenter and TimeControlsPresenter
+    // The controls of CameraControlsPresenter and KeyboardPresenter
     private static final List<String> CONTROLS = List.of(
             "Drag: turn  Wheel: zoom  +/-: faster/slower  Space: pause");
 

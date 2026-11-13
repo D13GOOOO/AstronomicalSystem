@@ -8,11 +8,11 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Lets the user change the flow of simulated time from the keyboard.
  */
-public class TimeControlsPresenter implements KeyboardHandler {
+public class KeyboardPresenter implements KeyboardHandler {
 
     private final TimeControls time;
 
-    public TimeControlsPresenter(@NotNull KeyboardView view, @NotNull TimeControls time) {
+    public KeyboardPresenter(@NotNull KeyboardView view, @NotNull TimeControls time) {
         this.time = time;
         view.addHandlers(this);
     }

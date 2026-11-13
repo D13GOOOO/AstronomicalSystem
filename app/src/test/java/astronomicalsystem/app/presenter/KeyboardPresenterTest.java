@@ -16,11 +16,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
-class TimeControlsPresenterTest {
+class KeyboardPresenterTest {
 
     private final KeyboardView view = mock();
     private final TimeControls time = mock();
-    private final TimeControlsPresenter SUT = new TimeControlsPresenter(view, time);
+    private final KeyboardPresenter SUT = new KeyboardPresenter(view, time);
 
     @Test
     void thePresenterHandlesTheKeyboardOfItsView() {
