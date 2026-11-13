@@ -29,6 +29,8 @@ class GlTextIntegrationTest {
     // A line of text lies within this corner of the image
     private static final int CORNER_WIDTH = 120;
     private static final int CORNER_HEIGHT = 40;
+    // Half of the margin that keeps the text away from the edges
+    private static final int MARGIN_STRIP_WIDTH = 5;
     private static final float HALF_BRIGHT = 0.5f;
 
     private GlfwWindow window;
@@ -81,25 +83,52 @@ class GlTextIntegrationTest {
         }
     }
 
+    // Right-aligned: within the image and short of its right edge
+    @Test
+    void textForTheBottomRightCornerEndsAMarginAwayFromTheRightEdge() {
+        try (GlText bottomRight = GlText.create(Corner.BOTTOM_RIGHT)) {
+            bottomRight.show(List.of(CAPITALS));
+            clearToBlack();
+
+            bottomRight.draw();
+
+            assertThat(brightestRedInTheBottomRightCorner()).isGreaterThan(HALF_BRIGHT);
+            assertThat(brightestRedInTheRightMargin()).isZero();
+            assertThat(brightestRedInTheBottomLeftCorner()).isZero();
+        }
+    }
+
     private static void clearToBlack() {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
     private static float brightestRedInTheTopLeftCorner() {
-        int[] viewport = new int[4];
-        glGetIntegerv(GL_VIEWPORT, viewport);
-        return brightestRedInTheLeftCornerFromRow(viewport[3] - CORNER_HEIGHT);
+        return brightestRedIn(0, viewport()[3] - CORNER_HEIGHT, CORNER_WIDTH, CORNER_HEIGHT);
     }
 
     private static float brightestRedInTheBottomLeftCorner() {
-        return brightestRedInTheLeftCornerFromRow(0);
+        return brightestRedIn(0, 0, CORNER_WIDTH, CORNER_HEIGHT);
+    }
+
+    private static float brightestRedInTheBottomRightCorner() {
+        return brightestRedIn(viewport()[2] - CORNER_WIDTH, 0, CORNER_WIDTH, CORNER_HEIGHT);
+    }
+
+    private static float brightestRedInTheRightMargin() {
+        return brightestRedIn(viewport()[2] - MARGIN_STRIP_WIDTH, 0, MARGIN_STRIP_WIDTH, CORNER_HEIGHT);
+    }
+
+    private static int[] viewport() {
+        int[] viewport = new int[4];
+        glGetIntegerv(GL_VIEWPORT, viewport);
+        return viewport;
     }
 
     // Rows of pixels are counted from the bottom of the image
-    private static float brightestRedInTheLeftCornerFromRow(int lowestRow) {
-        float[] reds = new float[CORNER_WIDTH * CORNER_HEIGHT];
-        glReadPixels(0, lowestRow, CORNER_WIDTH, CORNER_HEIGHT, GL_RED, GL_FLOAT, reds);
+    private static float brightestRedIn(int firstColumn, int lowestRow, int width, int height) {
+        float[] reds = new float[width * height];
+        glReadPixels(firstColumn, lowestRow, width, height, GL_RED, GL_FLOAT, reds);
         float brightest = 0.0f;
         for (float red : reds) {
             brightest = Math.max(brightest, red);
