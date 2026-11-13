@@ -1,0 +1,116 @@
+package astronomicalsystem.app.presenter;
+
+import astronomicalsystem.app.camera.Projection;
+import astronomicalsystem.app.view.ClipPoint;
+import astronomicalsystem.app.view.Colour;
+import astronomicalsystem.app.view.ImagePoint;
+import astronomicalsystem.app.view.Label;
+import astronomicalsystem.app.view.LabelsView;
+import astronomicalsystem.core.body.Body;
+import astronomicalsystem.core.body.BodyKind;
+import astronomicalsystem.core.body.BodyName;
+import astronomicalsystem.core.body.Mass;
+import astronomicalsystem.core.body.Radius;
+import astronomicalsystem.core.math.Vector3;
+import astronomicalsystem.core.observer.Observable;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+
+import java.util.List;
+import java.util.Map;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+class LabelsPresenterTest {
+
+    private static final Vector3 AT_REST = Vector3.ZERO;
+    private static final Body SUN = new Body(new BodyName("Sun"), BodyKind.STAR, new Mass(1.0), new Radius(0.25),
+            Vector3.ZERO, AT_REST);
+    private static final Body EARTH = new Body(new BodyName("Earth"), BodyKind.PLANET, new Mass(3e-6),
+            new Radius(0.125), new Vector3(1.0, 0.0, 0.0), AT_REST);
+    private static final double SUN_DIAMETER = 0.5;
+    private static final double EARTH_DIAMETER = 0.25;
+    private static final ClipPoint SUN_IN_CLIP_SPACE = new ClipPoint(0.0, 0.0, 0.5, 2.0);
+    private static final ClipPoint EARTH_IN_CLIP_SPACE = new ClipPoint(0.5, 0.0, 0.5, 2.0);
+    private static final ImagePoint SUN_IN_THE_IMAGE = new ImagePoint(100.0, 50.0);
+    private static final ImagePoint EARTH_IN_THE_IMAGE = new ImagePoint(150.0, 50.0);
+    private static final double LESS_THAN_A_PIXEL = 0.25;
+    private static final ClipPoint SUN_SEEN_FROM_ELSEWHERE = new ClipPoint(0.25, 0.25, 0.5, 2.0);
+    private static final ImagePoint SUN_ELSEWHERE_IN_THE_IMAGE = new ImagePoint(125.0, 37.5);
+    // Seen from close by, larger than the minimum of its style
+    private static final double FORTY_PIXELS = 40.0;
+
+    private static final Colour YELLOW = new Colour(1.0, 1.0, 0.0);
+    private static final Colour BLUE = new Colour(0.0, 0.0, 1.0);
+    private static final double STAR_MINIMUM = 16.0;
+    private static final double PLANET_MINIMUM = 8.0;
+    private static final Map<BodyKind, BodyStyle> STYLES = Map.of(
+            BodyKind.STAR, new BodyStyle(YELLOW, STAR_MINIMUM),
+            BodyKind.PLANET, new BodyStyle(BLUE, PLANET_MINIMUM));
+
+    private final LabelsView view = mock();
+    private final Projection projection = mock();
+    private final Observable<List<Body>> simulation = mock();
+    private final Projection movedCamera = mock();
+    private final Observable<Projection> cameraRig = mock();
+    private final LabelsPresenter SUT = new LabelsPresenter(view, projection, STYLES);
+
+    // Four pixels to the right of the edge of the disc: half its diameter plus four from its centre
+    @Test
+    void everyBodyIsNamedNextToItsDisc() {
+        givenTheCameraSees(SUN, SUN_DIAMETER, SUN_IN_CLIP_SPACE, LESS_THAN_A_PIXEL, SUN_IN_THE_IMAGE);
+        givenTheCameraSees(EARTH, EARTH_DIAMETER, EARTH_IN_CLIP_SPACE, LESS_THAN_A_PIXEL, EARTH_IN_THE_IMAGE);
+
+        SUT.update(simulation, List.of(SUN, EARTH));
+
+        verify(view).show(List.of(new Label(new ImagePoint(112.0, 50.0), "Sun"),
+                new Label(new ImagePoint(158.0, 50.0), "Earth")));
+    }
+
+    @Test
+    void theLabelOfALargerDiscIsFartherFromItsCentre() {
+        givenTheCameraSees(SUN, SUN_DIAMETER, SUN_IN_CLIP_SPACE, FORTY_PIXELS, SUN_IN_THE_IMAGE);
+
+        SUT.update(simulation, List.of(SUN));
+
+        verify(view).show(List.of(new Label(new ImagePoint(124.0, 50.0), "Sun")));
+    }
+
+    // On the plane of the eye or behind it: no perspective division is possible
+    @ParameterizedTest
+    @ValueSource(doubles = {0.0, -1.0})
+    void aBodyBehindTheCameraIsNotNamed(double depth) {
+        ClipPoint behind = new ClipPoint(0.0, 0.0, 0.0, depth);
+        when(projection.clipPoint(SUN.position())).thenReturn(behind);
+        givenTheCameraSees(EARTH, EARTH_DIAMETER, EARTH_IN_CLIP_SPACE, LESS_THAN_A_PIXEL, EARTH_IN_THE_IMAGE);
+
+        SUT.update(simulation, List.of(SUN, EARTH));
+
+        verify(view).show(List.of(new Label(new ImagePoint(158.0, 50.0), "Earth")));
+        verify(projection, never()).imagePoint(behind);
+    }
+
+    @Test
+    void theBodiesAreNamedFromThePointOfViewOfANewCamera() {
+        givenTheCameraSees(SUN, SUN_DIAMETER, SUN_IN_CLIP_SPACE, LESS_THAN_A_PIXEL, SUN_IN_THE_IMAGE);
+        when(movedCamera.clipPoint(SUN.position())).thenReturn(SUN_SEEN_FROM_ELSEWHERE);
+        when(movedCamera.apparentSizeInPixels(SUN_DIAMETER, SUN_SEEN_FROM_ELSEWHERE)).thenReturn(LESS_THAN_A_PIXEL);
+        when(movedCamera.imagePoint(SUN_SEEN_FROM_ELSEWHERE)).thenReturn(SUN_ELSEWHERE_IN_THE_IMAGE);
+        SUT.update(simulation, List.of(SUN));
+
+        SUT.cameraObserver().update(cameraRig, movedCamera);
+
+        verify(view).show(List.of(new Label(new ImagePoint(137.0, 37.5), "Sun")));
+    }
+
+    private void givenTheCameraSees(Body body, double diameter, ClipPoint centre, double apparentSize,
+                                    ImagePoint inTheImage) {
+        when(projection.clipPoint(body.position())).thenReturn(centre);
+        when(projection.apparentSizeInPixels(diameter, centre)).thenReturn(apparentSize);
+        when(projection.imagePoint(centre)).thenReturn(inTheImage);
+    }
+}

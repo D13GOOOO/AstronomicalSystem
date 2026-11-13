@@ -8,6 +8,7 @@ import astronomicalsystem.app.presenter.BodiesPresenter;
 import astronomicalsystem.app.presenter.BodyStyle;
 import astronomicalsystem.app.presenter.CameraControlsPresenter;
 import astronomicalsystem.app.presenter.ControlsHelpPresenter;
+import astronomicalsystem.app.presenter.LabelsPresenter;
 import astronomicalsystem.app.presenter.ProvenancePresenter;
 import astronomicalsystem.app.presenter.TimeControlsPresenter;
 import astronomicalsystem.app.presenter.TimeFlowPresenter;
@@ -18,6 +19,7 @@ import astronomicalsystem.app.view.Colour;
 import astronomicalsystem.app.view.Corner;
 import astronomicalsystem.app.view.GlDiscs;
 import astronomicalsystem.app.view.GlFont;
+import astronomicalsystem.app.view.GlLabels;
 import astronomicalsystem.app.view.GlText;
 import astronomicalsystem.app.view.GlfwWindow;
 import astronomicalsystem.app.view.Layers;
@@ -89,11 +91,15 @@ public final class Main {
             GlText headUpDisplay = new GlText(font, Corner.TOP_LEFT);
             GlText controlsHelp = new GlText(font, Corner.BOTTOM_LEFT);
             GlText provenance = new GlText(font, Corner.BOTTOM_RIGHT);
+            GlLabels names = new GlLabels(font);
             ObservableCameraRig camera = new ObservableCameraRig(BARYCENTRE, FIRST_VIEW, LENS,
                     new Viewport(WIDTH, HEIGHT));
             BodiesPresenter bodies = new BodiesPresenter(scene, camera.camera(), STYLES);
             simulation.addObserver(bodies);
             camera.addObserver(bodies.cameraObserver());
+            LabelsPresenter labels = new LabelsPresenter(names, camera.camera(), STYLES);
+            simulation.addObserver(labels);
+            camera.addObserver(labels.cameraObserver());
             new CameraControlsPresenter(window, camera);
             timeline.addObserver(new TimeFlowPresenter(headUpDisplay));
             new TimeControlsPresenter(window, timeline);
@@ -101,7 +107,7 @@ public final class Main {
             new ProvenancePresenter(provenance, initialState.provenance());
             simulation.notifyObservers();
             timeline.notifyObservers();
-            Layers picture = new Layers(List.of(scene, headUpDisplay, controlsHelp, provenance));
+            Layers picture = new Layers(List.of(scene, names, headUpDisplay, controlsHelp, provenance));
             new MainLoop(window, new SystemClock(), timeline, picture).run();
         }
     }
