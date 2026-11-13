@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Names the bodies of the simulation next to their discs.
+ * Names the bodies of the simulation next to their discs, every time they or the camera move.
  */
 public class LabelsPresenter implements Observer<List<Body>> {
 
@@ -24,8 +24,10 @@ public class LabelsPresenter implements Observer<List<Body>> {
     private static final double GAP_IN_PIXELS = 4.0;
 
     private final LabelsView view;
-    private final Projection projection;
     private final Map<BodyKind, BodyStyle> styles;
+    // The latest camera and the latest bodies: a change of either rewrites the labels
+    private Projection projection;
+    private List<Body> bodies = List.of();
 
     /**
      * @param styles precondition: a style for every kind of body the simulation contains, the same
@@ -40,19 +42,29 @@ public class LabelsPresenter implements Observer<List<Body>> {
 
     @Override
     public void update(@NotNull Observable<List<Body>> subject, @NotNull List<Body> state) {
+        bodies = List.copyOf(state);
+        redraw();
+    }
+
+    /**
+     * @return the observer that names the bodies from the point of view of every new camera
+     */
+    public @NotNull Observer<Projection> cameraObserver() {
+        return (subject, camera) -> {
+            projection = camera;
+            redraw();
+        };
+    }
+
+    private void redraw() {
         List<Label> labels = new ArrayList<>();
-        for (Body body : state) {
+        for (Body body : bodies) {
             ClipPoint centre = projection.clipPoint(body.position());
             if (centre.isInFrontOfTheCamera()) {
                 labels.add(labelOf(body, centre));
             }
         }
         view.show(labels);
-    }
-
-    public @NotNull Observer<Projection> cameraObserver() {
-        return (subject, camera) -> {
-        };
     }
 
     private @NotNull Label labelOf(@NotNull Body body, @NotNull ClipPoint centre) {
