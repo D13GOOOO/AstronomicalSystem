@@ -26,7 +26,7 @@ class GlTextIntegrationTest {
     private static final int HEIGHT = 240;
     // Capitals with wide strokes: whole pixels of the first line are covered by the letters
     private static final String CAPITALS = "MMMM";
-    // The first line of text lies within this corner of the image
+    // A line of text lies within this corner of the image
     private static final int CORNER_WIDTH = 120;
     private static final int CORNER_HEIGHT = 40;
     private static final float HALF_BRIGHT = 0.5f;
@@ -37,7 +37,7 @@ class GlTextIntegrationTest {
     @BeforeEach
     void openAWindow() {
         window = GlfwWindow.open(TITLE, WIDTH, HEIGHT);
-        SUT = GlText.create();
+        SUT = GlText.create(Corner.TOP_LEFT);
     }
 
     // The font atlas is deleted while the context still exists
@@ -68,17 +68,38 @@ class GlTextIntegrationTest {
         assertThat(brightestRedInTheTopLeftCorner()).isZero();
     }
 
+    @Test
+    void textForTheBottomLeftCornerLightsThatCornerOnly() {
+        try (GlText bottomLeft = GlText.create(Corner.BOTTOM_LEFT)) {
+            bottomLeft.show(List.of(CAPITALS));
+            clearToBlack();
+
+            bottomLeft.draw();
+
+            assertThat(brightestRedInTheBottomLeftCorner()).isGreaterThan(HALF_BRIGHT);
+            assertThat(brightestRedInTheTopLeftCorner()).isZero();
+        }
+    }
+
     private static void clearToBlack() {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
-    // Rows of pixels are read from the bottom of the image
     private static float brightestRedInTheTopLeftCorner() {
         int[] viewport = new int[4];
         glGetIntegerv(GL_VIEWPORT, viewport);
+        return brightestRedInTheLeftCornerFromRow(viewport[3] - CORNER_HEIGHT);
+    }
+
+    private static float brightestRedInTheBottomLeftCorner() {
+        return brightestRedInTheLeftCornerFromRow(0);
+    }
+
+    // Rows of pixels are counted from the bottom of the image
+    private static float brightestRedInTheLeftCornerFromRow(int lowestRow) {
         float[] reds = new float[CORNER_WIDTH * CORNER_HEIGHT];
-        glReadPixels(0, viewport[3] - CORNER_HEIGHT, CORNER_WIDTH, CORNER_HEIGHT, GL_RED, GL_FLOAT, reds);
+        glReadPixels(0, lowestRow, CORNER_WIDTH, CORNER_HEIGHT, GL_RED, GL_FLOAT, reds);
         float brightest = 0.0f;
         for (float red : reds) {
             brightest = Math.max(brightest, red);

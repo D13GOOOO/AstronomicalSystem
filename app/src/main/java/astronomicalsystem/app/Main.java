@@ -7,12 +7,14 @@ import astronomicalsystem.app.camera.Viewport;
 import astronomicalsystem.app.presenter.BodiesPresenter;
 import astronomicalsystem.app.presenter.BodyStyle;
 import astronomicalsystem.app.presenter.CameraControlsPresenter;
+import astronomicalsystem.app.presenter.ControlsHelpPresenter;
 import astronomicalsystem.app.presenter.TimeControlsPresenter;
 import astronomicalsystem.app.presenter.TimeFlowPresenter;
 import astronomicalsystem.app.time.ObservableTimeline;
 import astronomicalsystem.app.time.SystemClock;
 import astronomicalsystem.app.time.TimeWarp;
 import astronomicalsystem.app.view.Colour;
+import astronomicalsystem.app.view.Corner;
 import astronomicalsystem.app.view.GlDiscs;
 import astronomicalsystem.app.view.GlText;
 import astronomicalsystem.app.view.GlfwWindow;
@@ -79,7 +81,8 @@ public final class Main {
         ObservableTimeline timeline = new ObservableTimeline(simulation, now, ONE_HOUR, TEN_DAYS_PER_SECOND);
         // The scene and the text need the OpenGL context of the window
         try (GlfwWindow window = GlfwWindow.open(TITLE, WIDTH, HEIGHT); GlDiscs scene = GlDiscs.create();
-             GlText headUpDisplay = GlText.create()) {
+             GlText headUpDisplay = GlText.create(Corner.TOP_LEFT);
+             GlText controlsHelp = GlText.create(Corner.BOTTOM_LEFT)) {
             ObservableCameraRig camera = new ObservableCameraRig(BARYCENTRE, FIRST_VIEW, LENS,
                     new Viewport(WIDTH, HEIGHT));
             BodiesPresenter bodies = new BodiesPresenter(scene, camera.camera(), STYLES);
@@ -88,9 +91,10 @@ public final class Main {
             new CameraControlsPresenter(window, camera);
             timeline.addObserver(new TimeFlowPresenter(headUpDisplay));
             new TimeControlsPresenter(window, timeline);
+            new ControlsHelpPresenter(controlsHelp);
             simulation.notifyObservers();
             timeline.notifyObservers();
-            new MainLoop(window, new SystemClock(), timeline, new Layers(List.of(scene, headUpDisplay))).run();
+            new MainLoop(window, new SystemClock(), timeline, new Layers(List.of(scene, headUpDisplay, controlsHelp))).run();
         }
     }
 }
