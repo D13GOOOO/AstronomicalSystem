@@ -8,7 +8,7 @@ public enum Corner {
     TOP_LEFT(Side.NEAR, Side.NEAR),
     BOTTOM_LEFT(Side.NEAR, Side.FAR),
     BOTTOM_RIGHT(Side.FAR, Side.FAR),
-    TOP_RIGHT(Side.NEAR, Side.NEAR);
+    TOP_RIGHT(Side.FAR, Side.NEAR);
 
     private static final float MARGIN_IN_PIXELS = 10.0f;
 
