@@ -9,7 +9,6 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
@@ -28,6 +27,8 @@ class FixedStepTimelineTest {
     // At two days per second, 0.25 s of real time is two steps
     private static final double TWO_STEPS_IN_REAL_SECONDS = 0.25;
     private static final double HALF_A_SECOND = 0.5;
+    private static final int ONE_STEP = 1;
+    private static final int TWO_STEPS = 2;
 
     private final Advanceable simulation = mock();
     private final FixedStepTimeline SUT = new FixedStepTimeline(simulation, START_OF_2026, QUARTER_OF_A_DAY,
@@ -55,9 +56,9 @@ class FixedStepTimelineTest {
         assertThat(SUT.timeFlow().paused()).isTrue();
     }
 
+    // All the steps of a frame at once: the simulation tells its observers once per frame
     @ParameterizedTest
     @CsvSource(textBlock = """
-            0.0625, 0
             0.125,  1
             0.3125, 2
             0.5,    4
@@ -65,7 +66,14 @@ class FixedStepTimelineTest {
     void advancesByTheWholeStepsInTheWarpedTime(double realSeconds, int steps) {
         SUT.elapse(realSeconds);
 
-        verify(simulation, times(steps)).advance(QUARTER_OF_A_DAY);
+        verify(simulation).advance(QUARTER_OF_A_DAY, steps);
+    }
+
+    @Test
+    void lessThanAStepLeavesTheSimulationAsItIs() {
+        SUT.elapse(HALF_A_STEP_IN_REAL_SECONDS);
+
+        verifyNoInteractions(simulation);
     }
 
     @Test
@@ -73,14 +81,14 @@ class FixedStepTimelineTest {
         SUT.elapse(HALF_A_STEP_IN_REAL_SECONDS);
         SUT.elapse(HALF_A_STEP_IN_REAL_SECONDS);
 
-        verify(simulation).advance(QUARTER_OF_A_DAY);
+        verify(simulation).advance(QUARTER_OF_A_DAY, ONE_STEP);
     }
 
     @Test
     void aStalledFrameCountsAsOneSecondAtMost() {
         SUT.elapse(A_STALLED_FRAME_IN_REAL_SECONDS);
 
-        verify(simulation, times(STEPS_IN_ONE_REAL_SECOND)).advance(QUARTER_OF_A_DAY);
+        verify(simulation).advance(QUARTER_OF_A_DAY, STEPS_IN_ONE_REAL_SECOND);
     }
 
     // At four days per second, half a step of real time at two days per second is a whole step
@@ -89,7 +97,7 @@ class FixedStepTimelineTest {
         SUT.speedUp();
         SUT.elapse(HALF_A_STEP_IN_REAL_SECONDS);
 
-        verify(simulation).advance(QUARTER_OF_A_DAY);
+        verify(simulation).advance(QUARTER_OF_A_DAY, ONE_STEP);
     }
 
     // At one day per second, the time of two steps at two days per second is only one step
@@ -98,7 +106,7 @@ class FixedStepTimelineTest {
         SUT.slowDown();
         SUT.elapse(TWO_STEPS_IN_REAL_SECONDS);
 
-        verify(simulation).advance(QUARTER_OF_A_DAY);
+        verify(simulation).advance(QUARTER_OF_A_DAY, ONE_STEP);
     }
 
     @Test
@@ -115,6 +123,6 @@ class FixedStepTimelineTest {
         SUT.togglePause();
         SUT.elapse(TWO_STEPS_IN_REAL_SECONDS);
 
-        verify(simulation, times(2)).advance(QUARTER_OF_A_DAY);
+        verify(simulation).advance(QUARTER_OF_A_DAY, TWO_STEPS);
     }
 }

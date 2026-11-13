@@ -46,17 +46,11 @@ public final class TrajectoryPredictor {
         Map<BodyName, Path> paths = new LinkedHashMap<>();
         addPositions(future.bodies(), paths);
         for (int point = 1; point < sampling.points(); point++) {
-            advanceToTheNextPoint(future);
+            future.advance(timeStep, sampling.stepsPerPoint());
             addPositions(future.bodies(), paths);
         }
         return paths.entrySet().stream()
                 .map(path -> new Trajectory(path.getKey(), path.getValue().kind(), path.getValue().points())).toList();
-    }
-
-    private void advanceToTheNextPoint(@NotNull Simulation future) {
-        for (int step = 0; step < sampling.stepsPerPoint(); step++) {
-            future.advance(timeStep);
-        }
     }
 
     private static void addPositions(@NotNull List<Body> bodies, @NotNull Map<BodyName, Path> paths) {

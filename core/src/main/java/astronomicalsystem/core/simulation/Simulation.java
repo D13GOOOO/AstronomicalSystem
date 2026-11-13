@@ -32,8 +32,25 @@ public class Simulation implements Advanceable {
         return bodies;
     }
 
-    @Override
     public void advance(@NotNull TimeStep timeStep) {
+        step(timeStep);
+    }
+
+    /**
+     * Takes several steps, one after the other.
+     *
+     * @param steps precondition: positive
+     */
+    @Override
+    public void advance(@NotNull TimeStep timeStep, int steps) {
+        for (int step = 0; step < steps; step++) {
+            step(timeStep);
+        }
+    }
+
+    // Not overridable, unlike the advances: a subclass that acts after an advance acts once however
+    // many steps it takes
+    private void step(@NotNull TimeStep timeStep) {
         bodies = List.copyOf(collisions.resolve(integrator.step(bodies, timeStep)));
     }
 }
