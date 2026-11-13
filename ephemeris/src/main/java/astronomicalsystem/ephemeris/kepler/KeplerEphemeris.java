@@ -6,6 +6,7 @@ import astronomicalsystem.core.orbit.StateVector;
 import astronomicalsystem.core.time.JulianDate;
 import astronomicalsystem.ephemeris.BodyProperties;
 import astronomicalsystem.ephemeris.Ephemeris;
+import astronomicalsystem.ephemeris.Provenance;
 import astronomicalsystem.ephemeris.EphemerisSource;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,8 +44,11 @@ public final class KeplerEphemeris implements EphemerisSource {
         return aroundTheCentralBody.stream().map(body -> relativeTo(centreOfMass, body)).toList();
     }
 
+    /**
+     * @return the bodies of {@link #bodiesAt(JulianDate)}, computed from orbital elements
+     */
     public @NotNull Ephemeris ephemerisAt(@NotNull JulianDate date) {
-        throw new UnsupportedOperationException("not yet implemented");
+        return new Ephemeris(bodiesAt(date), Provenance.KEPLER_ELEMENTS);
     }
 
     private static @NotNull StateVector centreOfMass(@NotNull List<Body> bodies) {
