@@ -1,6 +1,7 @@
 package astronomicalsystem.core.simulation;
 
 import astronomicalsystem.core.body.Body;
+import astronomicalsystem.core.body.BodyName;
 import astronomicalsystem.core.math.Vector3;
 import astronomicalsystem.core.physics.CollisionResolver;
 import astronomicalsystem.core.physics.Integrator;
@@ -8,7 +9,9 @@ import astronomicalsystem.core.physics.TimeStep;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Foresees the paths of the bodies by running a copy of their simulation ahead in time, with the
@@ -30,24 +33,22 @@ public final class TrajectoryPredictor {
     }
 
     /**
-     * @return the trajectory of every body, in the order of the bodies
+     * @param bodies precondition: no two with the same name
+     * @return the trajectory of every body, in the order of the bodies; a body that merges into
+     *         another one stops where it was last seen, and the merged body goes on with the
+     *         trajectory of the one whose name it keeps
      */
     public @NotNull List<Trajectory> predict(@NotNull List<Body> bodies) {
         Simulation future = new Simulation(integrator, collisions, bodies);
-        List<Body> present = future.bodies();
-        List<List<Vector3>> paths = new ArrayList<>();
-        for (Body body : present) {
-            paths.add(new ArrayList<>(List.of(body.position())));
-        }
+        // By name, since merges shift the bodies that follow them in the list; in the order of the
+        // present bodies
+        Map<BodyName, List<Vector3>> paths = new LinkedHashMap<>();
+        addPositions(future.bodies(), paths);
         for (int point = 1; point < sampling.points(); point++) {
             advanceToTheNextPoint(future);
             addPositions(future.bodies(), paths);
         }
-        List<Trajectory> trajectories = new ArrayList<>();
-        for (int index = 0; index < present.size(); index++) {
-            trajectories.add(new Trajectory(present.get(index).name(), paths.get(index)));
-        }
-        return trajectories;
+        return paths.entrySet().stream().map(path -> new Trajectory(path.getKey(), path.getValue())).toList();
     }
 
     private void advanceToTheNextPoint(@NotNull Simulation future) {
@@ -56,10 +57,9 @@ public final class TrajectoryPredictor {
         }
     }
 
-    // The bodies are aligned by index with the paths
-    private static void addPositions(@NotNull List<Body> bodies, @NotNull List<List<Vector3>> paths) {
-        for (int index = 0; index < bodies.size(); index++) {
-            paths.get(index).add(bodies.get(index).position());
+    private static void addPositions(@NotNull List<Body> bodies, @NotNull Map<BodyName, List<Vector3>> paths) {
+        for (Body body : bodies) {
+            paths.computeIfAbsent(body.name(), name -> new ArrayList<>()).add(body.position());
         }
     }
 }
