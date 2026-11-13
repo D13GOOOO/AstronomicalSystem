@@ -72,7 +72,6 @@ public final class GlText implements TextView, Drawable, AutoCloseable {
     // From the top of the tallest glyph to the bottom of the lowest one
     private static final float FONT_HEIGHT_IN_PIXELS = 20.0f;
     private static final float LINE_SPACING_IN_PIXELS = 24.0f;
-    private static final float MARGIN_IN_PIXELS = 10.0f;
     // Printable ASCII, from the space to the tilde; other characters are written as UNKNOWN
     private static final int FIRST_CHARACTER = ' ';
     private static final int CHARACTER_COUNT = '~' - ' ' + 1;
@@ -89,6 +88,7 @@ public final class GlText implements TextView, Drawable, AutoCloseable {
     // Two triangles per character
     private static final int VERTICES_PER_CHARACTER = 6;
 
+    private final Corner corner;
     private final int program;
     private final int imageSize;
     private final int vertexArray;
@@ -99,7 +99,9 @@ public final class GlText implements TextView, Drawable, AutoCloseable {
     // The lines of the last update, written again in every frame until the next one
     private List<String> lines = List.of();
 
-    private GlText(int program, int vertexArray, int buffer, int atlas, @NotNull STBTTBakedChar.Buffer glyphs) {
+    private GlText(@NotNull Corner corner, int program, int vertexArray, int buffer, int atlas,
+                   @NotNull STBTTBakedChar.Buffer glyphs) {
+        this.corner = corner;
         this.program = program;
         this.imageSize = glGetUniformLocation(program, "imageSize");
         this.vertexArray = vertexArray;
@@ -122,7 +124,7 @@ public final class GlText implements TextView, Drawable, AutoCloseable {
         attribute(POSITION, 0);
         attribute(ATLAS_POSITION, PAIR);
         glBindVertexArray(0);
-        return new GlText(program, vertexArray, buffer, atlas, glyphs);
+        return new GlText(Corner.TOP_LEFT, program, vertexArray, buffer, atlas, glyphs);
     }
 
     @Override
@@ -132,9 +134,9 @@ public final class GlText implements TextView, Drawable, AutoCloseable {
 
     @Override
     public void draw() {
-        float[] vertices = vertices();
         int[] viewport = new int[4];
         glGetIntegerv(GL_VIEWPORT, viewport);
+        float[] vertices = vertices(viewport[3]);
         // Over everything, with the edges of the glyphs blended into the picture
         glDisable(GL_DEPTH_TEST);
         glEnable(GL_BLEND);
@@ -198,7 +200,7 @@ public final class GlText implements TextView, Drawable, AutoCloseable {
         glEnableVertexAttribArray(location);
     }
 
-    private float @NotNull [] vertices() {
+    private float @NotNull [] vertices(float imageHeight) {
         int characters = lines.stream().mapToInt(String::length).sum();
         float[] vertices = new float[characters * VERTICES_PER_CHARACTER * FLOATS_PER_VERTEX];
         try (MemoryStack stack = MemoryStack.stackPush()) {
@@ -206,14 +208,20 @@ public final class GlText implements TextView, Drawable, AutoCloseable {
             FloatBuffer penX = stack.mallocFloat(1);
             FloatBuffer penY = stack.mallocFloat(1);
             STBTTAlignedQuad quad = STBTTAlignedQuad.malloc(stack);
+            float top = corner.top(textHeight(), imageHeight);
             int index = 0;
             for (int line = 0; line < lines.size(); line++) {
-                penX.put(0, MARGIN_IN_PIXELS);
-                penY.put(0, MARGIN_IN_PIXELS + FONT_HEIGHT_IN_PIXELS + line * LINE_SPACING_IN_PIXELS);
+                penX.put(0, corner.left());
+                penY.put(0, top + FONT_HEIGHT_IN_PIXELS + line * LINE_SPACING_IN_PIXELS);
                 index = writeLine(lines.get(line), penX, penY, quad, vertices, index);
             }
         }
         return vertices;
+    }
+
+    // From the top of the first line to the bottom of the last one
+    private float textHeight() {
+        return FONT_HEIGHT_IN_PIXELS + Math.max(0, lines.size() - 1) * LINE_SPACING_IN_PIXELS;
     }
 
     private int writeLine(@NotNull String line, @NotNull FloatBuffer penX, @NotNull FloatBuffer penY,
