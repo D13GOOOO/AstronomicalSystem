@@ -47,6 +47,7 @@ public final class KeplerEphemeris implements EphemerisSource {
     /**
      * @return the bodies of {@link #bodiesAt(JulianDate)}, computed from orbital elements
      */
+    @Override
     public @NotNull Ephemeris ephemerisAt(@NotNull JulianDate date) {
         return new Ephemeris(bodiesAt(date), Provenance.KEPLER_ELEMENTS);
     }

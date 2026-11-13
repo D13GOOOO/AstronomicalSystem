@@ -33,6 +33,7 @@ public final class HorizonsEphemeris implements EphemerisSource {
     /**
      * @return the bodies of {@link #bodiesAt(JulianDate)}, as Horizons gives them
      */
+    @Override
     public @NotNull Ephemeris ephemerisAt(@NotNull JulianDate date) {
         return new Ephemeris(bodiesAt(date), Provenance.JPL_HORIZONS);
     }

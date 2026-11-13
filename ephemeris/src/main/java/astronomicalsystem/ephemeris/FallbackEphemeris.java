@@ -28,4 +28,9 @@ public final class FallbackEphemeris implements EphemerisSource {
             return fallback.bodiesAt(date);
         }
     }
+
+    @Override
+    public @NotNull Ephemeris ephemerisAt(@NotNull JulianDate date) {
+        throw new UnsupportedOperationException("not yet implemented");
+    }
 }

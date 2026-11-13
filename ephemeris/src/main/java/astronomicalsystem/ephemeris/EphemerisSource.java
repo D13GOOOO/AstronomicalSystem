@@ -18,4 +18,6 @@ public interface EphemerisSource {
      *                                       ephemeris
      */
     @NotNull List<Body> bodiesAt(@NotNull JulianDate date);
+
+    @NotNull Ephemeris ephemerisAt(@NotNull JulianDate date);
 }
