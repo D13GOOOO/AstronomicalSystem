@@ -9,7 +9,9 @@ import astronomicalsystem.core.math.Vector3;
 import astronomicalsystem.core.orbit.StateVector;
 import astronomicalsystem.core.time.JulianDate;
 import astronomicalsystem.ephemeris.BodyProperties;
+import astronomicalsystem.ephemeris.Ephemeris;
 import astronomicalsystem.ephemeris.EphemerisEntry;
+import astronomicalsystem.ephemeris.Provenance;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -45,6 +47,16 @@ class HorizonsEphemerisTest {
         List<Body> bodies = SUT.bodiesAt(DATE);
 
         assertThat(bodies).containsExactly(SUN.body().in(SUN_STATE), EARTH.body().in(EARTH_STATE));
+    }
+
+    @Test
+    void thePositionsComeFromHorizons() {
+        HorizonsEphemeris SUT = new HorizonsEphemeris(horizons, List.of(SUN));
+        when(horizons.entryOf(new HorizonsQuery(SUN.command(), DATE))).thenReturn(new EphemerisEntry(DATE, SUN_STATE));
+
+        Ephemeris ephemeris = SUT.ephemerisAt(DATE);
+
+        assertThat(ephemeris).isEqualTo(new Ephemeris(List.of(SUN.body().in(SUN_STATE)), Provenance.JPL_HORIZONS));
     }
 
     @Test
