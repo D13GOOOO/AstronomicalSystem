@@ -51,10 +51,15 @@ public class FixedStepTimeline implements Timeline, TimeControls {
             return;
         }
         pendingDays += Math.min(realSeconds, LONGEST_FRAME_SECONDS) * warp.daysPerSecond();
+        int steps = 0;
         while (pendingDays >= step.days()) {
-            simulation.advance(step);
             pendingDays -= step.days();
-            stepsTaken++;
+            steps++;
+        }
+        // All at once, so that the observers of the simulation hear from it once per frame
+        if (steps > 0) {
+            simulation.advance(step, steps);
+            stepsTaken += steps;
         }
     }
 
