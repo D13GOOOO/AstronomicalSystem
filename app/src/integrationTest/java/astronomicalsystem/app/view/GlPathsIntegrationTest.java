@@ -70,6 +70,23 @@ class GlPathsIntegrationTest {
         assertThat(pixelAt(x - TWENTY_PIXELS, y + TWENTY_PIXELS)).containsExactly(BLACK, withPrecision(ONE_LEVEL));
     }
 
+    // Two short paths on the diagonal, one each side of the centre: a line joining them would cross it
+    @Test
+    void separatePathsAreNotJoined() {
+        int x = viewport[2] / 2;
+        int y = viewport[3] / 2;
+        SUT.show(List.of(
+                new Path(List.of(atPixel(x - FORTY_PIXELS, y - FORTY_PIXELS), atPixel(x - TWENTY_PIXELS,
+                        y - TWENTY_PIXELS)), RED_LINE),
+                new Path(List.of(atPixel(x + TWENTY_PIXELS, y + TWENTY_PIXELS), atPixel(x + FORTY_PIXELS,
+                        y + FORTY_PIXELS)), RED_LINE)));
+        clearToBlack();
+
+        SUT.draw();
+
+        assertThat(pixelAt(x, y)).containsExactly(BLACK, withPrecision(ONE_LEVEL));
+    }
+
     // The centre of the pixel: a line through it lights it whatever rule the driver uses for edges
     private ClipPoint atPixel(int x, int y) {
         return new ClipPoint(2.0 * (x + 0.5) / viewport[2] - 1.0, 2.0 * (y + 0.5) / viewport[3] - 1.0, 0.0, 1.0);
