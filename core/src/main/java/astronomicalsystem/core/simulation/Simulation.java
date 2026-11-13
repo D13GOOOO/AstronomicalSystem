@@ -32,7 +32,6 @@ public class Simulation implements Advanceable {
         return bodies;
     }
 
-    @Override
     public void advance(@NotNull TimeStep timeStep) {
         step(timeStep);
     }
