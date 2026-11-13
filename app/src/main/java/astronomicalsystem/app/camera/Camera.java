@@ -1,6 +1,7 @@
 package astronomicalsystem.app.camera;
 
 import astronomicalsystem.app.view.ClipPoint;
+import astronomicalsystem.app.view.ImagePoint;
 import astronomicalsystem.core.math.Vector3;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,5 +53,10 @@ public final class Camera implements Projection {
     @Override
     public double apparentSizeInPixels(double size, @NotNull ClipPoint centre) {
         return size * lens.focalFactor() / centre.w() * pixelsPerDeviceUnit;
+    }
+
+    @Override
+    public @NotNull ImagePoint imagePoint(@NotNull ClipPoint point) {
+        return new ImagePoint(0.0, 0.0);
     }
 }
