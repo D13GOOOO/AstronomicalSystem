@@ -43,13 +43,14 @@ public final class TrajectoryPredictor {
         Simulation future = new Simulation(integrator, collisions, bodies);
         // By name, since merges shift the bodies that follow them in the list; in the order of the
         // present bodies
-        Map<BodyName, List<Vector3>> paths = new LinkedHashMap<>();
+        Map<BodyName, Path> paths = new LinkedHashMap<>();
         addPositions(future.bodies(), paths);
         for (int point = 1; point < sampling.points(); point++) {
             advanceToTheNextPoint(future);
             addPositions(future.bodies(), paths);
         }
-        return paths.entrySet().stream().map(path -> new Trajectory(path.getKey(), BodyKind.STAR, path.getValue())).toList();
+        return paths.entrySet().stream()
+                .map(path -> new Trajectory(path.getKey(), path.getValue().kind(), path.getValue().points())).toList();
     }
 
     private void advanceToTheNextPoint(@NotNull Simulation future) {
@@ -58,9 +59,14 @@ public final class TrajectoryPredictor {
         }
     }
 
-    private static void addPositions(@NotNull List<Body> bodies, @NotNull Map<BodyName, List<Vector3>> paths) {
+    private static void addPositions(@NotNull List<Body> bodies, @NotNull Map<BodyName, Path> paths) {
         for (Body body : bodies) {
-            paths.computeIfAbsent(body.name(), name -> new ArrayList<>()).add(body.position());
+            paths.computeIfAbsent(body.name(), name -> new Path(body.kind(), new ArrayList<>())).points()
+                    .add(body.position());
         }
+    }
+
+    // A trajectory while it is being predicted: its points are still being added
+    private record Path(@NotNull BodyKind kind, @NotNull List<Vector3> points) {
     }
 }
