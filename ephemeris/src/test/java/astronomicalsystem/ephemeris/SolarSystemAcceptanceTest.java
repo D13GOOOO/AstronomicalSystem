@@ -34,7 +34,7 @@ class SolarSystemAcceptanceTest {
     void theMeanOrbitsPutEveryBodyCloseToWhereHorizonsDoes(String name, String horizonsResponse) {
         EphemerisEntry horizons = new HorizonsParser().parse(fixture(horizonsResponse));
 
-        Body body = named(name, SolarSystem.meanOrbits().bodiesAt(horizons.epoch()));
+        Body body = named(name, SolarSystem.meanOrbits().ephemerisAt(horizons.epoch()).bodies());
 
         assertThat(body.position().minus(horizons.state().position()).length())
                 .isLessThan(RELATIVE_TOLERANCE * horizons.state().position().length());

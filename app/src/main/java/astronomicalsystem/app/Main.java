@@ -77,7 +77,7 @@ public final class Main {
         JulianDate now = JulianDate.at(Instant.now());
         ObservableSimulation simulation = new ObservableSimulation(
                 new VelocityVerlet(new NewtonianGravity(GravitationalParameter.GRAVITATIONAL_CONSTANT, NO_SOFTENING)),
-                new MergingCollisions(), solarSystem.bodiesAt(now));
+                new MergingCollisions(), solarSystem.ephemerisAt(now).bodies());
         ObservableTimeline timeline = new ObservableTimeline(simulation, now, ONE_HOUR, TEN_DAYS_PER_SECOND);
         // The scene and the text need the OpenGL context of the window
         try (GlfwWindow window = GlfwWindow.open(TITLE, WIDTH, HEIGHT); GlDiscs scene = GlDiscs.create();

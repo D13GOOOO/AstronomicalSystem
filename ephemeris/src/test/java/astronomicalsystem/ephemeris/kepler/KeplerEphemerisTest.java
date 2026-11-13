@@ -48,7 +48,7 @@ class KeplerEphemerisTest {
     void theCentralBodyAloneRestsAtTheOrigin() {
         KeplerEphemeris SUT = new KeplerEphemeris(SUN, J2000, List.of());
 
-        List<Body> bodies = SUT.bodiesAt(J2000);
+        List<Body> bodies = SUT.ephemerisAt(J2000).bodies();
 
         assertThat(bodies).containsExactly(
                 new Body(SUN.name(), SUN.kind(), SUN.mass(), SUN.radius(), Vector3.ZERO, Vector3.ZERO));
@@ -69,7 +69,7 @@ class KeplerEphemerisTest {
     void atTheEpochTheOrbitingBodyIsWhereItsElementsPutIt() {
         KeplerEphemeris SUT = new KeplerEphemeris(SUN, J2000, List.of(new KeplerOrbit(TWIN, CIRCLE_OF_RADIUS_TWO)));
 
-        List<Body> bodies = SUT.bodiesAt(J2000);
+        List<Body> bodies = SUT.ephemerisAt(J2000).bodies();
 
         assertThat(secondRelativeToFirst(bodies)).usingRecursiveComparison(CLOSE_ENOUGH)
                 .isEqualTo(new StateVector(new Vector3(2.0, 0.0, 0.0), new Vector3(0.0, CIRCULAR_SPEED, 0.0)));
@@ -79,7 +79,7 @@ class KeplerEphemerisTest {
     void theCentreOfMassRestsAtTheOrigin() {
         KeplerEphemeris SUT = new KeplerEphemeris(SUN, J2000, List.of(new KeplerOrbit(TWIN, CIRCLE_OF_RADIUS_TWO)));
 
-        List<Body> bodies = SUT.bodiesAt(J2000);
+        List<Body> bodies = SUT.ephemerisAt(J2000).bodies();
 
         assertThat(bodies).usingRecursiveComparison(CLOSE_ENOUGH).isEqualTo(List.of(
                 SUN.in(new StateVector(new Vector3(-1.0, 0.0, 0.0), new Vector3(0.0, -CIRCULAR_SPEED / 2.0, 0.0))),
@@ -90,7 +90,7 @@ class KeplerEphemerisTest {
     void aQuarterOfAPeriodLaterTheBodiesHaveTurnedByARightAngle() {
         KeplerEphemeris SUT = new KeplerEphemeris(SUN, J2000, List.of(new KeplerOrbit(TWIN, CIRCLE_OF_RADIUS_TWO)));
 
-        List<Body> bodies = SUT.bodiesAt(new JulianDate(J2000.days() + QUARTER_PERIOD_DAYS));
+        List<Body> bodies = SUT.ephemerisAt(new JulianDate(J2000.days() + QUARTER_PERIOD_DAYS)).bodies();
 
         assertThat(bodies).usingRecursiveComparison(CLOSE_ENOUGH).isEqualTo(List.of(
                 SUN.in(new StateVector(new Vector3(0.0, -1.0, 0.0), new Vector3(CIRCULAR_SPEED / 2.0, 0.0, 0.0))),
@@ -103,7 +103,7 @@ class KeplerEphemerisTest {
         KeplerEphemeris SUT = new KeplerEphemeris(SUN, J2000, orbits);
         orbits.clear();
 
-        List<Body> bodies = SUT.bodiesAt(J2000);
+        List<Body> bodies = SUT.ephemerisAt(J2000).bodies();
 
         assertThat(bodies).hasSize(2);
     }

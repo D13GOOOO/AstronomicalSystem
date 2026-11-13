@@ -44,7 +44,7 @@ class HorizonsEphemerisTest {
         when(horizons.entryOf(new HorizonsQuery(EARTH.command(), DATE)))
                 .thenReturn(new EphemerisEntry(DATE, EARTH_STATE));
 
-        List<Body> bodies = SUT.bodiesAt(DATE);
+        List<Body> bodies = SUT.ephemerisAt(DATE).bodies();
 
         assertThat(bodies).containsExactly(SUN.body().in(SUN_STATE), EARTH.body().in(EARTH_STATE));
     }
@@ -66,7 +66,7 @@ class HorizonsEphemerisTest {
         targets.clear();
         when(horizons.entryOf(new HorizonsQuery(SUN.command(), DATE))).thenReturn(new EphemerisEntry(DATE, SUN_STATE));
 
-        List<Body> bodies = SUT.bodiesAt(DATE);
+        List<Body> bodies = SUT.ephemerisAt(DATE).bodies();
 
         assertThat(bodies).containsExactly(SUN.body().in(SUN_STATE));
     }

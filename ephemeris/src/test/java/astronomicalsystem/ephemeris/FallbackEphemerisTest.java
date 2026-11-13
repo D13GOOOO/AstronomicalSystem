@@ -39,36 +39,6 @@ class FallbackEphemerisTest {
     }
 
     @Test
-    void theAnswerOfThePrimarySourceIsTakenWithoutAskingTheFallback() {
-        when(primary.bodiesAt(DATE)).thenReturn(PRIMARY_BODIES);
-
-        List<Body> bodies = SUT.bodiesAt(DATE);
-
-        assertThat(bodies).isEqualTo(PRIMARY_BODIES);
-        verifyNoInteractions(fallback);
-    }
-
-    @ParameterizedTest
-    @MethodSource("failuresOfThePrimary")
-    void theFallbackAnswersWhenThePrimarySourceFails(RuntimeException failure) {
-        when(primary.bodiesAt(DATE)).thenThrow(failure);
-        when(fallback.bodiesAt(DATE)).thenReturn(FALLBACK_BODIES);
-
-        List<Body> bodies = SUT.bodiesAt(DATE);
-
-        assertThat(bodies).isEqualTo(FALLBACK_BODIES);
-    }
-
-    @Test
-    void aDefectOfThePrimarySourceIsNotHiddenByTheFallback() {
-        IllegalStateException defect = new IllegalStateException("not yet managed");
-        when(primary.bodiesAt(DATE)).thenThrow(defect);
-
-        assertThatThrownBy(() -> SUT.bodiesAt(DATE)).isSameAs(defect);
-        verifyNoInteractions(fallback);
-    }
-
-    @Test
     void theEphemerisOfThePrimarySourceIsTakenWithoutAskingTheFallback() {
         when(primary.ephemerisAt(DATE)).thenReturn(PRIMARY_ANSWER);
 
@@ -91,7 +61,7 @@ class FallbackEphemerisTest {
     }
 
     @Test
-    void aDefectOfThePrimarySourceIsNotHiddenByTheFallbackEphemeris() {
+    void aDefectOfThePrimarySourceIsNotHiddenByTheFallback() {
         IllegalStateException defect = new IllegalStateException("not yet managed");
         when(primary.ephemerisAt(DATE)).thenThrow(defect);
 

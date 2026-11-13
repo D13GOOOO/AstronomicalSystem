@@ -23,19 +23,12 @@ public final class HorizonsEphemeris implements EphemerisSource {
     }
 
     /**
-     * @return the bodies in the order of the targets
-     */
-    @Override
-    public @NotNull List<Body> bodiesAt(@NotNull JulianDate date) {
-        return targets.stream().map(target -> atDate(target, date)).toList();
-    }
-
-    /**
-     * @return the bodies of {@link #bodiesAt(JulianDate)}, as Horizons gives them
+     * @return the bodies in the order of the targets, as Horizons gives them
      */
     @Override
     public @NotNull Ephemeris ephemerisAt(@NotNull JulianDate date) {
-        return new Ephemeris(bodiesAt(date), Provenance.JPL_HORIZONS);
+        return new Ephemeris(targets.stream().map(target -> atDate(target, date)).toList(),
+                Provenance.JPL_HORIZONS);
     }
 
     private @NotNull Body atDate(@NotNull HorizonsTarget target, @NotNull JulianDate date) {
