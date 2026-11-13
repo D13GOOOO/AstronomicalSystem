@@ -20,7 +20,7 @@ public enum Corner {
 
     private static final float MARGIN_IN_PIXELS = 10.0f;
 
-    public float left() {
+    public float left(float textWidth, float imageWidth) {
         return MARGIN_IN_PIXELS;
     }
 

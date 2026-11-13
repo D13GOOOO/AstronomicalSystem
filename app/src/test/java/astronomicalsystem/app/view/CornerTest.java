@@ -7,7 +7,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CornerTest {
 
+    private static final float IMAGE_WIDTH = 320.0f;
     private static final float IMAGE_HEIGHT = 240.0f;
+    private static final float TEXT_WIDTH = 100.0f;
 
     // Ten pixels away from the edges of the image
     @ParameterizedTest
@@ -19,6 +21,6 @@ class CornerTest {
             """)
     void aBlockOfTextStartsAMarginAwayFromItsCorner(Corner SUT, float textHeight, float top) {
         assertThat(SUT.top(textHeight, IMAGE_HEIGHT)).isEqualTo(top);
-        assertThat(SUT.left()).isEqualTo(10.0f);
+        assertThat(SUT.left(TEXT_WIDTH, IMAGE_WIDTH)).isEqualTo(10.0f);
     }
 }

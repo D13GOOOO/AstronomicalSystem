@@ -137,7 +137,7 @@ public final class GlText implements TextView, Drawable, AutoCloseable {
     public void draw() {
         int[] viewport = new int[4];
         glGetIntegerv(GL_VIEWPORT, viewport);
-        float[] vertices = vertices(viewport[3]);
+        float[] vertices = vertices(viewport[2], viewport[3]);
         // Over everything, with the edges of the glyphs blended into the picture
         glDisable(GL_DEPTH_TEST);
         glEnable(GL_BLEND);
@@ -201,7 +201,7 @@ public final class GlText implements TextView, Drawable, AutoCloseable {
         glEnableVertexAttribArray(location);
     }
 
-    private float @NotNull [] vertices(float imageHeight) {
+    private float @NotNull [] vertices(float imageWidth, float imageHeight) {
         int characters = lines.stream().mapToInt(String::length).sum();
         float[] vertices = new float[characters * VERTICES_PER_CHARACTER * FLOATS_PER_VERTEX];
         try (MemoryStack stack = MemoryStack.stackPush()) {
@@ -209,15 +209,29 @@ public final class GlText implements TextView, Drawable, AutoCloseable {
             FloatBuffer penX = stack.mallocFloat(1);
             FloatBuffer penY = stack.mallocFloat(1);
             STBTTAlignedQuad quad = STBTTAlignedQuad.malloc(stack);
+            float left = corner.left(textWidth(), imageWidth);
             float top = corner.top(textHeight(), imageHeight);
             int index = 0;
             for (int line = 0; line < lines.size(); line++) {
-                penX.put(0, corner.left());
+                penX.put(0, left);
                 penY.put(0, top + FONT_HEIGHT_IN_PIXELS + line * LINE_SPACING_IN_PIXELS);
                 index = writeLine(lines.get(line), penX, penY, quad, vertices, index);
             }
         }
         return vertices;
+    }
+
+    // The widest line, from the pen at its start to the pen after its last character
+    private float textWidth() {
+        float widest = 0.0f;
+        for (String line : lines) {
+            float width = 0.0f;
+            for (char character : line.toCharArray()) {
+                width += glyphs.get(glyphOf(character)).xadvance();
+            }
+            widest = Math.max(widest, width);
+        }
+        return widest;
     }
 
     // From the top of the first line to the bottom of the last one
