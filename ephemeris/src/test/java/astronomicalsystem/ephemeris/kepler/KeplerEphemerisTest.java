@@ -45,17 +45,7 @@ class KeplerEphemerisTest {
             .build();
 
     @Test
-    void theCentralBodyAloneRestsAtTheOrigin() {
-        KeplerEphemeris SUT = new KeplerEphemeris(SUN, J2000, List.of());
-
-        List<Body> bodies = SUT.ephemerisAt(J2000).bodies();
-
-        assertThat(bodies).containsExactly(
-                new Body(SUN.name(), SUN.kind(), SUN.mass(), SUN.radius(), Vector3.ZERO, Vector3.ZERO));
-    }
-
-    @Test
-    void thePositionsAreComputedFromOrbitalElements() {
+    void theCentralBodyAloneRestsAtTheOriginByItsElements() {
         KeplerEphemeris SUT = new KeplerEphemeris(SUN, J2000, List.of());
 
         Ephemeris ephemeris = SUT.ephemerisAt(J2000);

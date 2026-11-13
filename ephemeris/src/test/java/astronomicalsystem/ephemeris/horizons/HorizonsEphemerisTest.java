@@ -44,19 +44,10 @@ class HorizonsEphemerisTest {
         when(horizons.entryOf(new HorizonsQuery(EARTH.command(), DATE)))
                 .thenReturn(new EphemerisEntry(DATE, EARTH_STATE));
 
-        List<Body> bodies = SUT.ephemerisAt(DATE).bodies();
-
-        assertThat(bodies).containsExactly(SUN.body().in(SUN_STATE), EARTH.body().in(EARTH_STATE));
-    }
-
-    @Test
-    void thePositionsComeFromHorizons() {
-        HorizonsEphemeris SUT = new HorizonsEphemeris(horizons, List.of(SUN));
-        when(horizons.entryOf(new HorizonsQuery(SUN.command(), DATE))).thenReturn(new EphemerisEntry(DATE, SUN_STATE));
-
         Ephemeris ephemeris = SUT.ephemerisAt(DATE);
 
-        assertThat(ephemeris).isEqualTo(new Ephemeris(List.of(SUN.body().in(SUN_STATE)), Provenance.JPL_HORIZONS));
+        assertThat(ephemeris).isEqualTo(new Ephemeris(
+                List.of(SUN.body().in(SUN_STATE), EARTH.body().in(EARTH_STATE)), Provenance.JPL_HORIZONS));
     }
 
     @Test
