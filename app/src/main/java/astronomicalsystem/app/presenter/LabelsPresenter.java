@@ -48,7 +48,8 @@ public class LabelsPresenter implements Observer<List<Body>> {
     }
 
     private @NotNull Label labelOf(@NotNull Body body, @NotNull ClipPoint centre) {
-        double diameter = styles.get(body.kind()).minimumDiameter();
+        double apparentDiameter = projection.apparentSizeInPixels(2.0 * body.radius().astronomicalUnits(), centre);
+        double diameter = Math.max(styles.get(body.kind()).minimumDiameter(), apparentDiameter);
         ImagePoint inTheImage = projection.imagePoint(centre);
         return new Label(new ImagePoint(inTheImage.x() + diameter / 2.0 + GAP_IN_PIXELS, inTheImage.y()),
                 body.name().value());
