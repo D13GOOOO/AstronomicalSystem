@@ -5,6 +5,7 @@ import astronomicalsystem.core.math.Vector3;
 import astronomicalsystem.core.orbit.StateVector;
 import astronomicalsystem.core.time.JulianDate;
 import astronomicalsystem.ephemeris.BodyProperties;
+import astronomicalsystem.ephemeris.Ephemeris;
 import astronomicalsystem.ephemeris.EphemerisSource;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,6 +41,10 @@ public final class KeplerEphemeris implements EphemerisSource {
                 orbits.stream().map(orbit -> orbit.around(centralBody.mass(), daysSinceEpoch))).toList();
         StateVector centreOfMass = centreOfMass(aroundTheCentralBody);
         return aroundTheCentralBody.stream().map(body -> relativeTo(centreOfMass, body)).toList();
+    }
+
+    public @NotNull Ephemeris ephemerisAt(@NotNull JulianDate date) {
+        throw new UnsupportedOperationException("not yet implemented");
     }
 
     private static @NotNull StateVector centreOfMass(@NotNull List<Body> bodies) {

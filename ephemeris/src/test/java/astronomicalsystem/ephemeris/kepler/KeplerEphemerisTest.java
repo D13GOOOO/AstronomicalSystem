@@ -11,6 +11,8 @@ import astronomicalsystem.core.orbit.OrbitalElements;
 import astronomicalsystem.core.orbit.StateVector;
 import astronomicalsystem.core.time.JulianDate;
 import astronomicalsystem.ephemeris.BodyProperties;
+import astronomicalsystem.ephemeris.Ephemeris;
+import astronomicalsystem.ephemeris.Provenance;
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
 import org.assertj.core.util.DoubleComparator;
 import org.junit.jupiter.api.Test;
@@ -50,6 +52,17 @@ class KeplerEphemerisTest {
 
         assertThat(bodies).containsExactly(
                 new Body(SUN.name(), SUN.kind(), SUN.mass(), SUN.radius(), Vector3.ZERO, Vector3.ZERO));
+    }
+
+    @Test
+    void thePositionsAreComputedFromOrbitalElements() {
+        KeplerEphemeris SUT = new KeplerEphemeris(SUN, J2000, List.of());
+
+        Ephemeris ephemeris = SUT.ephemerisAt(J2000);
+
+        assertThat(ephemeris).isEqualTo(new Ephemeris(
+                List.of(new Body(SUN.name(), SUN.kind(), SUN.mass(), SUN.radius(), Vector3.ZERO, Vector3.ZERO)),
+                Provenance.KEPLER_ELEMENTS));
     }
 
     @Test
