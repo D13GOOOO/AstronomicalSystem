@@ -12,7 +12,7 @@ public class ControlsHelpPresenter {
 
     // The controls of CameraControlsPresenter and KeyboardPresenter
     private static final List<String> CONTROLS = List.of(
-            "Drag: turn  Wheel: zoom  +/-: faster/slower  Space: pause");
+            "Drag: turn  Wheel: zoom  +/-: faster/slower  Space: pause  ,/.: follow");
 
     public ControlsHelpPresenter(@NotNull TextView view) {
         view.show(CONTROLS);
