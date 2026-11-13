@@ -8,6 +8,7 @@ import astronomicalsystem.app.presenter.BodiesPresenter;
 import astronomicalsystem.app.presenter.BodyStyle;
 import astronomicalsystem.app.presenter.CameraControlsPresenter;
 import astronomicalsystem.app.presenter.ControlsHelpPresenter;
+import astronomicalsystem.app.presenter.ProvenancePresenter;
 import astronomicalsystem.app.presenter.TimeControlsPresenter;
 import astronomicalsystem.app.presenter.TimeFlowPresenter;
 import astronomicalsystem.app.time.ObservableTimeline;
@@ -28,6 +29,7 @@ import astronomicalsystem.core.physics.TimeStep;
 import astronomicalsystem.core.physics.VelocityVerlet;
 import astronomicalsystem.core.simulation.ObservableSimulation;
 import astronomicalsystem.core.time.JulianDate;
+import astronomicalsystem.ephemeris.Ephemeris;
 import astronomicalsystem.ephemeris.EphemerisSource;
 import astronomicalsystem.ephemeris.SolarSystem;
 import astronomicalsystem.ephemeris.horizons.HorizonsClient;
@@ -75,14 +77,16 @@ public final class Main {
         EphemerisSource solarSystem = SolarSystem.withFallback(
                 new HorizonsClient(new JdkHttpTransport(HORIZONS_TIMEOUT), new HorizonsParser()));
         JulianDate now = JulianDate.at(Instant.now());
+        Ephemeris initialState = solarSystem.ephemerisAt(now);
         ObservableSimulation simulation = new ObservableSimulation(
                 new VelocityVerlet(new NewtonianGravity(GravitationalParameter.GRAVITATIONAL_CONSTANT, NO_SOFTENING)),
-                new MergingCollisions(), solarSystem.ephemerisAt(now).bodies());
+                new MergingCollisions(), initialState.bodies());
         ObservableTimeline timeline = new ObservableTimeline(simulation, now, ONE_HOUR, TEN_DAYS_PER_SECOND);
         // The scene and the text need the OpenGL context of the window
         try (GlfwWindow window = GlfwWindow.open(TITLE, WIDTH, HEIGHT); GlDiscs scene = GlDiscs.create();
              GlText headUpDisplay = GlText.create(Corner.TOP_LEFT);
-             GlText controlsHelp = GlText.create(Corner.BOTTOM_LEFT)) {
+             GlText controlsHelp = GlText.create(Corner.BOTTOM_LEFT);
+             GlText provenance = GlText.create(Corner.BOTTOM_RIGHT)) {
             ObservableCameraRig camera = new ObservableCameraRig(BARYCENTRE, FIRST_VIEW, LENS,
                     new Viewport(WIDTH, HEIGHT));
             BodiesPresenter bodies = new BodiesPresenter(scene, camera.camera(), STYLES);
@@ -92,9 +96,11 @@ public final class Main {
             timeline.addObserver(new TimeFlowPresenter(headUpDisplay));
             new TimeControlsPresenter(window, timeline);
             new ControlsHelpPresenter(controlsHelp);
+            new ProvenancePresenter(provenance, initialState.provenance());
             simulation.notifyObservers();
             timeline.notifyObservers();
-            new MainLoop(window, new SystemClock(), timeline, new Layers(List.of(scene, headUpDisplay, controlsHelp))).run();
+            Layers picture = new Layers(List.of(scene, headUpDisplay, controlsHelp, provenance));
+            new MainLoop(window, new SystemClock(), timeline, picture).run();
         }
     }
 }
