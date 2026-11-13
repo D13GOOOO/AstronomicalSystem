@@ -37,7 +37,7 @@ class GlTextIntegrationTest {
     @BeforeEach
     void openAWindow() {
         window = GlfwWindow.open(TITLE, WIDTH, HEIGHT);
-        SUT = GlText.create();
+        SUT = GlText.create(Corner.TOP_LEFT);
     }
 
     // The font atlas is deleted while the context still exists

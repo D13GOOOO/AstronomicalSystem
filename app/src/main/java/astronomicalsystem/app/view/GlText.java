@@ -111,13 +111,6 @@ public final class GlText implements TextView, Drawable, AutoCloseable {
     }
 
     /**
-     * @throws IllegalStateException if the font or the shaders cannot be loaded
-     */
-    public static @NotNull GlText create() {
-        return create(Corner.TOP_LEFT);
-    }
-
-    /**
      * @param corner where the lines are written
      * @throws IllegalStateException if the font or the shaders cannot be loaded
      */

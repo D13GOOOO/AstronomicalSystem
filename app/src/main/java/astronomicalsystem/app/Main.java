@@ -13,6 +13,7 @@ import astronomicalsystem.app.time.ObservableTimeline;
 import astronomicalsystem.app.time.SystemClock;
 import astronomicalsystem.app.time.TimeWarp;
 import astronomicalsystem.app.view.Colour;
+import astronomicalsystem.app.view.Corner;
 import astronomicalsystem.app.view.GlDiscs;
 import astronomicalsystem.app.view.GlText;
 import astronomicalsystem.app.view.GlfwWindow;
@@ -79,7 +80,7 @@ public final class Main {
         ObservableTimeline timeline = new ObservableTimeline(simulation, now, ONE_HOUR, TEN_DAYS_PER_SECOND);
         // The scene and the text need the OpenGL context of the window
         try (GlfwWindow window = GlfwWindow.open(TITLE, WIDTH, HEIGHT); GlDiscs scene = GlDiscs.create();
-             GlText headUpDisplay = GlText.create()) {
+             GlText headUpDisplay = GlText.create(Corner.TOP_LEFT)) {
             ObservableCameraRig camera = new ObservableCameraRig(BARYCENTRE, FIRST_VIEW, LENS,
                     new Viewport(WIDTH, HEIGHT));
             BodiesPresenter bodies = new BodiesPresenter(scene, camera.camera(), STYLES);
