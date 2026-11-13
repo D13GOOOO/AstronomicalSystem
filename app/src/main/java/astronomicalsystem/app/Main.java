@@ -17,6 +17,7 @@ import astronomicalsystem.app.time.TimeWarp;
 import astronomicalsystem.app.view.Colour;
 import astronomicalsystem.app.view.Corner;
 import astronomicalsystem.app.view.GlDiscs;
+import astronomicalsystem.app.view.GlFont;
 import astronomicalsystem.app.view.GlText;
 import astronomicalsystem.app.view.GlfwWindow;
 import astronomicalsystem.app.view.Layers;
@@ -82,11 +83,12 @@ public final class Main {
                 new VelocityVerlet(new NewtonianGravity(GravitationalParameter.GRAVITATIONAL_CONSTANT, NO_SOFTENING)),
                 new MergingCollisions(), initialState.bodies());
         ObservableTimeline timeline = new ObservableTimeline(simulation, now, ONE_HOUR, TEN_DAYS_PER_SECOND);
-        // The scene and the text need the OpenGL context of the window
+        // The scene and the font need the OpenGL context of the window
         try (GlfwWindow window = GlfwWindow.open(TITLE, WIDTH, HEIGHT); GlDiscs scene = GlDiscs.create();
-             GlText headUpDisplay = GlText.create(Corner.TOP_LEFT);
-             GlText controlsHelp = GlText.create(Corner.BOTTOM_LEFT);
-             GlText provenance = GlText.create(Corner.BOTTOM_RIGHT)) {
+             GlFont font = GlFont.create()) {
+            GlText headUpDisplay = new GlText(font, Corner.TOP_LEFT);
+            GlText controlsHelp = new GlText(font, Corner.BOTTOM_LEFT);
+            GlText provenance = new GlText(font, Corner.BOTTOM_RIGHT);
             ObservableCameraRig camera = new ObservableCameraRig(BARYCENTRE, FIRST_VIEW, LENS,
                     new Viewport(WIDTH, HEIGHT));
             BodiesPresenter bodies = new BodiesPresenter(scene, camera.camera(), STYLES);

@@ -34,18 +34,20 @@ class GlTextIntegrationTest {
     private static final float HALF_BRIGHT = 0.5f;
 
     private GlfwWindow window;
+    private GlFont font;
     private GlText SUT;
 
     @BeforeEach
     void openAWindow() {
         window = GlfwWindow.open(TITLE, WIDTH, HEIGHT);
-        SUT = GlText.create(Corner.TOP_LEFT);
+        font = GlFont.create();
+        SUT = new GlText(font, Corner.TOP_LEFT);
     }
 
     // The font atlas is deleted while the context still exists
     @AfterEach
     void closeTheWindow() {
-        SUT.close();
+        font.close();
         window.close();
     }
 
@@ -72,30 +74,28 @@ class GlTextIntegrationTest {
 
     @Test
     void textForTheBottomLeftCornerLightsThatCornerOnly() {
-        try (GlText bottomLeft = GlText.create(Corner.BOTTOM_LEFT)) {
-            bottomLeft.show(List.of(CAPITALS));
-            clearToBlack();
+        GlText bottomLeft = new GlText(font, Corner.BOTTOM_LEFT);
+        bottomLeft.show(List.of(CAPITALS));
+        clearToBlack();
 
-            bottomLeft.draw();
+        bottomLeft.draw();
 
-            assertThat(brightestRedInTheBottomLeftCorner()).isGreaterThan(HALF_BRIGHT);
-            assertThat(brightestRedInTheTopLeftCorner()).isZero();
-        }
+        assertThat(brightestRedInTheBottomLeftCorner()).isGreaterThan(HALF_BRIGHT);
+        assertThat(brightestRedInTheTopLeftCorner()).isZero();
     }
 
     // Right-aligned: within the image and short of its right edge
     @Test
     void textForTheBottomRightCornerEndsAMarginAwayFromTheRightEdge() {
-        try (GlText bottomRight = GlText.create(Corner.BOTTOM_RIGHT)) {
-            bottomRight.show(List.of(CAPITALS));
-            clearToBlack();
+        GlText bottomRight = new GlText(font, Corner.BOTTOM_RIGHT);
+        bottomRight.show(List.of(CAPITALS));
+        clearToBlack();
 
-            bottomRight.draw();
+        bottomRight.draw();
 
-            assertThat(brightestRedInTheBottomRightCorner()).isGreaterThan(HALF_BRIGHT);
-            assertThat(brightestRedInTheRightMargin()).isZero();
-            assertThat(brightestRedInTheBottomLeftCorner()).isZero();
-        }
+        assertThat(brightestRedInTheBottomRightCorner()).isGreaterThan(HALF_BRIGHT);
+        assertThat(brightestRedInTheRightMargin()).isZero();
+        assertThat(brightestRedInTheBottomLeftCorner()).isZero();
     }
 
     private static void clearToBlack() {
