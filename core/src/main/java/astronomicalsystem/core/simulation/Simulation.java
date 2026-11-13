@@ -34,7 +34,7 @@ public class Simulation implements Advanceable {
 
     @Override
     public void advance(@NotNull TimeStep timeStep) {
-        bodies = List.copyOf(collisions.resolve(integrator.step(bodies, timeStep)));
+        step(timeStep);
     }
 
     /**
@@ -44,7 +44,13 @@ public class Simulation implements Advanceable {
      */
     public void advance(@NotNull TimeStep timeStep, int steps) {
         for (int step = 0; step < steps; step++) {
-            advance(timeStep);
+            step(timeStep);
         }
+    }
+
+    // Not overridable, unlike the advances: a subclass that acts after an advance acts once however
+    // many steps it takes
+    private void step(@NotNull TimeStep timeStep) {
+        bodies = List.copyOf(collisions.resolve(integrator.step(bodies, timeStep)));
     }
 }
