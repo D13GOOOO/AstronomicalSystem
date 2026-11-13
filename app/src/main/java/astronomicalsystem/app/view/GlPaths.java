@@ -4,8 +4,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+import static org.lwjgl.opengl.GL11.GL_DEPTH_TEST;
 import static org.lwjgl.opengl.GL11.GL_FLOAT;
 import static org.lwjgl.opengl.GL11.GL_LINE_STRIP;
+import static org.lwjgl.opengl.GL11.glDisable;
 import static org.lwjgl.opengl.GL11.glDrawArrays;
 import static org.lwjgl.opengl.GL15.GL_ARRAY_BUFFER;
 import static org.lwjgl.opengl.GL15.GL_STREAM_DRAW;
@@ -71,6 +73,9 @@ public final class GlPaths implements PathsView, Drawable, AutoCloseable {
 
     @Override
     public void draw() {
+        // Without the depth test nothing is written in the depth buffer: the paths lie under the
+        // discs drawn after them, which hide one another only by their own depth
+        glDisable(GL_DEPTH_TEST);
         glUseProgram(program);
         glBindVertexArray(vertexArray);
         glBindBuffer(GL_ARRAY_BUFFER, buffer);
