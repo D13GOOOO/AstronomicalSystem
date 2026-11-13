@@ -50,8 +50,8 @@ class TrajectoryPredictorTest {
         List<Trajectory> trajectories = SUT.predict(INITIAL_BODIES);
 
         assertThat(trajectories).containsExactly(
-                new Trajectory(SUN.name(), List.of(SUN.position(), SUN.position())),
-                new Trajectory(EARTH.name(), List.of(EARTH.position(), MOVED_EARTH.position())));
+                trajectoryOf(SUN, SUN.position(), SUN.position()),
+                trajectoryOf(EARTH, EARTH.position(), MOVED_EARTH.position()));
     }
 
     @Test
@@ -65,9 +65,8 @@ class TrajectoryPredictorTest {
         List<Trajectory> trajectories = SUT.predict(INITIAL_BODIES);
 
         assertThat(trajectories).containsExactly(
-                new Trajectory(SUN.name(), List.of(SUN.position(), SUN.position(), SUN.position())),
-                new Trajectory(EARTH.name(),
-                        List.of(EARTH.position(), earthAt(2.0).position(), earthAt(4.0).position())));
+                trajectoryOf(SUN, SUN.position(), SUN.position(), SUN.position()),
+                trajectoryOf(EARTH, EARTH.position(), earthAt(2.0).position(), earthAt(4.0).position()));
     }
 
     // The Earth falls into the Sun, which keeps its name; Jupiter moves from the third place to the second
@@ -83,9 +82,14 @@ class TrajectoryPredictorTest {
         List<Trajectory> trajectories = SUT.predict(List.of(SUN, EARTH, JUPITER));
 
         assertThat(trajectories).containsExactly(
-                new Trajectory(SUN.name(), List.of(SUN.position(), sunWithTheEarth.position())),
-                new Trajectory(EARTH.name(), List.of(EARTH.position())),
-                new Trajectory(JUPITER.name(), List.of(JUPITER.position(), MOVED_JUPITER.position())));
+                trajectoryOf(SUN, SUN.position(), sunWithTheEarth.position()),
+                trajectoryOf(EARTH, EARTH.position()),
+                trajectoryOf(JUPITER, JUPITER.position(), MOVED_JUPITER.position()));
+    }
+
+    // Named after the body, and of its kind
+    private static Trajectory trajectoryOf(Body body, Vector3... points) {
+        return new Trajectory(body.name(), body.kind(), List.of(points));
     }
 
     // The Earth after some steps, on the y-axis as far as the number of steps

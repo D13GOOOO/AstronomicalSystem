@@ -1,6 +1,7 @@
 package astronomicalsystem.core.simulation;
 
 import astronomicalsystem.core.body.Body;
+import astronomicalsystem.core.body.BodyKind;
 import astronomicalsystem.core.body.BodyName;
 import astronomicalsystem.core.math.Vector3;
 import astronomicalsystem.core.physics.CollisionResolver;
@@ -48,7 +49,7 @@ public final class TrajectoryPredictor {
             advanceToTheNextPoint(future);
             addPositions(future.bodies(), paths);
         }
-        return paths.entrySet().stream().map(path -> new Trajectory(path.getKey(), path.getValue())).toList();
+        return paths.entrySet().stream().map(path -> new Trajectory(path.getKey(), BodyKind.STAR, path.getValue())).toList();
     }
 
     private void advanceToTheNextPoint(@NotNull Simulation future) {
