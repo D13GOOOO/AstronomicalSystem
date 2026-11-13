@@ -74,9 +74,14 @@ public final class GlPaths implements PathsView, Drawable, AutoCloseable {
         glUseProgram(program);
         glBindVertexArray(vertexArray);
         glBindBuffer(GL_ARRAY_BUFFER, buffer);
-        float[] vertices = vertices();
-        glBufferData(GL_ARRAY_BUFFER, vertices, GL_STREAM_DRAW);
-        glDrawArrays(GL_LINE_STRIP, 0, vertices.length / FLOATS_PER_POINT);
+        glBufferData(GL_ARRAY_BUFFER, vertices(), GL_STREAM_DRAW);
+        // One strip per path, so that the end of a path is not joined to the start of the next one
+        int first = 0;
+        for (Path path : paths) {
+            int count = path.points().size();
+            glDrawArrays(GL_LINE_STRIP, first, count);
+            first += count;
+        }
         glBindVertexArray(0);
     }
 
