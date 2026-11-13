@@ -18,7 +18,7 @@ import java.util.Map;
  * Foresees the paths of the bodies by running a copy of their simulation ahead in time, with the
  * same integrator, collisions and time step: the prediction is what the simulation will do.
  */
-public final class TrajectoryPredictor {
+public final class TrajectoryPredictor implements Predictor {
 
     private final Integrator integrator;
     private final CollisionResolver collisions;
@@ -39,6 +39,7 @@ public final class TrajectoryPredictor {
      *         another one stops where it was last seen, and the merged body goes on with the
      *         trajectory of the one whose name it keeps
      */
+    @Override
     public @NotNull List<Trajectory> predict(@NotNull List<Body> bodies) {
         Simulation future = new Simulation(integrator, collisions, bodies);
         // By name, since merges shift the bodies that follow them in the list; in the order of the
