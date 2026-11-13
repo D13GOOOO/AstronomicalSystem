@@ -127,6 +127,10 @@ public final class GlText implements TextView, Drawable, AutoCloseable {
         return new GlText(Corner.TOP_LEFT, program, vertexArray, buffer, atlas, glyphs);
     }
 
+    public static @NotNull GlText create(@NotNull Corner corner) {
+        return create();
+    }
+
     @Override
     public void show(@NotNull List<String> lines) {
         this.lines = List.copyOf(lines);
