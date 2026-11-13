@@ -23,8 +23,10 @@ import java.util.Map;
 public class TrajectoriesPresenter implements Observer<List<Trajectory>> {
 
     private final PathsView view;
-    private final Projection projection;
     private final Map<BodyKind, Colour> colours;
+    // The latest camera and the latest trajectories: a change of either draws the paths again
+    private Projection projection;
+    private List<Trajectory> trajectories = List.of();
 
     /**
      * @param colours precondition: a colour for every kind of body the simulation contains
@@ -38,7 +40,8 @@ public class TrajectoriesPresenter implements Observer<List<Trajectory>> {
 
     @Override
     public void update(@NotNull Observable<List<Trajectory>> subject, @NotNull List<Trajectory> state) {
-        view.show(state.stream().map(this::pathOf).toList());
+        trajectories = List.copyOf(state);
+        redraw();
     }
 
     /**
@@ -46,7 +49,13 @@ public class TrajectoriesPresenter implements Observer<List<Trajectory>> {
      */
     public @NotNull Observer<Projection> cameraObserver() {
         return (subject, camera) -> {
+            projection = camera;
+            redraw();
         };
+    }
+
+    private void redraw() {
+        view.show(trajectories.stream().map(this::pathOf).toList());
     }
 
     private @NotNull Path pathOf(@NotNull Trajectory trajectory) {
