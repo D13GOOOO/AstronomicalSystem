@@ -12,6 +12,7 @@ import java.util.List;
 import static astronomicalsystem.core.simulation.SolarSystemFixtures.EARTH;
 import static astronomicalsystem.core.simulation.SolarSystemFixtures.INITIAL_BODIES;
 import static astronomicalsystem.core.simulation.SolarSystemFixtures.INTEGRATED_BODIES;
+import static astronomicalsystem.core.simulation.SolarSystemFixtures.INTEGRATED_TWICE;
 import static astronomicalsystem.core.simulation.SolarSystemFixtures.MERGED_BODIES;
 import static astronomicalsystem.core.simulation.SolarSystemFixtures.MOVED_EARTH;
 import static astronomicalsystem.core.simulation.SolarSystemFixtures.SUN;
@@ -24,6 +25,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class SimulationTest {
+
+    private static final int TWO_STEPS = 2;
 
     private final Integrator integrator = mock();
     private final CollisionResolver collisions = mock();
@@ -71,6 +74,17 @@ class SimulationTest {
         SUT.advance(TWO_DAYS);
 
         assertThat(SUT.bodies()).containsExactlyElementsOf(MERGED_BODIES);
+    }
+
+    @Test
+    void severalStepsAreTakenOneAfterTheOther() {
+        Simulation SUT = new Simulation(integrator, collisions, INITIAL_BODIES);
+        when(integrator.step(INITIAL_BODIES, TWO_DAYS)).thenReturn(INTEGRATED_BODIES);
+        when(integrator.step(INTEGRATED_BODIES, TWO_DAYS)).thenReturn(INTEGRATED_TWICE);
+
+        SUT.advance(TWO_DAYS, TWO_STEPS);
+
+        assertThat(SUT.bodies()).containsExactlyElementsOf(INTEGRATED_TWICE);
     }
 
     @Test
