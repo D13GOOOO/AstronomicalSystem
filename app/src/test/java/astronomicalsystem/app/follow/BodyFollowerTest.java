@@ -8,9 +8,15 @@ import astronomicalsystem.core.body.Mass;
 import astronomicalsystem.core.body.Radius;
 import astronomicalsystem.core.math.Vector3;
 import astronomicalsystem.core.observer.Observable;
+import org.junit.jupiter.api.Named;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -57,5 +63,53 @@ class BodyFollowerTest {
         SUT.update(simulation, List.of(SUN_LATER, EARTH));
 
         verify(camera).lookAt(SUN_LATER.position());
+    }
+
+    // The barycentre, the Sun, the Earth and the barycentre again, in either direction
+    static Stream<Arguments> choices() {
+        return Stream.of(
+                Arguments.of(presses("next twice", follower -> {
+                    follower.followNext();
+                    follower.followNext();
+                }), new Focus.OnBody(EARTH.name())),
+                Arguments.of(presses("next three times", follower -> {
+                    follower.followNext();
+                    follower.followNext();
+                    follower.followNext();
+                }), Focus.BARYCENTRE),
+                Arguments.of(presses("next four times", follower -> {
+                    follower.followNext();
+                    follower.followNext();
+                    follower.followNext();
+                    follower.followNext();
+                }), new Focus.OnBody(SUN.name())),
+                Arguments.of(presses("previous once", BodyFollower::followPrevious), new Focus.OnBody(EARTH.name())),
+                Arguments.of(presses("previous twice", follower -> {
+                    follower.followPrevious();
+                    follower.followPrevious();
+                }), new Focus.OnBody(SUN.name())),
+                Arguments.of(presses("previous three times", follower -> {
+                    follower.followPrevious();
+                    follower.followPrevious();
+                    follower.followPrevious();
+                }), Focus.BARYCENTRE),
+                Arguments.of(presses("next then previous", follower -> {
+                    follower.followNext();
+                    follower.followPrevious();
+                }), Focus.BARYCENTRE));
+    }
+
+    @ParameterizedTest
+    @MethodSource("choices")
+    void theChoicesGoRoundTheBarycentreAndTheBodiesInTheirOrder(Consumer<BodyFollower> choices, Focus focus) {
+        SUT.update(simulation, List.of(SUN, EARTH));
+
+        choices.accept(SUT);
+
+        assertThat(SUT.focus()).isEqualTo(focus);
+    }
+
+    private static Named<Consumer<BodyFollower>> presses(String name, Consumer<BodyFollower> choices) {
+        return Named.of(name, choices);
     }
 }
