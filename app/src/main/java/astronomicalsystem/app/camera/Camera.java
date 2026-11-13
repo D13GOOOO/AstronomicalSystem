@@ -57,6 +57,10 @@ public final class Camera implements Projection {
 
     @Override
     public @NotNull ImagePoint imagePoint(@NotNull ClipPoint point) {
-        return new ImagePoint(0.0, 0.0);
+        // Perspective division to normalised device coordinates, from -1 to 1 with y upwards
+        double deviceX = point.x() / point.w();
+        double deviceY = point.y() / point.w();
+        return new ImagePoint((1.0 + deviceX) * aspectRatio * pixelsPerDeviceUnit,
+                (1.0 - deviceY) * pixelsPerDeviceUnit);
     }
 }
