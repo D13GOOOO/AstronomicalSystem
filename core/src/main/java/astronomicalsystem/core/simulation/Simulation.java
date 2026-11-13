@@ -36,4 +36,12 @@ public class Simulation implements Advanceable {
     public void advance(@NotNull TimeStep timeStep) {
         bodies = List.copyOf(collisions.resolve(integrator.step(bodies, timeStep)));
     }
+
+    /**
+     * Takes several steps, one after the other.
+     *
+     * @param steps precondition: positive
+     */
+    public void advance(@NotNull TimeStep timeStep, int steps) {
+    }
 }

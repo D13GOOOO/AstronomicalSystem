@@ -1,6 +1,7 @@
 package astronomicalsystem.core.simulation;
 
 import astronomicalsystem.core.body.Body;
+import astronomicalsystem.core.math.Vector3;
 import astronomicalsystem.core.physics.CollisionResolver;
 import astronomicalsystem.core.physics.Integrator;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,6 +25,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class SimulationTest {
+
+    private static final int TWO_STEPS = 2;
+    // A quarter of an orbit per step: after the y-axis, the Earth reaches the negative x-axis
+    private static final List<Body> INTEGRATED_TWICE = List.of(SUN,
+            MOVED_EARTH.withMotion(new Vector3(-1.0, 0.0, 0.0), new Vector3(0.0, -0.0172, 0.0)));
 
     private final Integrator integrator = mock();
     private final CollisionResolver collisions = mock();
@@ -71,6 +77,17 @@ class SimulationTest {
         SUT.advance(TWO_DAYS);
 
         assertThat(SUT.bodies()).containsExactlyElementsOf(MERGED_BODIES);
+    }
+
+    @Test
+    void severalStepsAreTakenOneAfterTheOther() {
+        Simulation SUT = new Simulation(integrator, collisions, INITIAL_BODIES);
+        when(integrator.step(INITIAL_BODIES, TWO_DAYS)).thenReturn(INTEGRATED_BODIES);
+        when(integrator.step(INTEGRATED_BODIES, TWO_DAYS)).thenReturn(INTEGRATED_TWICE);
+
+        SUT.advance(TWO_DAYS, TWO_STEPS);
+
+        assertThat(SUT.bodies()).containsExactlyElementsOf(INTEGRATED_TWICE);
     }
 
     @Test
