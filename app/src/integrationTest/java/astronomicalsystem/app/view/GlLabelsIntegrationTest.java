@@ -29,8 +29,9 @@ class GlLabelsIntegrationTest {
     // In the middle of the image, in pixels from its top left corner
     private static final int ANCHOR_X = 160;
     private static final int ANCHOR_Y = 120;
-    // The capitals are less than 20 pixels tall: they lie within this band around the anchor
-    private static final int HALF_BAND = 15;
+    // The capitals, about 14 pixels tall, lie within this band around the anchor only if they are
+    // centred on it
+    private static final int HALF_BAND = 10;
     private static final int TEXT_WIDTH = 100;
     private static final float HALF_BRIGHT = 0.5f;
 
