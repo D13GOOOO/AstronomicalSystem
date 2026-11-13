@@ -5,6 +5,7 @@ import astronomicalsystem.app.camera.ObservableCameraRig;
 import astronomicalsystem.app.camera.Orbit;
 import astronomicalsystem.app.camera.Viewport;
 import astronomicalsystem.app.follow.ObservableBodyFollower;
+import astronomicalsystem.app.forecast.Forecast;
 import astronomicalsystem.app.presenter.BodiesPresenter;
 import astronomicalsystem.app.presenter.BodyStyle;
 import astronomicalsystem.app.presenter.CameraControlsPresenter;
@@ -14,6 +15,7 @@ import astronomicalsystem.app.presenter.LabelsPresenter;
 import astronomicalsystem.app.presenter.ProvenancePresenter;
 import astronomicalsystem.app.presenter.KeyboardPresenter;
 import astronomicalsystem.app.presenter.TimeFlowPresenter;
+import astronomicalsystem.app.presenter.TrajectoriesPresenter;
 import astronomicalsystem.app.time.ObservableTimeline;
 import astronomicalsystem.app.time.SystemClock;
 import astronomicalsystem.app.time.TimeWarp;
@@ -22,6 +24,7 @@ import astronomicalsystem.app.view.Corner;
 import astronomicalsystem.app.view.GlDiscs;
 import astronomicalsystem.app.view.GlFont;
 import astronomicalsystem.app.view.GlLabels;
+import astronomicalsystem.app.view.GlPaths;
 import astronomicalsystem.app.view.GlText;
 import astronomicalsystem.app.view.GlfwWindow;
 import astronomicalsystem.app.view.Layers;
@@ -33,6 +36,8 @@ import astronomicalsystem.core.physics.NewtonianGravity;
 import astronomicalsystem.core.physics.TimeStep;
 import astronomicalsystem.core.physics.VelocityVerlet;
 import astronomicalsystem.core.simulation.ObservableSimulation;
+import astronomicalsystem.core.simulation.Sampling;
+import astronomicalsystem.core.simulation.TrajectoryPredictor;
 import astronomicalsystem.core.time.JulianDate;
 import astronomicalsystem.ephemeris.Ephemeris;
 import astronomicalsystem.ephemeris.EphemerisSource;
@@ -74,6 +79,20 @@ public final class Main {
             BodyKind.MOON, new BodyStyle(new Colour(0.75, 0.75, 0.75), 4.0),
             BodyKind.COMET, new BodyStyle(new Colour(0.6, 1.0, 0.95), 4.0),
             BodyKind.DEBRIS, new BodyStyle(new Colour(0.6, 0.5, 0.4), 3.0));
+    // The colours of the bodies at half their brightness: the paths stay behind the discs
+    private static final Map<BodyKind, Colour> PATH_COLOURS = Map.of(
+            BodyKind.STAR, new Colour(0.5, 0.425, 0.225),
+            BodyKind.PLANET, new Colour(0.275, 0.375, 0.5),
+            BodyKind.MOON, new Colour(0.375, 0.375, 0.375),
+            BodyKind.COMET, new Colour(0.3, 0.5, 0.475),
+            BodyKind.DEBRIS, new Colour(0.3, 0.25, 0.2));
+    // The paths look a year ahead, a point a day. The prediction takes steps of a day, not of an
+    // hour like the simulation: 365 steps instead of 8766, and the paths differ by less than a pixel
+    private static final TimeStep ONE_DAY = new TimeStep(1.0);
+    private static final Sampling A_YEAR_DAY_BY_DAY = new Sampling(1, 366);
+    // The simulation tells its bodies once per frame: about fifteen predictions a second, each a
+    // couple of milliseconds
+    private static final int FRAMES_PER_PREDICTION = 4;
 
     private Main() {
     }
@@ -83,13 +102,17 @@ public final class Main {
                 new HorizonsClient(new JdkHttpTransport(HORIZONS_TIMEOUT), new HorizonsParser()));
         JulianDate now = JulianDate.at(Instant.now());
         Ephemeris initialState = solarSystem.ephemerisAt(now);
-        ObservableSimulation simulation = new ObservableSimulation(
-                new VelocityVerlet(new NewtonianGravity(GravitationalParameter.GRAVITATIONAL_CONSTANT, NO_SOFTENING)),
-                new MergingCollisions(), initialState.bodies());
+        VelocityVerlet gravity = new VelocityVerlet(
+                new NewtonianGravity(GravitationalParameter.GRAVITATIONAL_CONSTANT, NO_SOFTENING));
+        ObservableSimulation simulation = new ObservableSimulation(gravity, new MergingCollisions(),
+                initialState.bodies());
+        Forecast forecast = new Forecast(
+                new TrajectoryPredictor(gravity, new MergingCollisions(), ONE_DAY, A_YEAR_DAY_BY_DAY),
+                FRAMES_PER_PREDICTION);
         ObservableTimeline timeline = new ObservableTimeline(simulation, now, ONE_HOUR, TEN_DAYS_PER_SECOND);
-        // The scene and the font need the OpenGL context of the window
+        // The scene, the paths and the font need the OpenGL context of the window
         try (GlfwWindow window = GlfwWindow.open(TITLE, WIDTH, HEIGHT); GlDiscs scene = GlDiscs.create();
-             GlFont font = GlFont.create()) {
+             GlPaths paths = GlPaths.create(); GlFont font = GlFont.create()) {
             GlText headUpDisplay = new GlText(font, Corner.TOP_LEFT);
             GlText controlsHelp = new GlText(font, Corner.BOTTOM_LEFT);
             GlText provenance = new GlText(font, Corner.BOTTOM_RIGHT);
@@ -103,6 +126,10 @@ public final class Main {
             LabelsPresenter labels = new LabelsPresenter(names, camera.camera(), STYLES);
             simulation.addObserver(labels);
             camera.addObserver(labels.cameraObserver());
+            TrajectoriesPresenter trajectories = new TrajectoriesPresenter(paths, camera.camera(), PATH_COLOURS);
+            forecast.addObserver(trajectories);
+            camera.addObserver(trajectories.cameraObserver());
+            simulation.addObserver(forecast);
             // After the presenters of the bodies: they draw the new bodies before the camera follows them
             ObservableBodyFollower follower = new ObservableBodyFollower(camera);
             simulation.addObserver(follower);
@@ -115,7 +142,7 @@ public final class Main {
             simulation.notifyObservers();
             timeline.notifyObservers();
             follower.notifyObservers();
-            Layers picture = new Layers(List.of(scene, names, headUpDisplay, focus, controlsHelp, provenance));
+            Layers picture = new Layers(List.of(paths, scene, names, headUpDisplay, focus, controlsHelp, provenance));
             new MainLoop(window, new SystemClock(), timeline, picture).run();
         }
     }
