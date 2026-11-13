@@ -7,27 +7,20 @@ import astronomicalsystem.app.view.Label;
 import astronomicalsystem.app.view.LabelsView;
 import astronomicalsystem.core.body.Body;
 import astronomicalsystem.core.body.BodyKind;
-import astronomicalsystem.core.observer.Observable;
-import astronomicalsystem.core.observer.Observer;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 /**
  * Names the bodies of the simulation next to their discs, every time they or the camera move.
  */
-public class LabelsPresenter implements Observer<List<Body>> {
+public class LabelsPresenter extends ProjectedBodiesPresenter<Label> {
 
     // Between the edge of a disc and its label
     private static final double GAP_IN_PIXELS = 4.0;
 
     private final LabelsView view;
-    private final Map<BodyKind, BodyStyle> styles;
-    // The latest camera and the latest bodies: a change of either rewrites the labels
-    private Projection projection;
-    private List<Body> bodies = List.of();
 
     /**
      * @param styles precondition: a style for every kind of body the simulation contains, the same
@@ -35,43 +28,20 @@ public class LabelsPresenter implements Observer<List<Body>> {
      */
     public LabelsPresenter(@NotNull LabelsView view, @NotNull Projection projection,
                            @NotNull Map<BodyKind, BodyStyle> styles) {
+        super(projection, styles);
         this.view = view;
-        this.projection = projection;
-        this.styles = Map.copyOf(styles);
     }
 
     @Override
-    public void update(@NotNull Observable<List<Body>> subject, @NotNull List<Body> state) {
-        bodies = List.copyOf(state);
-        redraw();
-    }
-
-    /**
-     * @return the observer that names the bodies from the point of view of every new camera
-     */
-    public @NotNull Observer<Projection> cameraObserver() {
-        return (subject, camera) -> {
-            projection = camera;
-            redraw();
-        };
-    }
-
-    private void redraw() {
-        List<Label> labels = new ArrayList<>();
-        for (Body body : bodies) {
-            ClipPoint centre = projection.clipPoint(body.position());
-            if (centre.isInFrontOfTheCamera()) {
-                labels.add(labelOf(body, centre));
-            }
-        }
-        view.show(labels);
-    }
-
-    private @NotNull Label labelOf(@NotNull Body body, @NotNull ClipPoint centre) {
-        double apparentDiameter = projection.apparentSizeInPixels(2.0 * body.radius().astronomicalUnits(), centre);
-        double diameter = Math.max(styles.get(body.kind()).minimumDiameter(), apparentDiameter);
-        ImagePoint inTheImage = projection.imagePoint(centre);
+    protected @NotNull Label markOf(@NotNull Body body, @NotNull BodyStyle style, @NotNull ClipPoint centre,
+                                    double diameter) {
+        ImagePoint inTheImage = imagePointOf(centre);
         return new Label(new ImagePoint(inTheImage.x() + diameter / 2.0 + GAP_IN_PIXELS, inTheImage.y()),
                 body.name().value());
+    }
+
+    @Override
+    protected void show(@NotNull List<Label> labels) {
+        view.show(labels);
     }
 }
