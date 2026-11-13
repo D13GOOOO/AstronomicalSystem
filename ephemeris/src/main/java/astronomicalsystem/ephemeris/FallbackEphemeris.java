@@ -31,6 +31,10 @@ public final class FallbackEphemeris implements EphemerisSource {
 
     @Override
     public @NotNull Ephemeris ephemerisAt(@NotNull JulianDate date) {
-        throw new UnsupportedOperationException("not yet implemented");
+        try {
+            return primary.ephemerisAt(date);
+        } catch (EphemerisUnavailableException | IllegalArgumentException e) {
+            return fallback.ephemerisAt(date);
+        }
     }
 }
