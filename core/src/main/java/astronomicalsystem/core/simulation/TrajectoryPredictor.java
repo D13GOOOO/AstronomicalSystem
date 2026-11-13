@@ -1,6 +1,7 @@
 package astronomicalsystem.core.simulation;
 
 import astronomicalsystem.core.body.Body;
+import astronomicalsystem.core.body.BodyKind;
 import astronomicalsystem.core.body.BodyName;
 import astronomicalsystem.core.math.Vector3;
 import astronomicalsystem.core.physics.CollisionResolver;
@@ -17,7 +18,7 @@ import java.util.Map;
  * Foresees the paths of the bodies by running a copy of their simulation ahead in time, with the
  * same integrator, collisions and time step: the prediction is what the simulation will do.
  */
-public final class TrajectoryPredictor {
+public final class TrajectoryPredictor implements Predictor {
 
     private final Integrator integrator;
     private final CollisionResolver collisions;
@@ -38,22 +39,29 @@ public final class TrajectoryPredictor {
      *         another one stops where it was last seen, and the merged body goes on with the
      *         trajectory of the one whose name it keeps
      */
+    @Override
     public @NotNull List<Trajectory> predict(@NotNull List<Body> bodies) {
         Simulation future = new Simulation(integrator, collisions, bodies);
         // By name, since merges shift the bodies that follow them in the list; in the order of the
         // present bodies
-        Map<BodyName, List<Vector3>> paths = new LinkedHashMap<>();
+        Map<BodyName, Path> paths = new LinkedHashMap<>();
         addPositions(future.bodies(), paths);
         for (int point = 1; point < sampling.points(); point++) {
             future.advance(timeStep, sampling.stepsPerPoint());
             addPositions(future.bodies(), paths);
         }
-        return paths.entrySet().stream().map(path -> new Trajectory(path.getKey(), path.getValue())).toList();
+        return paths.entrySet().stream()
+                .map(path -> new Trajectory(path.getKey(), path.getValue().kind(), path.getValue().points())).toList();
     }
 
-    private static void addPositions(@NotNull List<Body> bodies, @NotNull Map<BodyName, List<Vector3>> paths) {
+    private static void addPositions(@NotNull List<Body> bodies, @NotNull Map<BodyName, Path> paths) {
         for (Body body : bodies) {
-            paths.computeIfAbsent(body.name(), name -> new ArrayList<>()).add(body.position());
+            paths.computeIfAbsent(body.name(), name -> new Path(body.kind(), new ArrayList<>())).points()
+                    .add(body.position());
         }
+    }
+
+    // A trajectory while it is being predicted: its points are still being added
+    private record Path(@NotNull BodyKind kind, @NotNull List<Vector3> points) {
     }
 }

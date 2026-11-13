@@ -1,5 +1,6 @@
 package astronomicalsystem.core.simulation;
 
+import astronomicalsystem.core.body.BodyKind;
 import astronomicalsystem.core.body.BodyName;
 import astronomicalsystem.core.math.Vector3;
 import org.junit.jupiter.api.Test;
@@ -19,7 +20,7 @@ class TrajectoryTest {
     @Test
     void thePointsCannotBeChangedFromOutside() {
         List<Vector3> given = new ArrayList<>(List.of(HERE, THERE));
-        Trajectory SUT = new Trajectory(EARTH, given);
+        Trajectory SUT = new Trajectory(EARTH, BodyKind.PLANET, given);
 
         given.clear();
 
