@@ -43,5 +43,8 @@ public class Simulation implements Advanceable {
      * @param steps precondition: positive
      */
     public void advance(@NotNull TimeStep timeStep, int steps) {
+        for (int step = 0; step < steps; step++) {
+            advance(timeStep);
+        }
     }
 }
