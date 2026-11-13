@@ -16,6 +16,12 @@ public enum Corner {
         public float top(float textHeight, float imageHeight) {
             return imageHeight - MARGIN_IN_PIXELS - textHeight;
         }
+    },
+    BOTTOM_RIGHT {
+        @Override
+        public float top(float textHeight, float imageHeight) {
+            return 0.0f;
+        }
     };
 
     private static final float MARGIN_IN_PIXELS = 10.0f;
