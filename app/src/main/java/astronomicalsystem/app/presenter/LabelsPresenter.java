@@ -42,7 +42,10 @@ public class LabelsPresenter implements Observer<List<Body>> {
     public void update(@NotNull Observable<List<Body>> subject, @NotNull List<Body> state) {
         List<Label> labels = new ArrayList<>();
         for (Body body : state) {
-            labels.add(labelOf(body, projection.clipPoint(body.position())));
+            ClipPoint centre = projection.clipPoint(body.position());
+            if (centre.isInFrontOfTheCamera()) {
+                labels.add(labelOf(body, centre));
+            }
         }
         view.show(labels);
     }
