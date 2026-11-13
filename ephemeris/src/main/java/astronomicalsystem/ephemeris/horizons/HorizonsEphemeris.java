@@ -4,6 +4,7 @@ import astronomicalsystem.core.body.Body;
 import astronomicalsystem.core.time.JulianDate;
 import astronomicalsystem.ephemeris.Ephemeris;
 import astronomicalsystem.ephemeris.EphemerisSource;
+import astronomicalsystem.ephemeris.Provenance;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -29,8 +30,11 @@ public final class HorizonsEphemeris implements EphemerisSource {
         return targets.stream().map(target -> atDate(target, date)).toList();
     }
 
+    /**
+     * @return the bodies of {@link #bodiesAt(JulianDate)}, as Horizons gives them
+     */
     public @NotNull Ephemeris ephemerisAt(@NotNull JulianDate date) {
-        throw new UnsupportedOperationException("not yet implemented");
+        return new Ephemeris(bodiesAt(date), Provenance.JPL_HORIZONS);
     }
 
     private @NotNull Body atDate(@NotNull HorizonsTarget target, @NotNull JulianDate date) {
