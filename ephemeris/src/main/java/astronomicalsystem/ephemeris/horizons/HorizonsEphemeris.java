@@ -2,7 +2,9 @@ package astronomicalsystem.ephemeris.horizons;
 
 import astronomicalsystem.core.body.Body;
 import astronomicalsystem.core.time.JulianDate;
+import astronomicalsystem.ephemeris.Ephemeris;
 import astronomicalsystem.ephemeris.EphemerisSource;
+import astronomicalsystem.ephemeris.Provenance;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -21,11 +23,12 @@ public final class HorizonsEphemeris implements EphemerisSource {
     }
 
     /**
-     * @return the bodies in the order of the targets
+     * @return the bodies in the order of the targets, as Horizons gives them
      */
     @Override
-    public @NotNull List<Body> bodiesAt(@NotNull JulianDate date) {
-        return targets.stream().map(target -> atDate(target, date)).toList();
+    public @NotNull Ephemeris ephemerisAt(@NotNull JulianDate date) {
+        return new Ephemeris(targets.stream().map(target -> atDate(target, date)).toList(),
+                Provenance.JPL_HORIZONS);
     }
 
     private @NotNull Body atDate(@NotNull HorizonsTarget target, @NotNull JulianDate date) {
