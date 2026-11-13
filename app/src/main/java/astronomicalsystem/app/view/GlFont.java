@@ -76,6 +76,8 @@ public final class GlFont implements AutoCloseable {
     private static final int FIRST_CHARACTER = ' ';
     private static final int CHARACTER_COUNT = '~' - ' ' + 1;
     private static final char UNKNOWN = '?';
+    // A capital with a flat top standing on the baseline
+    private static final char CAPITAL = 'H';
     // Large enough for every glyph at this height: baking checks it
     private static final int ATLAS_SIZE = 256;
 
@@ -134,6 +136,14 @@ public final class GlFont implements AutoCloseable {
      */
     float lineSpacing() {
         return LINE_SPACING_IN_PIXELS;
+    }
+
+    /**
+     * @return from the baseline to the top of the capitals, in pixels
+     */
+    float capitalHeight() {
+        // The baked glyph starts this far below the pen, which is on the baseline
+        return -glyphs.get(glyphOf(CAPITAL)).yoff();
     }
 
     /**
