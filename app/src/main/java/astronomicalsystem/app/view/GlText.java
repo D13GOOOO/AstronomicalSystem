@@ -57,7 +57,7 @@ import static org.lwjgl.stb.STBTruetype.stbtt_BakeFontBitmap;
 import static org.lwjgl.stb.STBTruetype.stbtt_GetBakedQuad;
 
 /**
- * Writes lines of text with OpenGL over the picture, from its top left corner, in the font Share
+ * Writes lines of text with OpenGL over the picture, near one of its corners, in the font Share
  * Tech Mono (SIL Open Font License, in the resources next to the font). Needs a current OpenGL 3.3
  * core context, on the thread that created it.
  * <p>
@@ -114,6 +114,14 @@ public final class GlText implements TextView, Drawable, AutoCloseable {
      * @throws IllegalStateException if the font or the shaders cannot be loaded
      */
     public static @NotNull GlText create() {
+        return create(Corner.TOP_LEFT);
+    }
+
+    /**
+     * @param corner where the lines are written
+     * @throws IllegalStateException if the font or the shaders cannot be loaded
+     */
+    public static @NotNull GlText create(@NotNull Corner corner) {
         STBTTBakedChar.Buffer glyphs = STBTTBakedChar.malloc(CHARACTER_COUNT);
         int atlas = bakeAtlas(glyphs);
         int program = ShaderProgram.link("/shaders/text.vert", "/shaders/text.frag");
@@ -124,11 +132,7 @@ public final class GlText implements TextView, Drawable, AutoCloseable {
         attribute(POSITION, 0);
         attribute(ATLAS_POSITION, PAIR);
         glBindVertexArray(0);
-        return new GlText(Corner.TOP_LEFT, program, vertexArray, buffer, atlas, glyphs);
-    }
-
-    public static @NotNull GlText create(@NotNull Corner corner) {
-        return create();
+        return new GlText(corner, program, vertexArray, buffer, atlas, glyphs);
     }
 
     @Override
