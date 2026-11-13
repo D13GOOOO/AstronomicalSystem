@@ -1,5 +1,6 @@
 package astronomicalsystem.app.presenter;
 
+import astronomicalsystem.app.follow.FollowControls;
 import astronomicalsystem.app.time.TimeControls;
 import astronomicalsystem.app.view.KeyboardView;
 import org.junit.jupiter.api.Named;
@@ -20,7 +21,8 @@ class KeyboardPresenterTest {
 
     private final KeyboardView view = mock();
     private final TimeControls time = mock();
-    private final KeyboardPresenter SUT = new KeyboardPresenter(view, time);
+    private final FollowControls follow = mock();
+    private final KeyboardPresenter SUT = new KeyboardPresenter(view, time, follow);
 
     @Test
     void thePresenterHandlesTheKeyboardOfItsView() {
@@ -44,13 +46,30 @@ class KeyboardPresenterTest {
         command.accept(verify(time));
     }
 
+    // Keys without the shift key on both Italian and US layouts
+    static Stream<Arguments> choicesOfFocus() {
+        return Stream.of(
+                Arguments.of(character('.'), Named.of("next", (Consumer<FollowControls>) FollowControls::followNext)),
+                Arguments.of(character(','),
+                        Named.of("previous", (Consumer<FollowControls>) FollowControls::followPrevious)));
+    }
+
+    @ParameterizedTest
+    @MethodSource("choicesOfFocus")
+    void thePunctuationChoosesWhatTheCameraFollows(int codePoint, Consumer<FollowControls> choice) {
+        SUT.characterTyped(codePoint);
+
+        choice.accept(verify(follow));
+        verifyNoInteractions(time);
+    }
+
     @ParameterizedTest
     // Also a letter outside ASCII: e with an acute accent
     @ValueSource(ints = {'a', '0', '_', 'é'})
-    void anyOtherCharacterLeavesTimeAlone(int codePoint) {
+    void anyOtherCharacterLeavesTimeAndCameraAlone(int codePoint) {
         SUT.characterTyped(codePoint);
 
-        verifyNoInteractions(time);
+        verifyNoInteractions(time, follow);
     }
 
     private static Named<Integer> character(char typed) {

@@ -1,5 +1,6 @@
 package astronomicalsystem.app.presenter;
 
+import astronomicalsystem.app.follow.FollowControls;
 import astronomicalsystem.app.time.TimeControls;
 import astronomicalsystem.app.view.KeyboardHandler;
 import astronomicalsystem.app.view.KeyboardView;
@@ -12,7 +13,8 @@ public class KeyboardPresenter implements KeyboardHandler {
 
     private final TimeControls time;
 
-    public KeyboardPresenter(@NotNull KeyboardView view, @NotNull TimeControls time) {
+    public KeyboardPresenter(@NotNull KeyboardView view, @NotNull TimeControls time,
+                             @NotNull FollowControls follow) {
         this.time = time;
         view.addHandlers(this);
     }
