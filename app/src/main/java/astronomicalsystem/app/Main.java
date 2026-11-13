@@ -101,9 +101,12 @@ public final class Main {
             LabelsPresenter labels = new LabelsPresenter(names, camera.camera(), STYLES);
             simulation.addObserver(labels);
             camera.addObserver(labels.cameraObserver());
+            // After the presenters of the bodies: they draw the new bodies before the camera follows them
+            BodyFollower follower = new BodyFollower(camera);
+            simulation.addObserver(follower);
             new CameraControlsPresenter(window, camera);
             timeline.addObserver(new TimeFlowPresenter(headUpDisplay));
-            new KeyboardPresenter(window, timeline, new BodyFollower(camera));
+            new KeyboardPresenter(window, timeline, follower);
             new ControlsHelpPresenter(controlsHelp);
             new ProvenancePresenter(provenance, initialState.provenance());
             simulation.notifyObservers();
