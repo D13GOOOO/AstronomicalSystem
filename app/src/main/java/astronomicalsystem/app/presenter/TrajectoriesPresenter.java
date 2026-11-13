@@ -41,6 +41,14 @@ public class TrajectoriesPresenter implements Observer<List<Trajectory>> {
         view.show(state.stream().map(this::pathOf).toList());
     }
 
+    /**
+     * @return the observer that draws the paths from the point of view of every new camera
+     */
+    public @NotNull Observer<Projection> cameraObserver() {
+        return (subject, camera) -> {
+        };
+    }
+
     private @NotNull Path pathOf(@NotNull Trajectory trajectory) {
         return new Path(trajectory.points().stream().map(projection::clipPoint).toList(),
                 colours.get(trajectory.kind()));

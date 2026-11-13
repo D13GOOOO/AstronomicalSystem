@@ -32,6 +32,8 @@ class TrajectoriesPresenterTest {
     private static final ClipPoint ABOVE_THE_CENTRE = new ClipPoint(0.0, 0.002, 0.5, 2.0);
     private static final ClipPoint RIGHT = new ClipPoint(1.0, 0.0, 0.5, 2.0);
     private static final ClipPoint TOP = new ClipPoint(0.0, 1.0, 0.5, 2.0);
+    private static final ClipPoint LEFT = new ClipPoint(-1.0, 0.0, 0.5, 2.0);
+    private static final ClipPoint BOTTOM = new ClipPoint(0.0, -1.0, 0.5, 2.0);
 
     private static final Colour DARK_YELLOW = new Colour(0.5, 0.5, 0.0);
     private static final Colour DARK_BLUE = new Colour(0.0, 0.0, 0.5);
@@ -41,6 +43,8 @@ class TrajectoriesPresenterTest {
     private final PathsView view = mock();
     private final Projection projection = mock();
     private final Observable<List<Trajectory>> forecast = mock();
+    private final Projection movedCamera = mock();
+    private final Observable<Projection> cameraRig = mock();
     private final TrajectoriesPresenter SUT = new TrajectoriesPresenter(view, projection, COLOURS);
 
     @Test
@@ -54,6 +58,25 @@ class TrajectoriesPresenterTest {
 
         verify(view).show(List.of(new Path(List.of(CENTRE, ABOVE_THE_CENTRE), DARK_YELLOW),
                 new Path(List.of(RIGHT, TOP), DARK_BLUE)));
+    }
+
+    // The camera turned half round the Sun: the Earth goes from the left to the bottom of the image
+    @Test
+    void thePathsAreDrawnFromThePointOfViewOfANewCamera() {
+        givenTheCameraSees(SUN_NOW, CENTRE);
+        givenTheCameraSees(SUN_LATER, ABOVE_THE_CENTRE);
+        givenTheCameraSees(EARTH_NOW, RIGHT);
+        givenTheCameraSees(EARTH_LATER, TOP);
+        when(movedCamera.clipPoint(SUN_NOW)).thenReturn(CENTRE);
+        when(movedCamera.clipPoint(SUN_LATER)).thenReturn(ABOVE_THE_CENTRE);
+        when(movedCamera.clipPoint(EARTH_NOW)).thenReturn(LEFT);
+        when(movedCamera.clipPoint(EARTH_LATER)).thenReturn(BOTTOM);
+        SUT.update(forecast, SUN_AND_EARTH);
+
+        SUT.cameraObserver().update(cameraRig, movedCamera);
+
+        verify(view).show(List.of(new Path(List.of(CENTRE, ABOVE_THE_CENTRE), DARK_YELLOW),
+                new Path(List.of(LEFT, BOTTOM), DARK_BLUE)));
     }
 
     private void givenTheCameraSees(Vector3 point, ClipPoint inClipSpace) {
