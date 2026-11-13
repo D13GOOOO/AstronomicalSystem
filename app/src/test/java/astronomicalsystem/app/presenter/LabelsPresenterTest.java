@@ -36,6 +36,8 @@ class LabelsPresenterTest {
     private static final ImagePoint SUN_IN_THE_IMAGE = new ImagePoint(100.0, 50.0);
     private static final ImagePoint EARTH_IN_THE_IMAGE = new ImagePoint(150.0, 50.0);
     private static final double LESS_THAN_A_PIXEL = 0.25;
+    // Seen from close by, larger than the minimum of its style
+    private static final double FORTY_PIXELS = 40.0;
 
     private static final Colour YELLOW = new Colour(1.0, 1.0, 0.0);
     private static final Colour BLUE = new Colour(0.0, 0.0, 1.0);
@@ -60,6 +62,15 @@ class LabelsPresenterTest {
 
         verify(view).show(List.of(new Label(new ImagePoint(112.0, 50.0), "Sun"),
                 new Label(new ImagePoint(158.0, 50.0), "Earth")));
+    }
+
+    @Test
+    void theLabelOfALargerDiscIsFartherFromItsCentre() {
+        givenTheCameraSees(SUN, SUN_DIAMETER, SUN_IN_CLIP_SPACE, FORTY_PIXELS, SUN_IN_THE_IMAGE);
+
+        SUT.update(simulation, List.of(SUN));
+
+        verify(view).show(List.of(new Label(new ImagePoint(124.0, 50.0), "Sun")));
     }
 
     private void givenTheCameraSees(Body body, double diameter, ClipPoint centre, double apparentSize,
