@@ -103,6 +103,17 @@ class SimulationTest {
         assertThat(SUT.bodies()).containsExactly(SUN, EARTH, ASTEROID);
     }
 
+    @Test
+    void addingABodyResolvesItsCollisions() {
+        Simulation SUT = new Simulation(integrator, collisions, INITIAL_BODIES);
+        List<Body> joined = List.of(SUN, EARTH, ASTEROID);
+        when(collisions.resolve(joined, joined)).thenReturn(MERGED_BODIES);
+
+        SUT.add(ASTEROID);
+
+        assertThat(SUT.bodies()).containsExactlyElementsOf(MERGED_BODIES);
+    }
+
     // Bodies are told apart by their names, for example by the paths and the camera
     @Test
     void aBodyCannotJoinWithTheNameOfAnotherOne() {
