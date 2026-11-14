@@ -54,7 +54,8 @@ public class CameraRig implements CameraModel, CameraTarget, CurrentCamera {
 
     @Override
     public void lookAt(@NotNull Vector3 newTarget, double clearance) {
-        lookAt(newTarget);
+        change(newTarget, new Orbit(Math.max(orbit.distance(), clearance), orbit.azimuth(), orbit.elevation()),
+                viewport);
     }
 
     private void change(@NotNull Vector3 newTarget, @NotNull Orbit newOrbit, @NotNull Viewport newViewport) {
