@@ -12,6 +12,8 @@ import static org.lwjgl.opengl.GL20.glVertexAttribPointer;
 /**
  * Vertices of squares of two triangles drawn around points, where a shader keeps a round shape:
  * what the views of discs and glows share.
+ * <p>
+ * Not covered by unit tests, since it needs a graphics card: see the integration tests of the views.
  */
 final class Squares {
 
