@@ -84,6 +84,7 @@ class BlastTest {
                 .allSatisfy(ember -> assertThat(ember.position().length()).isGreaterThan(EARTH_RADIUS));
     }
 
+    // Embers may still be flying: the fireball is the only flare with a size
     @Test
     void theFireballIsGoneAfterTwentyTimesItsRiseTime() {
         Blast SUT = new Blast(new Collision(EARTH, UP, UP, SPEED, BINDING_ENERGY / 8.0), START);
@@ -91,6 +92,6 @@ class BlastTest {
 
         List<Flare> flares = SUT.flaresAt(new JulianDate(START.days() + 21.0 * riseTime), Vector3.ZERO);
 
-        assertThat(flares).isEmpty();
+        assertThat(flares).allSatisfy(flare -> assertThat(flare.radius()).isZero());
     }
 }
