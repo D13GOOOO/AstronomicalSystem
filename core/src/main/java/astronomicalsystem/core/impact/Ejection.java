@@ -46,14 +46,15 @@ public record Ejection(@NotNull Body merged, @NotNull Mass remnant, @NotNull Lis
         List<Vector3> directions = cone.directions(fragments.size());
         double shell = shellRadius(directions);
         List<Vector3> offsets = directions.stream().map(direction -> direction.times(shell)).toList();
-        // M X = M_lr x + sum m_k (x + a_k): the remnant moves back by sum m_k a_k / M
-        Vector3 position = merged.position().minus(weightedSum(offsets));
-        Body largest = new Body(merged.name(), merged.kind(), remnant, radiusOf(remnant), position,
-                merged.velocity());
         double speed = speedAt(shell);
+        List<Vector3> kicks = directions.stream().map(direction -> direction.times(speed)).toList();
+        // M X = M_lr x + sum m_k (x + a_k): the remnant moves back by sum m_k a_k / M, and likewise
+        // its velocity, so that the centre of mass and the momentum stay
+        Vector3 position = merged.position().minus(weightedSum(offsets));
+        Vector3 velocity = merged.velocity().minus(weightedSum(kicks));
+        Body largest = new Body(merged.name(), merged.kind(), remnant, radiusOf(remnant), position, velocity);
         return Stream.concat(Stream.of(largest), IntStream.range(0, fragments.size())
-                .mapToObj(index -> fragment(index, position.plus(offsets.get(index)),
-                        merged.velocity().plus(directions.get(index).times(speed)))))
+                .mapToObj(index -> fragment(index, position.plus(offsets.get(index)), velocity.plus(kicks.get(index)))))
                 .toList();
     }
 
