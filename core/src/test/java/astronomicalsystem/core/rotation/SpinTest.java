@@ -5,6 +5,8 @@ import astronomicalsystem.core.math.Vector3;
 import astronomicalsystem.core.time.JulianDate;
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -26,5 +28,21 @@ class SpinTest {
         Axes axes = SUT.axesAt(J2000);
 
         assertThat(axes).usingRecursiveComparison(CLOSE_ENOUGH).isEqualTo(new Axes(X_AXIS, Y_AXIS, Z_AXIS));
+    }
+
+    // A quarter turn a day about z, eastwards: a day after the epoch the prime meridian is where
+    // the y-axis was; a day before, with a retrograde rotation, as well
+    @ParameterizedTest(name = "{0} rad/day, {1} days from the epoch")
+    @CsvSource(textBlock = """
+             1.5707963267948966,  1.0
+            -1.5707963267948966, -1.0
+            """)
+    void theBodyTurnsAboutItsPoleAtASteadyRate(double radiansPerDay, double daysFromTheEpoch) {
+        Spin SUT = new Spin(Z_AXIS, X_AXIS, J2000, radiansPerDay);
+
+        Axes axes = SUT.axesAt(new JulianDate(J2000.days() + daysFromTheEpoch));
+
+        assertThat(axes).usingRecursiveComparison(CLOSE_ENOUGH)
+                .isEqualTo(new Axes(Y_AXIS, new Vector3(-1.0, 0.0, 0.0), Z_AXIS));
     }
 }
