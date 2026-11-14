@@ -139,7 +139,7 @@ public final class Main {
             GlLabels names = new GlLabels(font);
             ObservableCameraRig camera = new ObservableCameraRig(BARYCENTRE, FIRST_VIEW, LENS,
                     new Viewport(WIDTH, HEIGHT));
-            BodiesPresenter bodies = new BodiesPresenter(scene, camera.camera(), STYLES);
+            BodiesPresenter bodies = new BodiesPresenter(scene, camera.camera(), STYLES, Map.of(), now);
             simulation.addObserver(bodies);
             camera.addObserver(bodies.cameraObserver());
             LabelsPresenter labels = new LabelsPresenter(names, camera.camera(), STYLES, UNNAMED);

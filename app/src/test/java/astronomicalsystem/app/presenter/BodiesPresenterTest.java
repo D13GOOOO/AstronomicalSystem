@@ -14,6 +14,7 @@ import astronomicalsystem.core.body.Mass;
 import astronomicalsystem.core.body.Radius;
 import astronomicalsystem.core.math.Vector3;
 import astronomicalsystem.core.observer.Observable;
+import astronomicalsystem.core.time.JulianDate;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -52,12 +53,16 @@ class BodiesPresenterTest {
             BodyKind.STAR, new BodyStyle(YELLOW, STAR_MINIMUM, false),
             BodyKind.PLANET, new BodyStyle(BLUE, PLANET_MINIMUM, false));
 
+    private static final Map<BodyName, Skin> NO_SKINS = Map.of();
+    private static final JulianDate START_OF_2026 = new JulianDate(2461041.5);
+
     private final SceneView view = mock();
     private final Projection projection = mock();
     private final Observable<List<Body>> simulation = mock();
     private final Projection movedCamera = mock();
     private final Observable<Projection> cameraRig = mock();
-    private final BodiesPresenter SUT = new BodiesPresenter(view, projection, STYLES);
+    private final BodiesPresenter SUT = new BodiesPresenter(view, projection, STYLES, NO_SKINS,
+            START_OF_2026);
 
     @Test
     void everyBodyIsADiscWithTheStyleOfItsKind() {

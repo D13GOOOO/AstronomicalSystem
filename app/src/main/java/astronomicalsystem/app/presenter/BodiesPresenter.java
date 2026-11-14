@@ -8,7 +8,9 @@ import astronomicalsystem.app.view.SceneView;
 import astronomicalsystem.app.view.Surface;
 import astronomicalsystem.core.body.Body;
 import astronomicalsystem.core.body.BodyKind;
+import astronomicalsystem.core.body.BodyName;
 import astronomicalsystem.core.math.Vector3;
+import astronomicalsystem.core.time.JulianDate;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
@@ -22,14 +24,22 @@ import java.util.Map;
 public class BodiesPresenter extends ProjectedBodiesPresenter<Disc> {
 
     private final SceneView view;
+    private final Map<BodyName, Skin> skins;
+    private JulianDate date;
 
     /**
      * @param styles precondition: a style for every kind of body the simulation contains
+     * @param skins  the bodies that have a map of their surface, by their names; the others are
+     *               drawn in the colour of their kind
+     * @param start  the date of the simulation when it begins
      */
     public BodiesPresenter(@NotNull SceneView view, @NotNull Projection projection,
-                           @NotNull Map<BodyKind, BodyStyle> styles) {
+                           @NotNull Map<BodyKind, BodyStyle> styles, @NotNull Map<BodyName, Skin> skins,
+                           @NotNull JulianDate start) {
         super(projection, styles);
         this.view = view;
+        this.skins = Map.copyOf(skins);
+        this.date = start;
     }
 
     @Override
