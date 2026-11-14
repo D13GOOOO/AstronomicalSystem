@@ -27,8 +27,10 @@ import java.util.stream.Stream;
 public record Ejection(@NotNull Body merged, @NotNull Mass remnant, @NotNull List<Mass> fragments,
                        @NotNull Cone cone, @NotNull BodyName source) {
 
-    // The fragments start on a sphere around the remnant a little wider than they need to clear it
-    // and to keep apart from each other
+    // The fragments start where the debris is a few minutes after the impact, ten radii of the
+    // remnant out, where steps of an hour follow it well; farther if they need it to keep a little
+    // apart from the remnant and from each other
+    private static final double START_IN_RADII = 10.0;
     private static final double CLEARANCE = 1.1;
     // The largest fragment leaves the surface a little faster than the escape speed, the least speed
     // at which it does not fall back; smaller ones faster, as m^(-1/6), as measured for ejecta
@@ -87,10 +89,11 @@ public record Ejection(@NotNull Body merged, @NotNull Mass remnant, @NotNull Lis
     // Two fragments in directions a chord c apart on the unit sphere are c times the shell apart, which
     // must exceed twice the radius of the largest fragment
     private double shellRadius(@NotNull List<Vector3> directions) {
+        double remnantRadius = radiusOf(remnant).astronomicalUnits();
         double largestFragment = radiusOf(fragments.getFirst()).astronomicalUnits();
-        double clearOfTheRemnant = radiusOf(remnant).astronomicalUnits() + largestFragment;
+        double clearOfTheRemnant = remnantRadius + largestFragment;
         double clearOfEachOther = 2.0 * largestFragment / smallestChord(directions);
-        return CLEARANCE * Math.max(clearOfTheRemnant, clearOfEachOther);
+        return Math.max(START_IN_RADII * remnantRadius, CLEARANCE * Math.max(clearOfTheRemnant, clearOfEachOther));
     }
 
     // Infinite for a single direction, which has no neighbour
