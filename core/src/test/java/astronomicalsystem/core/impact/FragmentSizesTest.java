@@ -4,16 +4,29 @@ import astronomicalsystem.core.body.Mass;
 import astronomicalsystem.core.math.Tolerances;
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FragmentSizesTest {
 
     private static final int THREE = 3;
     private static final int TEN = 10;
     private static final RecursiveComparisonConfiguration CLOSE_ENOUGH = Tolerances.closeEnough(1e-12);
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, -1})
+    void atLeastOneFragmentMustBeAllowed(int most) {
+        Mass smallest = new Mass(0.5);
+
+        assertThatThrownBy(() -> new FragmentSizes(smallest, most))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("An impact must be allowed at least one fragment");
+    }
 
     @Test
     void debrisLighterThanTheSmallestFragmentIsDust() {
