@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * Keeps the camera on what the user chose to follow, every time the bodies move.
  */
-public class BodyFollower implements Observer<List<Body>>, FollowControls {
+public class BodyFollower implements Observer<List<Body>>, FollowControls, Following {
 
     // The frame of the simulation is centred on the barycentre of the solar system
     private static final Vector3 BARYCENTRE = Vector3.ZERO;
@@ -27,6 +27,7 @@ public class BodyFollower implements Observer<List<Body>>, FollowControls {
         this.camera = camera;
     }
 
+    @Override
     public @NotNull Focus focus() {
         return focus;
     }
