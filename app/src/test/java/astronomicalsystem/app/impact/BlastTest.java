@@ -27,6 +27,8 @@ class BlastTest {
     private static final double SPEED = 0.01;
     private static final JulianDate START = new JulianDate(2461041.5);
     private static final double PRECISION_PERCENT = 1e-9;
+    // The age is known to some 40 microseconds out of minutes
+    private static final double HEAT_PRECISION_PERCENT = 1e-4;
 
     // An eighth of the binding energy: the fireball grows to half a radius of the Earth, cbrt(1/8),
     // at the speed of the impact, so that it takes R / 2 / v to reach it; looked at twice as late,
@@ -40,5 +42,18 @@ class BlastTest {
                 .getFirst();
 
         assertThat(fireball.radius()).isCloseTo(halfARadius, withinPercentage(PRECISION_PERCENT));
+    }
+
+    // Grown in a rise time t, it glows for twenty of them and cools as exp(-(age - t) / tau), with
+    // tau a third of the time left, 19 t / 3: one tau after it has grown, its heat is 1 / e
+    @Test
+    void theFireballCoolsDownOnceGrown() {
+        Blast SUT = new Blast(new Collision(EARTH, UP, UP, SPEED, BINDING_ENERGY / 8.0), START);
+        double riseTime = EARTH_RADIUS / 2.0 / SPEED;
+
+        Flare fireball = SUT.flaresAt(new JulianDate(START.days() + riseTime * (1.0 + 19.0 / 3.0)), Vector3.ZERO)
+                .getFirst();
+
+        assertThat(fireball.heat()).isCloseTo(Math.exp(-1.0), withinPercentage(HEAT_PRECISION_PERCENT));
     }
 }
