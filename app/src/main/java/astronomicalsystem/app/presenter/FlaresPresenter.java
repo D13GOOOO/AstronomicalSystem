@@ -40,9 +40,15 @@ public class FlaresPresenter implements Observer<List<Flare>> {
     @Override
     public void update(@NotNull Observable<List<Flare>> subject, @NotNull List<Flare> state) {
         flares = List.copyOf(state);
-        view.show(flares.stream().map(this::glowOf).toList());
+        view.show(flares.stream()
+                .filter(flare -> projection.clipPoint(flare.position()).isInFrontOfTheCamera())
+                .map(this::glowOf)
+                .toList());
     }
 
+    /**
+     * @param flare precondition: in front of the camera
+     */
     private @NotNull Glow glowOf(@NotNull Flare flare) {
         ClipPoint centre = projection.clipPoint(flare.position());
         double apparent = projection.apparentSizeInPixels(2.0 * flare.radius(), centre);
