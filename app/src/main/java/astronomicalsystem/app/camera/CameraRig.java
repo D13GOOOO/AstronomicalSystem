@@ -18,6 +18,8 @@ public class CameraRig implements CameraModel, CameraTarget, CurrentCamera {
     // Rebuilt only when the target, the orbit or the viewport changes: the same object means the same
     // picture
     private Projection camera;
+    // How near the camera may come to its target, besides the limits of the orbit
+    private double clearance;
 
     public CameraRig(@NotNull Vector3 target, @NotNull Orbit orbit, @NotNull Lens lens, @NotNull Viewport viewport) {
         this.target = target;
@@ -39,7 +41,7 @@ public class CameraRig implements CameraModel, CameraTarget, CurrentCamera {
 
     @Override
     public void zoomBy(double factor) {
-        change(target, orbit.zoomed(factor), viewport);
+        change(target, clear(orbit.zoomed(factor)), viewport);
     }
 
     @Override
@@ -48,8 +50,14 @@ public class CameraRig implements CameraModel, CameraTarget, CurrentCamera {
     }
 
     @Override
-    public void lookAt(@NotNull Vector3 newTarget) {
-        change(newTarget, orbit, viewport);
+    public void lookAt(@NotNull Vector3 newTarget, double newClearance) {
+        clearance = newClearance;
+        change(newTarget, clear(orbit), viewport);
+    }
+
+    // The same orbit, backed off along the line of sight if it is nearer than the clearance
+    private @NotNull Orbit clear(@NotNull Orbit someOrbit) {
+        return new Orbit(Math.max(someOrbit.distance(), clearance), someOrbit.azimuth(), someOrbit.elevation());
     }
 
     private void change(@NotNull Vector3 newTarget, @NotNull Orbit newOrbit, @NotNull Viewport newViewport) {
@@ -64,6 +72,7 @@ public class CameraRig implements CameraModel, CameraTarget, CurrentCamera {
 
     private @NotNull Projection cameraOf(@NotNull Vector3 someTarget, @NotNull Orbit someOrbit,
                                          @NotNull Viewport someViewport) {
-        return new Camera(someOrbit.eye(someTarget), someTarget, ECLIPTIC_NORTH, lens, someViewport);
+        return new Camera(someOrbit.eye(someTarget), someTarget, ECLIPTIC_NORTH, lens.closeUpTo(someOrbit.distance()),
+                someViewport);
     }
 }

@@ -12,8 +12,10 @@ import org.jetbrains.annotations.NotNull;
  */
 public record Orbit(double distance, double azimuth, double elevation) {
 
-    // Close enough to see a planet as a disc, far enough to see the orbit of Neptune (30 AU)
-    private static final double NEAREST = 0.02;
+    // 150 km, close enough to see the surface of the smallest body fill the image; how near the
+    // camera may come to a body is up to what follows it. Far enough to see the orbit of Neptune
+    // (30 AU)
+    private static final double NEAREST = 1e-6;
     private static final double FARTHEST = 100.0;
     // Short of the poles, where the ecliptic north would be parallel to the line of sight
     private static final double ELEVATION_LIMIT = Math.toRadians(89.0);
@@ -21,7 +23,7 @@ public record Orbit(double distance, double azimuth, double elevation) {
     public Orbit {
         // Written so that NaN fails the comparisons
         if (!(distance >= NEAREST && distance <= FARTHEST)) {
-            throw new IllegalArgumentException("Orbit distance must be between 0.02 and 100 AU");
+            throw new IllegalArgumentException("Orbit distance must be between 1e-6 and 100 AU");
         }
         if (!Double.isFinite(azimuth)) {
             throw new IllegalArgumentException("Orbit azimuth must be finite");

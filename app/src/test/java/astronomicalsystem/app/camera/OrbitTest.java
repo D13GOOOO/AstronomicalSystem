@@ -20,9 +20,9 @@ class OrbitTest {
     // 89.5 degrees = 1.5620696805349264 rad, just beyond the limit of 89 degrees
     @ParameterizedTest
     @CsvSource(textBlock = """
-            0.01,   0.0,       0.0,                 Orbit distance must be between 0.02 and 100 AU
-            100.5,  0.0,       0.0,                 Orbit distance must be between 0.02 and 100 AU
-            NaN,    0.0,       0.0,                 Orbit distance must be between 0.02 and 100 AU
+            5e-7,   0.0,       0.0,                 Orbit distance must be between 1e-6 and 100 AU
+            100.5,  0.0,       0.0,                 Orbit distance must be between 1e-6 and 100 AU
+            NaN,    0.0,       0.0,                 Orbit distance must be between 1e-6 and 100 AU
             1.0,    Infinity,  0.0,                 Orbit azimuth must be finite
             1.0,    NaN,       0.0,                 Orbit azimuth must be finite
             1.0,    0.0,       1.5620696805349264,  Orbit elevation must be within 89 degrees of the ecliptic
@@ -39,7 +39,7 @@ class OrbitTest {
     // The limits themselves, any number of turns, and 89 degrees = 1.5533430342749532 rad
     @ParameterizedTest
     @CsvSource(textBlock = """
-            0.02,   0.0,      0.0
+            1e-6,   0.0,      0.0
             100.0,  0.0,      0.0
             1.0,    -100.0,   1.5533430342749532
             1.0,    100.0,   -1.5533430342749532
@@ -87,12 +87,12 @@ class OrbitTest {
         assertThat(rotated).usingRecursiveComparison(CLOSE_ENOUGH).isEqualTo(new Orbit(DISTANCE, azimuth, elevation));
     }
 
-    // Starting 2 AU away; the distance stops at 0.02 and 100 AU
+    // Starting 2 AU away; the distance stops at 1e-6 and 100 AU
     @ParameterizedTest
     @CsvSource(textBlock = """
             0.5,     1.0
             2.0,     4.0
-            0.001,   0.02
+            1e-7,    1e-6
             100.0, 100.0
             """)
     void zoomingScalesTheDistanceUpToItsLimits(double factor, double distance) {

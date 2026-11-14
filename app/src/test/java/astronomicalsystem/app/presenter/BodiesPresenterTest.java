@@ -4,6 +4,7 @@ import astronomicalsystem.app.camera.Projection;
 import astronomicalsystem.app.view.ClipPoint;
 import astronomicalsystem.app.view.Colour;
 import astronomicalsystem.app.view.Disc;
+import astronomicalsystem.app.view.Lighting;
 import astronomicalsystem.app.view.SceneView;
 import astronomicalsystem.core.body.Body;
 import astronomicalsystem.core.body.BodyKind;
@@ -47,8 +48,8 @@ class BodiesPresenterTest {
     private static final double STAR_MINIMUM = 16.0;
     private static final double PLANET_MINIMUM = 8.0;
     private static final Map<BodyKind, BodyStyle> STYLES = Map.of(
-            BodyKind.STAR, new BodyStyle(YELLOW, STAR_MINIMUM),
-            BodyKind.PLANET, new BodyStyle(BLUE, PLANET_MINIMUM));
+            BodyKind.STAR, new BodyStyle(YELLOW, STAR_MINIMUM, false),
+            BodyKind.PLANET, new BodyStyle(BLUE, PLANET_MINIMUM, false));
 
     private final SceneView view = mock();
     private final Projection projection = mock();
@@ -64,8 +65,8 @@ class BodiesPresenterTest {
 
         SUT.update(simulation, List.of(SUN, EARTH));
 
-        verify(view).show(List.of(new Disc(SUN_IN_CLIP_SPACE, STAR_MINIMUM, YELLOW),
-                new Disc(EARTH_IN_CLIP_SPACE, PLANET_MINIMUM, BLUE)));
+        verify(view).show(List.of(new Disc(SUN_IN_CLIP_SPACE, STAR_MINIMUM, YELLOW, Lighting.OWN_LIGHT),
+                new Disc(EARTH_IN_CLIP_SPACE, PLANET_MINIMUM, BLUE, Lighting.OWN_LIGHT)));
     }
 
     @Test
@@ -74,7 +75,7 @@ class BodiesPresenterTest {
 
         SUT.update(simulation, List.of(SUN));
 
-        verify(view).show(List.of(new Disc(SUN_IN_CLIP_SPACE, FORTY_PIXELS, YELLOW)));
+        verify(view).show(List.of(new Disc(SUN_IN_CLIP_SPACE, FORTY_PIXELS, YELLOW, Lighting.OWN_LIGHT)));
     }
 
     // On the plane of the eye or behind it: no perspective division is possible
@@ -87,7 +88,7 @@ class BodiesPresenterTest {
 
         SUT.update(simulation, List.of(SUN, EARTH));
 
-        verify(view).show(List.of(new Disc(EARTH_IN_CLIP_SPACE, PLANET_MINIMUM, BLUE)));
+        verify(view).show(List.of(new Disc(EARTH_IN_CLIP_SPACE, PLANET_MINIMUM, BLUE, Lighting.OWN_LIGHT)));
         verify(projection, never()).apparentSizeInPixels(anyDouble(), eq(behind));
     }
 
@@ -105,6 +106,6 @@ class BodiesPresenterTest {
 
         SUT.cameraObserver().update(cameraRig, movedCamera);
 
-        verify(view).show(List.of(new Disc(SUN_SEEN_FROM_ELSEWHERE, STAR_MINIMUM, YELLOW)));
+        verify(view).show(List.of(new Disc(SUN_SEEN_FROM_ELSEWHERE, STAR_MINIMUM, YELLOW, Lighting.OWN_LIGHT)));
     }
 }

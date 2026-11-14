@@ -73,4 +73,10 @@ public final class Camera implements Projection {
     public @NotNull Vector3 forward() {
         return forward;
     }
+
+    @Override
+    public @NotNull Vector3 inTheImage(@NotNull Vector3 direction) {
+        // The components along the basis; the viewer is behind the eye, against the line of sight
+        return new Vector3(direction.dot(right), direction.dot(imageUp), -direction.dot(forward));
+    }
 }

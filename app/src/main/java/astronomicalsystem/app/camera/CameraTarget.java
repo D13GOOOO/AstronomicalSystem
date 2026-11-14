@@ -9,8 +9,11 @@ import org.jetbrains.annotations.NotNull;
 public interface CameraTarget {
 
     /**
-     * Moves the camera with its target, so that it sees the new target from the same distance and
-     * direction.
+     * Moves the camera with its target, so that it sees the new target from the same direction and
+     * distance, unless it is nearer than the clearance: then it backs off to it, for example to stay
+     * outside the body it follows. Zooming in stops at the clearance too.
+     *
+     * @param clearance in AU; precondition: positive and finite
      */
-    void lookAt(@NotNull Vector3 target);
+    void lookAt(@NotNull Vector3 target, double clearance);
 }

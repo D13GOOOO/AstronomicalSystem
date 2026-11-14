@@ -16,7 +16,7 @@ class BodyStyleTest {
     @ParameterizedTest
     @ValueSource(doubles = {0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY})
     void constructorRejectsNonPositiveOrNonFiniteDiameters(double minimumDiameter) {
-        assertThatThrownBy(() -> new BodyStyle(WHITE, minimumDiameter))
+        assertThatThrownBy(() -> new BodyStyle(WHITE, minimumDiameter, false))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Minimum diameter must be positive and finite");
     }
@@ -24,6 +24,6 @@ class BodyStyleTest {
     @ParameterizedTest
     @ValueSource(doubles = {HALF_A_PIXEL, SUN_LIKE})
     void constructorAcceptsPositiveFiniteDiameters(double minimumDiameter) {
-        assertThatNoException().isThrownBy(() -> new BodyStyle(WHITE, minimumDiameter));
+        assertThatNoException().isThrownBy(() -> new BodyStyle(WHITE, minimumDiameter, false));
     }
 }
