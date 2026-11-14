@@ -45,6 +45,11 @@ public class LabelsPresenter extends ProjectedBodiesPresenter<Label> {
     }
 
     @Override
+    protected boolean isMarked(@NotNull Body body) {
+        return !unnamed.contains(body.kind());
+    }
+
+    @Override
     protected void show(@NotNull List<Label> labels) {
         view.show(labels);
     }
