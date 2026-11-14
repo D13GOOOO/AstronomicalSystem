@@ -53,4 +53,15 @@ class ImpactTest {
 
         assertThat(remnant.solarMasses()).isCloseTo(3.1823568615992685e-6, withinPercentage(PRECISION_PERCENT));
     }
+
+    // Equal masses at twice the energy where the universal law stops (1.8 Q*_RD): the largest
+    // remnant falls as M_lr = M 0.1 (Q_R / (1.8 Q*_RD))^-1.5 = M 0.1 2^-1.5
+    @Test
+    void aSuperCatastrophicImpactLeavesLittleOfTheBodies() {
+        Impact SUT = new Impact(HALF_AN_EARTH, HALF_AN_EARTH, EARTH_RADIUS, 0.01968628123408058);
+
+        Mass remnant = SUT.largestRemnant();
+
+        assertThat(remnant.solarMasses()).isCloseTo(1.0606601717798214e-7, withinPercentage(PRECISION_PERCENT));
+    }
 }
