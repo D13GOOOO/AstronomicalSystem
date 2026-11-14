@@ -21,14 +21,29 @@ public record FragmentSizes(@NotNull Mass smallest, int most) {
     /**
      * @param debris mass thrown out of the bodies by the impact, in solar masses; precondition:
      *               non-negative and finite
-     * @return the masses of the fragments, from the largest
+     * @return the masses of the fragments, from the largest: as many as can share the debris with
+     *         none lighter than the smallest, up to the most; none if the debris is lighter
      */
     public @NotNull List<Mass> split(double debris) {
         if (debris < smallest.solarMasses()) {
             return List.of();
         }
-        List<Double> weights = IntStream.rangeClosed(1, most).mapToObj(rank -> Math.pow(rank, RANK_EXPONENT)).toList();
-        double total = weights.stream().mapToDouble(Double::doubleValue).sum();
-        return weights.stream().map(weight -> new Mass(debris * weight / total)).toList();
+        // One fragment is always heavy enough, since it takes the whole debris
+        int count = most;
+        while (count > 1 && share(debris, count, count) < smallest.solarMasses()) {
+            count--;
+        }
+        int fragments = count;
+        return IntStream.rangeClosed(1, fragments).mapToObj(rank -> new Mass(share(debris, rank, fragments))).toList();
+    }
+
+    // The mass of the fragment of the given rank, when the debris breaks into count fragments
+    private static double share(double debris, int rank, int count) {
+        double total = IntStream.rangeClosed(1, count).mapToDouble(FragmentSizes::weight).sum();
+        return debris * weight(rank) / total;
+    }
+
+    private static double weight(int rank) {
+        return Math.pow(rank, RANK_EXPONENT);
     }
 }
