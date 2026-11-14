@@ -30,8 +30,13 @@ public class MapDownloads {
         executor.execute(() -> download(source));
     }
 
+    // Only what the files say they cannot give is let go: anything else is a defect, and shows
     private void download(@NotNull MapSource source) {
-        List<byte[]> tiles = source.tiles().stream().map(files::fetch).toList();
-        view.loadMosaic(source.name(), source.columns(), tiles);
+        try {
+            List<byte[]> tiles = source.tiles().stream().map(files::fetch).toList();
+            view.loadMosaic(source.name(), source.columns(), tiles);
+        } catch (MapUnavailableException unavailable) {
+            // The body is drawn in its plain colour
+        }
     }
 }
