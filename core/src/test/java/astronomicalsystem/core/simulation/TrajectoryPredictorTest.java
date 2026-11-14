@@ -6,8 +6,10 @@ import astronomicalsystem.core.body.BodyName;
 import astronomicalsystem.core.body.Mass;
 import astronomicalsystem.core.body.Radius;
 import astronomicalsystem.core.math.Vector3;
+import astronomicalsystem.core.physics.Collision;
 import astronomicalsystem.core.physics.CollisionResolver;
 import astronomicalsystem.core.physics.Integrator;
+import astronomicalsystem.core.physics.Resolution;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -20,7 +22,6 @@ import static astronomicalsystem.core.simulation.SolarSystemFixtures.MOVED_EARTH
 import static astronomicalsystem.core.simulation.SolarSystemFixtures.SUN;
 import static astronomicalsystem.core.simulation.SolarSystemFixtures.TWO_DAYS;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.AdditionalAnswers.returnsLastArg;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -28,6 +29,7 @@ import static org.mockito.Mockito.when;
 class TrajectoryPredictorTest {
 
     private static final Sampling EVERY_STEP_ONCE = new Sampling(1, 2);
+    private static final List<Collision> NO_COLLISIONS = List.of();
     private static final Body JUPITER = new Body(new BodyName("Jupiter"), BodyKind.PLANET, new Mass(9.5e-4),
             new Radius(4.67e-4), new Vector3(5.0, 0.0, 0.0), new Vector3(0.0, 0.0076, 0.0));
     private static final Body MOVED_JUPITER = JUPITER.withMotion(new Vector3(5.0, 0.0152, 0.0), JUPITER.velocity());
@@ -39,7 +41,8 @@ class TrajectoryPredictorTest {
 
     @BeforeEach
     void noCollisionsByDefault() {
-        when(collisions.resolve(anyList(), anyList())).thenAnswer(returnsLastArg());
+        when(collisions.resolve(anyList(), anyList()))
+                .thenAnswer(call -> new Resolution(call.getArgument(1), NO_COLLISIONS));
     }
 
     @Test
@@ -77,7 +80,7 @@ class TrajectoryPredictorTest {
                 .thenReturn(List.of(SUN, MOVED_EARTH, MOVED_JUPITER));
         Body sunWithTheEarth = SUN.mergedWith(MOVED_EARTH);
         when(collisions.resolve(List.of(SUN, EARTH, JUPITER), List.of(SUN, MOVED_EARTH, MOVED_JUPITER)))
-                .thenReturn(List.of(sunWithTheEarth, MOVED_JUPITER));
+                .thenReturn(new Resolution(List.of(sunWithTheEarth, MOVED_JUPITER), NO_COLLISIONS));
 
         List<Trajectory> trajectories = SUT.predict(List.of(SUN, EARTH, JUPITER));
 

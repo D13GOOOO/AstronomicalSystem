@@ -71,6 +71,14 @@ public record Impact(@NotNull Mass target, @NotNull Mass projectile, double cont
         return equalMasses * Math.pow(coupling, 2.0 / (3.0 * COUPLING_EXPONENT) - 1.0);
     }
 
+    /**
+     * @return the kinetic energy of the impact in the frame of the centre of mass, (1/2) mu v², in
+     *         solar masses times AU squared per day squared
+     */
+    public double energy() {
+        return specificEnergy() * totalMass();
+    }
+
     private double totalMass() {
         return target.solarMasses() + projectile.solarMasses();
     }

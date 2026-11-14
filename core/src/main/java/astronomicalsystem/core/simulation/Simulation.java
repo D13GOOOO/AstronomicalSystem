@@ -1,8 +1,10 @@
 package astronomicalsystem.core.simulation;
 
 import astronomicalsystem.core.body.Body;
+import astronomicalsystem.core.physics.Collision;
 import astronomicalsystem.core.physics.CollisionResolver;
 import astronomicalsystem.core.physics.Integrator;
+import astronomicalsystem.core.physics.Resolution;
 import astronomicalsystem.core.physics.TimeStep;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,17 +19,18 @@ import java.util.stream.Stream;
 public class Simulation implements Advanceable, Joinable {
 
     private final Integrator integrator;
-    private final CollisionResolver collisions;
+    private final CollisionResolver resolver;
     // A list rather than a map by name: the integrator and the gravity model work on lists aligned
     // by index, and no operation looks a body up by name yet. Always an unmodifiable copy, so that
     // it can be exposed without copying it again.
     private List<Body> bodies;
+    private List<Collision> latestCollisions = List.of();
 
     public Simulation(@NotNull Integrator integrator, @NotNull CollisionResolver collisions,
                       @NotNull List<Body> initialBodies) {
         this.integrator = integrator;
-        this.collisions = collisions;
-        this.bodies = List.copyOf(collisions.resolve(initialBodies, initialBodies));
+        this.resolver = collisions;
+        this.bodies = List.copyOf(resolver.resolve(initialBodies, initialBodies).bodies());
     }
 
     @Override
@@ -35,7 +38,15 @@ public class Simulation implements Advanceable, Joinable {
         return bodies;
     }
 
+    /**
+     * @return the collisions of the steps of the latest advance, in the order in which they happened
+     */
+    public @NotNull List<Collision> collisions() {
+        return latestCollisions;
+    }
+
     public void advance(@NotNull TimeStep timeStep) {
+        latestCollisions = List.of();
         step(timeStep);
     }
 
@@ -45,7 +56,7 @@ public class Simulation implements Advanceable, Joinable {
             throw new IllegalArgumentException("A body named " + body.name().value() + " is already in the simulation");
         }
         List<Body> joined = Stream.concat(bodies.stream(), Stream.of(body)).toList();
-        bodies = List.copyOf(collisions.resolve(joined, joined));
+        bodies = List.copyOf(resolver.resolve(joined, joined).bodies());
     }
 
     /**
@@ -55,6 +66,7 @@ public class Simulation implements Advanceable, Joinable {
      */
     @Override
     public void advance(@NotNull TimeStep timeStep, int steps) {
+        latestCollisions = List.of();
         for (int step = 0; step < steps; step++) {
             step(timeStep);
         }
@@ -63,6 +75,8 @@ public class Simulation implements Advanceable, Joinable {
     // Not overridable, unlike the advances: a subclass that acts after an advance acts once however
     // many steps it takes
     private void step(@NotNull TimeStep timeStep) {
-        bodies = List.copyOf(collisions.resolve(bodies, integrator.step(bodies, timeStep)));
+        Resolution resolution = resolver.resolve(bodies, integrator.step(bodies, timeStep));
+        bodies = resolution.bodies();
+        latestCollisions = Stream.concat(latestCollisions.stream(), resolution.collisions().stream()).toList();
     }
 }

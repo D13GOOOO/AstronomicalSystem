@@ -1,6 +1,7 @@
 package astronomicalsystem.core.physics;
 
 import astronomicalsystem.core.body.Body;
+import astronomicalsystem.core.impact.Impact;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -15,29 +16,35 @@ import java.util.stream.IntStream;
 public abstract class SweptCollisions implements CollisionResolver {
 
     @Override
-    public final @NotNull List<Body> resolve(@NotNull List<Body> before, @NotNull List<Body> after) {
+    public final @NotNull Resolution resolve(@NotNull List<Body> before, @NotNull List<Body> after) {
         List<Sweep> sweeps = new ArrayList<>(IntStream.range(0, after.size())
                 .mapToObj(i -> new Sweep(before.get(i), after.get(i)))
                 .toList());
+        List<Collision> collisions = new ArrayList<>();
         Meeting meeting = earliestMeeting(sweeps);
         while (meeting.happens()) {
             Sweep second = sweeps.remove(meeting.second());
-            List<Sweep> outcome = outcomeOf(sweeps.get(meeting.first()), second, meeting.fraction());
+            Contact contact = Contact.between(sweeps.get(meeting.first()), second, meeting.fraction());
+            List<Sweep> outcome = outcomeOf(contact);
             sweeps.set(meeting.first(), outcome.getFirst());
             sweeps.addAll(outcome.subList(1, outcome.size()));
+            collisions.add(collisionOf(contact, outcome.getFirst()));
             meeting = earliestMeeting(sweeps);
         }
-        return sweeps.stream().map(Sweep::end).toList();
+        return new Resolution(sweeps.stream().map(Sweep::end).toList(), collisions);
     }
 
     /**
-     * @param first    the body met, the earlier of the two in the order of the system
-     * @param second   the body that meets it
-     * @param fraction of the step at which they start to overlap, in [0, 1)
-     * @return what the collision leaves, not empty: the first body takes the place of the first of
-     *         the two, the others join the system after the bodies already there
+     * @return what the collision leaves, not empty: the first body takes the place of the earlier of
+     *         the two in the order of the system, the others join it after the bodies already there
      */
-    protected abstract @NotNull List<Sweep> outcomeOf(@NotNull Sweep first, @NotNull Sweep second, double fraction);
+    protected abstract @NotNull List<Sweep> outcomeOf(@NotNull Contact contact);
+
+    private static @NotNull Collision collisionOf(@NotNull Contact contact, @NotNull Sweep survivor) {
+        Impact impact = contact.impact();
+        return new Collision(survivor.end().name(), contact.normal(), contact.debrisAxis().normalized(),
+                impact.speed(), impact.energy());
+    }
 
     // On a tie, the first pair in index order meets first
     private static @NotNull Meeting earliestMeeting(@NotNull List<Sweep> sweeps) {

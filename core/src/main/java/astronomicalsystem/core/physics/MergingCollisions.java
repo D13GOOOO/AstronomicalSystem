@@ -11,7 +11,7 @@ import java.util.List;
 public class MergingCollisions extends SweptCollisions {
 
     @Override
-    protected @NotNull List<Sweep> outcomeOf(@NotNull Sweep first, @NotNull Sweep second, double fraction) {
-        return List.of(first.mergedWith(second));
+    protected @NotNull List<Sweep> outcomeOf(@NotNull Contact contact) {
+        return List.of(contact.target().mergedWith(contact.projectile()));
     }
 }
