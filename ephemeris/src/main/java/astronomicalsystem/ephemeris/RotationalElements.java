@@ -36,7 +36,8 @@ public record RotationalElements(double rightAscension, double declination, doub
         Vector3 node = new Vector3(-Math.sin(alpha), Math.cos(alpha), 0.0);
         // W along the equator of the body from the node, eastwards: about the pole
         Vector3 meridian = node.rotatedAbout(pole, Math.toRadians(primeMeridian));
-        return new Spin(inTheEclipticFrame(pole), inTheEclipticFrame(meridian), J2000, 0.0);
+        return new Spin(inTheEclipticFrame(pole), inTheEclipticFrame(meridian), J2000,
+                Math.toRadians(degreesPerDay));
     }
 
     // The ecliptic frame is the equatorial one turned about their common x-axis by the obliquity
