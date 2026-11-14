@@ -27,6 +27,10 @@ public class MapDownloads {
     }
 
     public void request(@NotNull MapSource source) {
+        executor.execute(() -> download(source));
+    }
+
+    private void download(@NotNull MapSource source) {
         List<byte[]> tiles = source.tiles().stream().map(files::fetch).toList();
         view.loadMosaic(source.name(), source.columns(), tiles);
     }
