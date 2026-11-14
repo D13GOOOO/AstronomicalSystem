@@ -4,6 +4,7 @@ import astronomicalsystem.core.body.Body;
 import astronomicalsystem.core.physics.Collision;
 import astronomicalsystem.core.physics.CollisionResolver;
 import astronomicalsystem.core.physics.Integrator;
+import astronomicalsystem.core.physics.Resolution;
 import astronomicalsystem.core.physics.TimeStep;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,6 +24,7 @@ public class Simulation implements Advanceable, Joinable {
     // by index, and no operation looks a body up by name yet. Always an unmodifiable copy, so that
     // it can be exposed without copying it again.
     private List<Body> bodies;
+    private List<Collision> latestCollisions = List.of();
 
     public Simulation(@NotNull Integrator integrator, @NotNull CollisionResolver collisions,
                       @NotNull List<Body> initialBodies) {
@@ -40,7 +42,7 @@ public class Simulation implements Advanceable, Joinable {
      * @return the collisions of the steps of the latest advance, in the order in which they happened
      */
     public @NotNull List<Collision> collisions() {
-        return List.of();
+        return latestCollisions;
     }
 
     public void advance(@NotNull TimeStep timeStep) {
@@ -71,6 +73,8 @@ public class Simulation implements Advanceable, Joinable {
     // Not overridable, unlike the advances: a subclass that acts after an advance acts once however
     // many steps it takes
     private void step(@NotNull TimeStep timeStep) {
-        bodies = List.copyOf(collisions.resolve(bodies, integrator.step(bodies, timeStep)).bodies());
+        Resolution resolution = collisions.resolve(bodies, integrator.step(bodies, timeStep));
+        bodies = resolution.bodies();
+        latestCollisions = resolution.collisions();
     }
 }
