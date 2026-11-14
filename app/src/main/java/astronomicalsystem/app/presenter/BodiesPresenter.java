@@ -22,8 +22,8 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Shows the bodies of the simulation as discs, lit by the brightest star, every time they or the
- * camera move.
+ * Shows the bodies of the simulation as discs, lit by the brightest star and wrapped in the maps of
+ * their surfaces, every time they move, the camera moves or time goes by.
  */
 public class BodiesPresenter extends ProjectedBodiesPresenter<Disc> {
 
@@ -51,6 +51,8 @@ public class BodiesPresenter extends ProjectedBodiesPresenter<Disc> {
      */
     public @NotNull Observer<TimeFlow> timeObserver() {
         return (subject, flow) -> {
+            date = flow.date();
+            redraw();
         };
     }
 
