@@ -29,6 +29,8 @@ class FragmentingCollisionsTest {
     // About 20 km/s, twice the escape speed: a giant impact
     private static final double FAST = 0.01155;
     private static final double PRECISION_PERCENT = 1e-9;
+    // Well away from the normal, where a head-on impact sends the debris
+    private static final double CLEARLY_DOWNRANGE = 0.2;
 
     private final FragmentingCollisions SUT = new FragmentingCollisions(SIZES);
 
@@ -58,6 +60,29 @@ class FragmentingCollisionsTest {
                 .isCloseTo(EARTH.mass().solarMasses() + after.mass().solarMasses(), withinPercentage(PRECISION_PERCENT));
     }
 
+    // Half a contact distance off the line of the centres, the projectile touches where the normal is
+    // (0.866, 0.5, 0), and moves along the surface towards (-0.5, 0.866, 0): the debris leans that way
+    @Test
+    void theDebrisOfAnObliqueImpactLeansDownrange() {
+        Body before = protoplanet(new Vector3(3.0 * CONTACT, 0.5 * CONTACT, 0.0), new Vector3(-FAST, 0.0, 0.0));
+        Body after = protoplanet(new Vector3(-3.0 * CONTACT, 0.5 * CONTACT, 0.0), new Vector3(-FAST, 0.0, 0.0));
+
+        List<Body> resolved = SUT.resolve(List.of(EARTH, before), List.of(EARTH, after));
+
+        Vector3 downrange = new Vector3(-0.5, Math.sqrt(0.75), 0.0);
+        assertThat(meanDirectionFromTheFirst(resolved).dot(downrange)).isGreaterThan(CLEARLY_DOWNRANGE);
+    }
+
+    // Bodies that start overlapping, at rest, meet at no speed at all
+    @Test
+    void bodiesAlreadyOverlappingAtRestMergeWhole() {
+        Body overlapping = protoplanet(new Vector3(0.5 * CONTACT, 0.0, 0.0), Vector3.ZERO);
+
+        List<Body> resolved = SUT.resolve(List.of(EARTH, overlapping), List.of(EARTH, overlapping));
+
+        assertThat(resolved).containsExactly(EARTH.mergedWith(overlapping));
+    }
+
     // The projectile first in the system: the target is the larger body, wherever it is
     @Test
     void theFragmentsAreNamedAfterTheSmallerBody() {
@@ -84,6 +109,14 @@ class FragmentingCollisionsTest {
     private static Body asteroid(Vector3 position) {
         return new Body(new BodyName("Asteroid 1"), BodyKind.ASTEROID, new Mass(3.003e-12), new Radius(4.259e-7),
                 position, new Vector3(-FAST, 0.0, 0.0));
+    }
+
+    // The average of the directions of the other bodies seen from the first one
+    private static Vector3 meanDirectionFromTheFirst(List<Body> bodies) {
+        Vector3 centre = bodies.getFirst().position();
+        return bodies.subList(1, bodies.size()).stream()
+                .map(body -> body.position().minus(centre).normalized())
+                .reduce(Vector3.ZERO, Vector3::plus).times(1.0 / (bodies.size() - 1));
     }
 
     private static double totalMassOf(List<Body> bodies) {
