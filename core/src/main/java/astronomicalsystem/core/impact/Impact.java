@@ -27,6 +27,9 @@ public record Impact(@NotNull Mass target, @NotNull Mass projectile, double cont
     private static final double PLANETARY_COEFFICIENT = 1.9;
     // mu-bar, the exponent of the coupling of the projectile's energy with the target
     private static final double COUPLING_EXPONENT = 0.36;
+    // Beyond this energy, in units of Q*_RD, the universal law gives way to a power law
+    private static final double SUPER_CATASTROPHIC = 1.8;
+    private static final double SUPER_CATASTROPHIC_EXPONENT = -1.5;
 
     /**
      * @return whether the two bodies merge whole: they meet slower than their mutual escape speed
@@ -37,11 +40,16 @@ public record Impact(@NotNull Mass target, @NotNull Mass projectile, double cont
     }
 
     /**
-     * @return the mass of the largest body left by the impact, by the universal law
-     *         M_lr = M (1 - Q_R / (2 Q*_RD))
+     * @return the mass of the largest body left by the impact: by the universal law
+     *         M_lr = M (1 - Q_R / (2 Q*_RD)) up to 1.8 Q*_RD, where a tenth of the mass is left;
+     *         beyond it M_lr = M 0.1 (Q_R / (1.8 Q*_RD))^-1.5, which joins it there
      */
     public @NotNull Mass largestRemnant() {
-        return new Mass(totalMass() * (1.0 - specificEnergy() / (2.0 * disruptionEnergy())));
+        double energy = specificEnergy() / disruptionEnergy();
+        if (energy < SUPER_CATASTROPHIC) {
+            return new Mass(totalMass() * (1.0 - energy / 2.0));
+        }
+        return new Mass(totalMass() * 0.1 * Math.pow(energy / SUPER_CATASTROPHIC, SUPER_CATASTROPHIC_EXPONENT));
     }
 
     // Q_R: the kinetic energy in the frame of the centre of mass, (1/2) mu v² with the reduced mass
