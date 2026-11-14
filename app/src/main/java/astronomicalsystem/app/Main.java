@@ -17,9 +17,11 @@ import astronomicalsystem.app.presenter.FlaresPresenter;
 import astronomicalsystem.app.presenter.FocusPresenter;
 import astronomicalsystem.app.presenter.LabelsPresenter;
 import astronomicalsystem.app.presenter.ProvenancePresenter;
+import astronomicalsystem.app.presenter.Skin;
 import astronomicalsystem.app.presenter.KeyboardPresenter;
 import astronomicalsystem.app.presenter.TimeFlowPresenter;
 import astronomicalsystem.app.presenter.TrajectoriesPresenter;
+import astronomicalsystem.app.texture.BundledMaps;
 import astronomicalsystem.app.time.ObservableTimeline;
 import astronomicalsystem.app.time.SystemClock;
 import astronomicalsystem.app.time.TimeWarp;
@@ -31,9 +33,11 @@ import astronomicalsystem.app.view.GlGlows;
 import astronomicalsystem.app.view.GlLabels;
 import astronomicalsystem.app.view.GlPaths;
 import astronomicalsystem.app.view.GlText;
+import astronomicalsystem.app.view.GlTextures;
 import astronomicalsystem.app.view.GlfwWindow;
 import astronomicalsystem.app.view.Layers;
 import astronomicalsystem.core.body.BodyKind;
+import astronomicalsystem.core.body.BodyName;
 import astronomicalsystem.core.body.Mass;
 import astronomicalsystem.core.impact.FragmentSizes;
 import astronomicalsystem.core.math.Vector3;
@@ -42,6 +46,7 @@ import astronomicalsystem.core.physics.FragmentingCollisions;
 import astronomicalsystem.core.physics.NewtonianGravity;
 import astronomicalsystem.core.physics.TimeStep;
 import astronomicalsystem.core.physics.VelocityVerlet;
+import astronomicalsystem.core.rotation.Spin;
 import astronomicalsystem.core.simulation.ObservableSimulation;
 import astronomicalsystem.core.simulation.Sampling;
 import astronomicalsystem.core.simulation.TrajectoryPredictor;
@@ -58,6 +63,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Creates the solar system as it is now, the simulation and the window, and connects them.
@@ -93,6 +99,9 @@ public final class Main {
             BodyKind.COMET, new BodyStyle(new Colour(0.6, 1.0, 0.95), 4.0, false),
             BodyKind.ASTEROID, new BodyStyle(new Colour(0.85, 0.7, 0.55), 4.0, false),
             BodyKind.DEBRIS, new BodyStyle(new Colour(0.6, 0.5, 0.4), 3.0, false));
+    // The maps that come with the application, and the bodies they are wrapped around
+    private static final Map<String, String> MAPS = Map.of("Sun", "sun", "Venus", "venus", "Jupiter", "jupiter",
+            "Saturn", "saturn", "Uranus", "uranus", "Neptune", "neptune");
     // Debris comes in dozens of fragments, whose names would cover each other
     private static final Set<BodyKind> UNNAMED = Set.of(BodyKind.DEBRIS);
     // The colours of the bodies at half their brightness: the paths stay behind the discs
@@ -114,6 +123,13 @@ public final class Main {
     private Main() {
     }
 
+    // Every mapped body with its map and the way it turns, from the catalogue
+    private static Map<BodyName, Skin> skins() {
+        Map<BodyName, Spin> spins = SolarSystem.spins();
+        return MAPS.entrySet().stream().collect(Collectors.toMap(map -> new BodyName(map.getKey()),
+                map -> new Skin(map.getValue(), spins.get(new BodyName(map.getKey())))));
+    }
+
     public static void main(String[] args) {
         EphemerisSource solarSystem = SolarSystem.withFallback(
                 new HorizonsClient(new JdkHttpTransport(HORIZONS_TIMEOUT), new HorizonsParser()));
@@ -130,7 +146,8 @@ public final class Main {
         ObservableTimeline timeline = new ObservableTimeline(simulation, now, ONE_HOUR, TEN_DAYS_PER_SECOND,
                 A_STEP_PER_FRAME);
         // The scene, the paths and the font need the OpenGL context of the window
-        try (GlfwWindow window = GlfwWindow.open(TITLE, WIDTH, HEIGHT); GlDiscs scene = GlDiscs.create();
+        try (GlfwWindow window = GlfwWindow.open(TITLE, WIDTH, HEIGHT); GlTextures textures = GlTextures.create();
+             GlDiscs scene = GlDiscs.create(textures);
              GlPaths paths = GlPaths.create(); GlGlows glows = GlGlows.create(); GlFont font = GlFont.create()) {
             GlText headUpDisplay = new GlText(font, Corner.TOP_LEFT);
             GlText controlsHelp = new GlText(font, Corner.BOTTOM_LEFT);
@@ -139,8 +156,11 @@ public final class Main {
             GlLabels names = new GlLabels(font);
             ObservableCameraRig camera = new ObservableCameraRig(BARYCENTRE, FIRST_VIEW, LENS,
                     new Viewport(WIDTH, HEIGHT));
-            BodiesPresenter bodies = new BodiesPresenter(scene, camera.camera(), STYLES);
+            BundledMaps maps = new BundledMaps(textures);
+            MAPS.values().forEach(maps::load);
+            BodiesPresenter bodies = new BodiesPresenter(scene, camera.camera(), STYLES, skins(), now);
             simulation.addObserver(bodies);
+            timeline.addObserver(bodies.timeObserver());
             camera.addObserver(bodies.cameraObserver());
             LabelsPresenter labels = new LabelsPresenter(names, camera.camera(), STYLES, UNNAMED);
             simulation.addObserver(labels);

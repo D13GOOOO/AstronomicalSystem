@@ -6,6 +6,7 @@ import astronomicalsystem.core.body.Mass;
 import astronomicalsystem.core.body.Radius;
 import astronomicalsystem.core.orbit.Eccentricity;
 import astronomicalsystem.core.orbit.OrbitalElements;
+import astronomicalsystem.core.rotation.Spin;
 import astronomicalsystem.core.time.JulianDate;
 import astronomicalsystem.ephemeris.horizons.Horizons;
 import astronomicalsystem.ephemeris.horizons.HorizonsCommand;
@@ -16,6 +17,8 @@ import astronomicalsystem.ephemeris.kepler.KeplerOrbit;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Catalogue of the Sun and the planets. Sources:
@@ -27,7 +30,9 @@ import java.util.List;
  *     and the nominal solar radius of IAU 2015 Resolution B3;</li>
  *     <li>orbital elements: table 1 of Standish and Williams, mean ecliptic and equinox of J2000,
  *     valid from 1800 to 2050
- *     (<a href="https://ssd.jpl.nasa.gov/planets/approx_pos.html">JPL approximate positions</a>).</li>
+ *     (<a href="https://ssd.jpl.nasa.gov/planets/approx_pos.html">JPL approximate positions</a>);</li>
+ *     <li>rotations: Archinal et al., Report of the IAU Working Group on Cartographic Coordinates
+ *     and Rotational Elements: 2009, Celestial Mechanics and Dynamical Astronomy 109 (2011).</li>
  * </ul>
  */
 public final class SolarSystem {
@@ -70,6 +75,20 @@ public final class SolarSystem {
             new KeplerOrbit(NEPTUNE,
                     standish(30.06992276, 0.00859048, 1.77004347, -55.12002969, 44.96476227, 131.78422574)));
 
+    // Right ascension and declination of the north pole, prime meridian at J2000 and its rate, in
+    // degrees and degrees per day, without the slow and the periodic terms of the report: the poles
+    // move by hundredths of a degree in a century
+    private static final Map<BodyProperties, RotationalElements> ROTATIONS = Map.of(
+            SUN, new RotationalElements(286.13, 63.87, 84.176, 14.1844000),
+            MERCURY, new RotationalElements(281.0097, 61.4143, 329.5469, 6.1385025),
+            VENUS, new RotationalElements(272.76, 67.16, 160.20, -1.4813688),
+            EARTH, new RotationalElements(0.00, 90.00, 190.147, 360.9856235),
+            MARS, new RotationalElements(317.68143, 52.88650, 176.630, 350.89198226),
+            JUPITER, new RotationalElements(268.056595, 64.495303, 284.95, 870.5360000),
+            SATURN, new RotationalElements(40.589, 83.537, 38.90, 810.7939024),
+            URANUS, new RotationalElements(257.311, -15.175, 203.81, -501.1600928),
+            NEPTUNE, new RotationalElements(299.36, 43.46, 253.18, 536.3128492));
+
     // Horizons numbers the barycentre of each planetary system from 1 to 8, outwards from the Sun
     private static final List<HorizonsTarget> HORIZONS_TARGETS = List.of(target(SUN, "10"), target(MERCURY, "1"),
             target(VENUS, "2"), target(EARTH, "3"), target(MARS, "4"), target(JUPITER, "5"), target(SATURN, "6"),
@@ -98,6 +117,14 @@ public final class SolarSystem {
      */
     public static @NotNull EphemerisSource withFallback(@NotNull Horizons horizons) {
         return new FallbackEphemeris(fromHorizons(horizons), meanOrbits());
+    }
+
+    /**
+     * @return how the Sun and each planet turn about their axes, by their names
+     */
+    public static @NotNull Map<BodyName, Spin> spins() {
+        return ROTATIONS.entrySet().stream()
+                .collect(Collectors.toMap(rotation -> rotation.getKey().name(), rotation -> rotation.getValue().spin()));
     }
 
     private static @NotNull BodyProperties planet(@NotNull String name, double gmKm3PerS2, double meanRadiusKm) {

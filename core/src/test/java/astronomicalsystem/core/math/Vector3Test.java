@@ -49,6 +49,26 @@ class Vector3Test {
                 .isEqualTo(new Vector3(expectedX, expectedY, expectedZ));
     }
 
+    // About the diagonal (1, 1, 1) a third of a turn takes each axis into the next one
+    @ParameterizedTest(name = "({0}, {1}, {2}) about ({3}, {4}, {5}) by {6} degrees")
+    @CsvSource(textBlock = """
+            1.0, 0.0, 0.0,   0.0, 0.0, 1.0,    90.0,   0.0, 1.0, 0.0
+            0.0, 0.0, 5.0,   0.0, 0.0, 1.0,    90.0,   0.0, 0.0, 5.0
+            1.0, 0.0, 0.0,   0.0, 0.0, 3.0,   180.0,  -1.0, 0.0, 0.0
+            1.0, 0.0, 0.0,   1.0, 1.0, 1.0,   120.0,   0.0, 1.0, 0.0
+            0.0, 2.0, 0.0,   1.0, 1.0, 1.0,   120.0,   0.0, 0.0, 2.0
+            1.0, 2.0, 3.0,   1.0, 1.0, 1.0,  -120.0,   2.0, 3.0, 1.0
+            """)
+    void aVectorTurnsAboutAnyAxis(double x, double y, double z, double axisX, double axisY, double axisZ,
+                                  double degrees, double expectedX, double expectedY, double expectedZ) {
+        Vector3 SUT = new Vector3(x, y, z);
+
+        Vector3 rotated = SUT.rotatedAbout(new Vector3(axisX, axisY, axisZ), Math.toRadians(degrees));
+
+        assertThat(rotated).usingRecursiveComparison(CLOSE_ENOUGH)
+                .isEqualTo(new Vector3(expectedX, expectedY, expectedZ));
+    }
+
     @Test
     void plusAddsEachComponent() {
         Vector3 SUT = new Vector3(1.0, 2.0, 3.0);

@@ -61,6 +61,18 @@ public record Vector3(double x, double y, double z) {
     }
 
     /**
+     * @param axis  the direction of the axis, of any length; precondition: not zero
+     * @param angle in radians, counterclockwise when seen from the tip of the axis
+     */
+    public @NotNull Vector3 rotatedAbout(@NotNull Vector3 axis, double angle) {
+        // Rodrigues' formula, with the unit vector k of the axis: the part of v along k stays, the
+        // part across it turns in the plane perpendicular to k
+        Vector3 k = axis.normalized();
+        double cos = Math.cos(angle);
+        return times(cos).plus(k.cross(this).times(Math.sin(angle))).plus(k.times(k.dot(this) * (1.0 - cos)));
+    }
+
+    /**
      * @param angle in radians, counterclockwise when seen from the positive x-axis
      */
     public @NotNull Vector3 rotatedAboutX(double angle) {
