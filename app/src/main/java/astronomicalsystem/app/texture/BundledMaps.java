@@ -24,6 +24,10 @@ public class BundledMaps {
      */
     public void load(@NotNull String name) {
         try (InputStream file = BundledMaps.class.getResourceAsStream("/textures/" + name + ".jpg")) {
+            // The library gives null for a resource that is not there
+            if (file == null) {
+                throw new IllegalArgumentException("No map named " + name + " comes with the application");
+            }
             view.load(name, file.readAllBytes());
         } catch (IOException unreadable) {
             // Not covered by the tests: a resource of the application that is there can be read
