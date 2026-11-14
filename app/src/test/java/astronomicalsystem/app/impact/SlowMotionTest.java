@@ -3,7 +3,11 @@ package astronomicalsystem.app.impact;
 import astronomicalsystem.app.follow.Focus;
 import astronomicalsystem.app.follow.Following;
 import astronomicalsystem.app.time.TimeControls;
+import astronomicalsystem.core.body.Body;
+import astronomicalsystem.core.body.BodyKind;
 import astronomicalsystem.core.body.BodyName;
+import astronomicalsystem.core.body.Mass;
+import astronomicalsystem.core.body.Radius;
 import astronomicalsystem.core.math.Vector3;
 import astronomicalsystem.core.observer.Observable;
 import astronomicalsystem.core.physics.Collision;
@@ -23,7 +27,8 @@ class SlowMotionTest {
 
     private static final BodyName EARTH = new BodyName("Earth");
     private static final Vector3 UP = new Vector3(0.0, 0.0, 1.0);
-    private static final Collision EARTH_HIT = new Collision(EARTH, UP, UP, 0.01, 1e-9);
+    private static final Collision EARTH_HIT = new Collision(new Body(EARTH, BodyKind.PLANET, new Mass(3.003e-6),
+            new Radius(4.259e-5), Vector3.ZERO, Vector3.ZERO), UP, UP, 0.01, 1e-9);
 
     private final Following following = mock();
     private final TimeControls time = mock();

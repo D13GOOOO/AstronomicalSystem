@@ -30,7 +30,7 @@ final class SolarSystemFixtures {
             MOVED_EARTH.withMotion(new Vector3(-1.0, 0.0, 0.0), new Vector3(0.0, -0.0172, 0.0)));
     static final List<Body> MERGED_BODIES = List.of(SUN.mergedWith(MOVED_EARTH));
     // The Earth falling into the Sun, hit on its side towards x
-    static final Collision EARTH_INTO_THE_SUN = new Collision(SUN.name(), new Vector3(1.0, 0.0, 0.0),
+    static final Collision EARTH_INTO_THE_SUN = new Collision(SUN, new Vector3(1.0, 0.0, 0.0),
             new Vector3(1.0, 0.0, 0.0), 0.35, 1e-7);
     // A small body that joins the system, far from the others
     static final Body ASTEROID = new Body(new BodyName("Asteroid 1"), BodyKind.ASTEROID, new Mass(1e-18),

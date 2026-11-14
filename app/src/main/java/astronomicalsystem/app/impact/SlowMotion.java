@@ -27,7 +27,7 @@ public class SlowMotion implements Observer<List<Collision>> {
     @Override
     public void update(@NotNull Observable<List<Collision>> subject, @NotNull List<Collision> state) {
         Focus focus = following.focus();
-        if (state.stream().anyMatch(collision -> new Focus.OnBody(collision.survivor()).equals(focus))) {
+        if (state.stream().anyMatch(collision -> new Focus.OnBody(collision.survivor().name()).equals(focus))) {
             time.slowest();
         }
     }
