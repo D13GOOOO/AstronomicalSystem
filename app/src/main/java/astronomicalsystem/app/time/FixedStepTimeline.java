@@ -94,6 +94,9 @@ public class FixedStepTimeline implements Timeline, TimeControls {
 
     @Override
     public void slowest() {
+        while (warp.daysPerSecond() / SPEED_RATIO >= SLOWEST_DAYS_PER_SECOND) {
+            slowDown();
+        }
     }
 
     @Override
