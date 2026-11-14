@@ -7,8 +7,10 @@ import java.net.URI;
 import java.util.List;
 import java.util.concurrent.Executor;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 class MapDownloadsTest {
@@ -34,5 +36,17 @@ class MapDownloadsTest {
         SUT.request(MARS);
 
         verify(view).loadMosaic("mars", TWO_COLUMNS, List.of(WEST_TILE, EAST_TILE));
+    }
+
+    // An executor that only takes note: nothing is fetched by the one who asks
+    @Test
+    void aRequestIsLeftToTheExecutor() {
+        Executor later = mock();
+        MapDownloads background = new MapDownloads(files, view, later);
+
+        background.request(MARS);
+
+        verify(later).execute(any());
+        verifyNoInteractions(files, view);
     }
 }
