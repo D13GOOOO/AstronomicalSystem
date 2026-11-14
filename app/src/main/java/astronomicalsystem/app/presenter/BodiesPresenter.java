@@ -3,6 +3,7 @@ package astronomicalsystem.app.presenter;
 import astronomicalsystem.app.camera.Projection;
 import astronomicalsystem.app.view.ClipPoint;
 import astronomicalsystem.app.view.Disc;
+import astronomicalsystem.app.view.Lighting;
 import astronomicalsystem.app.view.SceneView;
 import astronomicalsystem.core.body.Body;
 import astronomicalsystem.core.body.BodyKind;
@@ -30,7 +31,7 @@ public class BodiesPresenter extends ProjectedBodiesPresenter<Disc> {
     @Override
     protected @NotNull Disc markOf(@NotNull Body body, @NotNull BodyStyle style, @NotNull ClipPoint centre,
                                    double diameter) {
-        return new Disc(centre, diameter, style.colour());
+        return new Disc(centre, diameter, style.colour(), Lighting.OWN_LIGHT);
     }
 
     @Override

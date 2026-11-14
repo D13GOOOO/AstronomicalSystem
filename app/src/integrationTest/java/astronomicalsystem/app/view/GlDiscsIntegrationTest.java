@@ -57,7 +57,7 @@ class GlDiscsIntegrationTest {
 
     @Test
     void aDiscIsDrawnAsARoundSpotOfItsColour() {
-        SUT.show(List.of(new Disc(MIDDLE_OF_THE_IMAGE, TWENTY_PIXELS, new Colour(1.0, 0.0, 0.0))));
+        SUT.show(List.of(new Disc(MIDDLE_OF_THE_IMAGE, TWENTY_PIXELS, new Colour(1.0, 0.0, 0.0), Lighting.OWN_LIGHT)));
         clearToBlack();
 
         SUT.draw();
@@ -71,8 +71,8 @@ class GlDiscsIntegrationTest {
 
     @Test
     void aNearerDiscHidesAFartherOneDrawnAfterIt() {
-        SUT.show(List.of(new Disc(NEARER, TWENTY_PIXELS, new Colour(1.0, 0.0, 0.0)),
-                new Disc(FARTHER, TWENTY_PIXELS, new Colour(0.0, 0.0, 1.0))));
+        SUT.show(List.of(new Disc(NEARER, TWENTY_PIXELS, new Colour(1.0, 0.0, 0.0), Lighting.OWN_LIGHT),
+                new Disc(FARTHER, TWENTY_PIXELS, new Colour(0.0, 0.0, 1.0), Lighting.OWN_LIGHT)));
         clearToBlack();
 
         SUT.draw();
