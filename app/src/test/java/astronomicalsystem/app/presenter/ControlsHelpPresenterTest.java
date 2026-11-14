@@ -16,6 +16,7 @@ class ControlsHelpPresenterTest {
     void listsTheControlsAsSoonAsItIsCreated() {
         new ControlsHelpPresenter(view);
 
-        verify(view).show(List.of("Drag: turn  Wheel: zoom  +/-: faster/slower  Space: pause  ,/.: follow"));
+        verify(view).show(List.of(
+                "Drag: turn  Wheel: zoom  +/-: faster/slower  Space: pause  ,/.: follow  1/2/3: impactor"));
     }
 }
