@@ -3,6 +3,7 @@ package astronomicalsystem.core.impact;
 import astronomicalsystem.core.math.Vector3;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -18,6 +19,6 @@ public record Cone(@NotNull Vector3 axis, double halfAngle) {
      * @return that many unit vectors spread evenly inside the cone
      */
     public @NotNull List<Vector3> directions(int count) {
-        return List.of();
+        return Collections.nCopies(count, axis.normalized());
     }
 }
