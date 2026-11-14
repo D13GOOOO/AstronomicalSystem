@@ -31,6 +31,14 @@ class SkinsTest {
         assertThat(skin).contains(OF_MARS);
     }
 
+    // A protoplanet thrown at the Earth: no map of its own, the one of its kind
+    @Test
+    void aBodyNotKnownByNameHasTheSkinOfItsKind() {
+        Optional<Skin> skin = SUT.of(body("Protoplanet 1", BodyKind.PLANET));
+
+        assertThat(skin).contains(OF_A_PLANET);
+    }
+
     private static Body body(String name, BodyKind kind) {
         return new Body(new BodyName(name), kind, new Mass(1e-7), new Radius(1e-5), Vector3.ZERO, Vector3.ZERO);
     }
