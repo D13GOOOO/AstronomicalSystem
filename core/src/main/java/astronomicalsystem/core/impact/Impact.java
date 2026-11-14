@@ -16,19 +16,44 @@ import org.jetbrains.annotations.NotNull;
  */
 public record Impact(@NotNull Mass target, @NotNull Mass projectile, double contactDistance, double speed) {
 
+    private static final double G = GravitationalParameter.GRAVITATIONAL_CONSTANT;
+    // 1 g/cm³ in solar masses per cubic AU: 1000 kg/m³, the cubic metres in a cubic AU, the
+    // kilograms of the Sun (its GM over G)
+    private static final double METRES_PER_AU = 1.495978707e11;
+    private static final double KILOGRAMS_PER_SUN = 1.3271244e20 / 6.6743e-11;
+    private static final double UNIT_DENSITY = 1000.0 * METRES_PER_AU * METRES_PER_AU * METRES_PER_AU
+            / KILOGRAMS_PER_SUN;
+    // c* of the scaling law for planets, which hold together by gravity alone
+    private static final double PLANETARY_COEFFICIENT = 1.9;
+
     /**
      * @return whether the two bodies merge whole: they meet slower than their mutual escape speed
      *         √(2 G M / d), compared squared
      */
     public boolean merges() {
-        return speed * speed < 2.0 * GravitationalParameter.GRAVITATIONAL_CONSTANT * totalMass() / contactDistance;
+        return speed * speed < 2.0 * G * totalMass() / contactDistance;
     }
 
     /**
-     * @return the mass of the largest body left by the impact
+     * @return the mass of the largest body left by the impact, by the universal law
+     *         M_lr = M (1 - Q_R / (2 Q*_RD))
      */
     public @NotNull Mass largestRemnant() {
-        return new Mass(totalMass());
+        return new Mass(totalMass() * (1.0 - specificEnergy() / (2.0 * disruptionEnergy())));
+    }
+
+    // Q_R: the kinetic energy in the frame of the centre of mass, (1/2) mu v² with the reduced mass
+    // mu = m M / (m + M), per unit of the total mass
+    private double specificEnergy() {
+        double reducedMass = target.solarMasses() * projectile.solarMasses() / totalMass();
+        return 0.5 * reducedMass * speed * speed / totalMass();
+    }
+
+    // Q*_RD: the specific energy that leaves half of the mass in the largest remnant, c* times the
+    // binding energy per unit mass (4/5) pi rho G R² of a sphere of the total mass at 1 g/cm³
+    private double disruptionEnergy() {
+        double radius = Math.cbrt(3.0 * totalMass() / (4.0 * Math.PI * UNIT_DENSITY));
+        return PLANETARY_COEFFICIENT * 0.8 * Math.PI * UNIT_DENSITY * G * radius * radius;
     }
 
     private double totalMass() {
