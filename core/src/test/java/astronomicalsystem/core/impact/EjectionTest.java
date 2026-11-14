@@ -80,6 +80,16 @@ class EjectionTest {
         });
     }
 
+    // Ejecta speeds grow as m^(-1/6): the second fragment is the lighter one
+    @Test
+    void smallerFragmentsFlyFaster() {
+        List<Body> bodies = SUT.bodies();
+
+        Vector3 remnantVelocity = bodies.getFirst().velocity();
+        assertThat(bodies.get(2).velocity().minus(remnantVelocity).length())
+                .isGreaterThan(bodies.get(1).velocity().minus(remnantVelocity).length());
+    }
+
     // No external force acts in the impact: the bodies move on as a whole
     @Test
     void theCentreOfMassStaysWhereTheBodiesWere() {
