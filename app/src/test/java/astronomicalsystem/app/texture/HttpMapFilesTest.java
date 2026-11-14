@@ -61,6 +61,29 @@ class HttpMapFilesTest {
                 .hasMessage("The map server answered with HTTP status 404");
     }
 
+    @Test
+    void aServerThatIsNotThereIsReportedAsUnavailable() {
+        URI address = address();
+        server.stop(0);
+
+        assertThatThrownBy(() -> SUT.fetch(address))
+                .isInstanceOf(MapUnavailableException.class)
+                .hasMessage("The map server cannot be reached");
+    }
+
+    // The thread is asked to stop while it downloads: it says so and stays interrupted, for whoever
+    // runs it to see
+    @Test
+    void anInterruptedDownloadLeavesTheThreadInterrupted() {
+        respondWith(OK, TILE);
+        Thread.currentThread().interrupt();
+
+        assertThatThrownBy(() -> SUT.fetch(address()))
+                .isInstanceOf(MapUnavailableException.class)
+                .hasMessage("The download of a map was interrupted");
+        assertThat(Thread.interrupted()).isTrue();
+    }
+
     private void respondWith(int status, byte[] body) {
         server.createContext(PATH, exchange -> {
             exchange.sendResponseHeaders(status, body.length);
