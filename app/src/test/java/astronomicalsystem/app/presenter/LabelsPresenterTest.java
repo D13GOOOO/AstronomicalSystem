@@ -51,9 +51,9 @@ class LabelsPresenterTest {
     private static final double PLANET_MINIMUM = 8.0;
     private static final double DEBRIS_MINIMUM = 3.0;
     private static final Map<BodyKind, BodyStyle> STYLES = Map.of(
-            BodyKind.STAR, new BodyStyle(YELLOW, STAR_MINIMUM),
-            BodyKind.PLANET, new BodyStyle(BLUE, PLANET_MINIMUM),
-            BodyKind.DEBRIS, new BodyStyle(BLUE, DEBRIS_MINIMUM));
+            BodyKind.STAR, new BodyStyle(YELLOW, STAR_MINIMUM, false),
+            BodyKind.PLANET, new BodyStyle(BLUE, PLANET_MINIMUM, false),
+            BodyKind.DEBRIS, new BodyStyle(BLUE, DEBRIS_MINIMUM, false));
     private static final Set<BodyKind> UNNAMED = Set.of(BodyKind.DEBRIS);
     private static final Body FRAGMENT = new Body(new BodyName("Theia fragment 1"), BodyKind.DEBRIS, new Mass(1e-8),
             new Radius(0.0625), new Vector3(1.0, 0.0, 0.0), AT_REST);

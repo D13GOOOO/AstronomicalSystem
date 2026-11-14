@@ -81,12 +81,12 @@ public final class Main {
     private static final Orbit FIRST_VIEW = new Orbit(8.0, 0.0, Math.toRadians(35.0));
     private static final Lens LENS = new Lens(Math.toRadians(45.0), 0.01, 1000.0);
     private static final Map<BodyKind, BodyStyle> STYLES = Map.of(
-            BodyKind.STAR, new BodyStyle(new Colour(1.0, 0.85, 0.45), 16.0),
-            BodyKind.PLANET, new BodyStyle(new Colour(0.55, 0.75, 1.0), 7.0),
-            BodyKind.MOON, new BodyStyle(new Colour(0.75, 0.75, 0.75), 4.0),
-            BodyKind.COMET, new BodyStyle(new Colour(0.6, 1.0, 0.95), 4.0),
-            BodyKind.ASTEROID, new BodyStyle(new Colour(0.85, 0.7, 0.55), 4.0),
-            BodyKind.DEBRIS, new BodyStyle(new Colour(0.6, 0.5, 0.4), 3.0));
+            BodyKind.STAR, new BodyStyle(new Colour(1.0, 0.85, 0.45), 16.0, true),
+            BodyKind.PLANET, new BodyStyle(new Colour(0.55, 0.75, 1.0), 7.0, false),
+            BodyKind.MOON, new BodyStyle(new Colour(0.75, 0.75, 0.75), 4.0, false),
+            BodyKind.COMET, new BodyStyle(new Colour(0.6, 1.0, 0.95), 4.0, false),
+            BodyKind.ASTEROID, new BodyStyle(new Colour(0.85, 0.7, 0.55), 4.0, false),
+            BodyKind.DEBRIS, new BodyStyle(new Colour(0.6, 0.5, 0.4), 3.0, false));
     // Debris comes in dozens of fragments, whose names would cover each other
     private static final Set<BodyKind> UNNAMED = Set.of(BodyKind.DEBRIS);
     // The colours of the bodies at half their brightness: the paths stay behind the discs

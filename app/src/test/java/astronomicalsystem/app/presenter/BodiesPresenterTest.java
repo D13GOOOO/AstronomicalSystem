@@ -48,8 +48,8 @@ class BodiesPresenterTest {
     private static final double STAR_MINIMUM = 16.0;
     private static final double PLANET_MINIMUM = 8.0;
     private static final Map<BodyKind, BodyStyle> STYLES = Map.of(
-            BodyKind.STAR, new BodyStyle(YELLOW, STAR_MINIMUM),
-            BodyKind.PLANET, new BodyStyle(BLUE, PLANET_MINIMUM));
+            BodyKind.STAR, new BodyStyle(YELLOW, STAR_MINIMUM, false),
+            BodyKind.PLANET, new BodyStyle(BLUE, PLANET_MINIMUM, false));
 
     private final SceneView view = mock();
     private final Projection projection = mock();
