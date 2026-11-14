@@ -1,10 +1,6 @@
 package astronomicalsystem.core.simulation;
 
 import astronomicalsystem.core.body.Body;
-import astronomicalsystem.core.body.BodyKind;
-import astronomicalsystem.core.body.BodyName;
-import astronomicalsystem.core.body.Mass;
-import astronomicalsystem.core.body.Radius;
 import astronomicalsystem.core.math.Vector3;
 import astronomicalsystem.core.physics.CollisionResolver;
 import astronomicalsystem.core.physics.Integrator;
@@ -14,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
 
+import static astronomicalsystem.core.simulation.SolarSystemFixtures.ASTEROID;
 import static astronomicalsystem.core.simulation.SolarSystemFixtures.EARTH;
 import static astronomicalsystem.core.simulation.SolarSystemFixtures.INITIAL_BODIES;
 import static astronomicalsystem.core.simulation.SolarSystemFixtures.INTEGRATED_BODIES;
@@ -32,8 +29,6 @@ import static org.mockito.Mockito.when;
 class SimulationTest {
 
     private static final int TWO_STEPS = 2;
-    private static final Body ASTEROID = new Body(new BodyName("Asteroid 1"), BodyKind.ASTEROID, new Mass(1e-18),
-            new Radius(6.7e-9), new Vector3(0.0, 2.0, 0.0), new Vector3(0.01, 0.0, 0.0));
 
     private final Integrator integrator = mock();
     private final CollisionResolver collisions = mock();

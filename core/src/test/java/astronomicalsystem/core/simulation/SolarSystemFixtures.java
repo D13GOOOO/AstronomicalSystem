@@ -28,6 +28,9 @@ final class SolarSystemFixtures {
     static final List<Body> INTEGRATED_TWICE = List.of(SUN,
             MOVED_EARTH.withMotion(new Vector3(-1.0, 0.0, 0.0), new Vector3(0.0, -0.0172, 0.0)));
     static final List<Body> MERGED_BODIES = List.of(SUN.mergedWith(MOVED_EARTH));
+    // A small body that joins the system, far from the others
+    static final Body ASTEROID = new Body(new BodyName("Asteroid 1"), BodyKind.ASTEROID, new Mass(1e-18),
+            new Radius(6.7e-9), new Vector3(0.0, 2.0, 0.0), new Vector3(0.01, 0.0, 0.0));
 
     private SolarSystemFixtures() {
     }
