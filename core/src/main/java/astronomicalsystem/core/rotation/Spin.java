@@ -27,6 +27,7 @@ public record Spin(@NotNull Vector3 pole, @NotNull Vector3 meridian, @NotNull Ju
      * @return the axes of the body at the date
      */
     public @NotNull Axes axesAt(@NotNull JulianDate date) {
-        return new Axes(meridian, pole.cross(meridian), pole);
+        Vector3 x = meridian.rotatedAbout(pole, radiansPerDay * (date.days() - epoch.days()));
+        return new Axes(x, pole.cross(x), pole);
     }
 }
