@@ -7,6 +7,7 @@ import astronomicalsystem.core.physics.TimeStep;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * State of a running simulation: the bodies of the system and how they evolve.
@@ -36,7 +37,11 @@ public class Simulation implements Advanceable {
         step(timeStep);
     }
 
+    /**
+     * @param body joins the system after the bodies already there
+     */
     public void add(@NotNull Body body) {
+        bodies = Stream.concat(bodies.stream(), Stream.of(body)).toList();
     }
 
     /**
