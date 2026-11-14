@@ -18,6 +18,12 @@ public record FragmentSizes(@NotNull Mass smallest, int most) {
     // from the size distribution N(>D) ~ D^-2.85 of Leinhardt and Stewart, with m ~ D³
     private static final double RANK_EXPONENT = -1.0 / 0.95;
 
+    public FragmentSizes {
+        if (most < 1) {
+            throw new IllegalArgumentException("An impact must be allowed at least one fragment");
+        }
+    }
+
     /**
      * @param debris mass thrown out of the bodies by the impact, in solar masses; precondition:
      *               non-negative and finite
