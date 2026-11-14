@@ -47,6 +47,13 @@ public class ObservableTimeline extends FixedStepTimeline implements Observable<
     }
 
     @Override
+    public void slowest() {
+        TimeFlow before = timeFlow();
+        super.slowest();
+        notifyObserversIfChangedFrom(before);
+    }
+
+    @Override
     public void togglePause() {
         TimeFlow before = timeFlow();
         super.togglePause();
