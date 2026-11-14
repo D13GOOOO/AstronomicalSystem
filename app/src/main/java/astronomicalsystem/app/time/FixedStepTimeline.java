@@ -64,10 +64,11 @@ public class FixedStepTimeline implements Timeline, TimeControls {
             pendingDays -= current.days();
             steps++;
         }
-        // All at once, so that the observers of the simulation hear from it once per frame
+        // All at once, so that the observers of the simulation hear from it once per frame; the date
+        // is the end of the frame already, for those who ask while it advances
         if (steps > 0) {
-            simulation.advance(current, steps);
             elapsedDays += steps * current.days();
+            simulation.advance(current, steps);
         }
     }
 
