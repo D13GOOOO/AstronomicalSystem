@@ -40,7 +40,8 @@ class TimeFlowPresenterTest {
         verify(view).show(List.of(NEW_YEAR_2026_IN_UTC, "10 d/s, paused"));
     }
 
-    // Below a day per second the speed is given in hours per second; at most two decimals
+    // Below a day per second the speed is given in hours per second, below an hour per second in
+    // minutes per second; at most two decimals
     @ParameterizedTest
     @CsvSource(textBlock = """
             320.0,                 320 d/s
@@ -49,6 +50,8 @@ class TimeFlowPresenterTest {
             0.625,                 15 h/s
             0.078125,              1.88 h/s
             0.041666666666666664,  1 h/s
+            0.0390625,             56.25 min/s
+            0.0006103515625,       0.88 min/s
             """)
     void theSpeedIsShownInTheLargestUnitBelowIt(double daysPerSecond, String speed) {
         SUT.update(timeline, new TimeFlow(NEW_YEAR_2026, new TimeWarp(daysPerSecond), false));
