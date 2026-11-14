@@ -41,6 +41,7 @@ public class ObservableSimulation extends Simulation implements Observable<List<
     public void advance(@NotNull TimeStep timeStep, int steps) {
         super.advance(timeStep, steps);
         notifyObservers();
+        collisionNews.notifyObservers();
     }
 
     @Override
