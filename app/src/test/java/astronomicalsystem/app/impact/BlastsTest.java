@@ -44,11 +44,13 @@ class BlastsTest {
     private final Observer<List<Flare>> observer = mock();
     private final Blasts SUT = new Blasts();
 
+    // The simulation tells a collision while the timeline advances it, before the date of the frame:
+    // the blast starts from that date, which may be hours after the steps that went before
     @BeforeEach
     void theEarthIsHitNow() {
-        SUT.timeObserver().update(timeline, new TimeFlow(IMPACT, SLOWEST, false));
         SUT.bodiesObserver().update(simulation, List.of(EARTH));
         SUT.update(collisionNews, List.of(EARTH_HIT));
+        SUT.timeObserver().update(timeline, new TimeFlow(IMPACT, SLOWEST, false));
         SUT.addObserver(observer);
     }
 
