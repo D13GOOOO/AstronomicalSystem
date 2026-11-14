@@ -6,16 +6,12 @@ import astronomicalsystem.app.view.ClipPoint;
 import astronomicalsystem.app.view.Colour;
 import astronomicalsystem.app.view.Glow;
 import astronomicalsystem.app.view.GlowsView;
-import astronomicalsystem.core.observer.Observable;
-import astronomicalsystem.core.observer.Observer;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 /**
  * Shows what glows of the impacts as patches of light, of the colour of their heat.
  */
-public class FlaresPresenter implements Observer<List<Flare>> {
+public class FlaresPresenter extends ProjectingPresenter<Flare> {
 
     // A fireball seen from afar is drawn at least this large, so that the impact can be seen; an
     // ember, which has no size, is a spark
@@ -28,34 +24,16 @@ public class FlaresPresenter implements Observer<List<Flare>> {
             new Colour(1.0, 0.6, 0.2), new Colour(1.0, 0.95, 0.85)};
 
     private final GlowsView view;
-    // The latest camera and the latest flares: a change of either shows them again
-    private Projection projection;
-    private List<Flare> flares = List.of();
 
     public FlaresPresenter(@NotNull GlowsView view, @NotNull Projection projection) {
+        super(projection);
         this.view = view;
-        this.projection = projection;
     }
 
     @Override
-    public void update(@NotNull Observable<List<Flare>> subject, @NotNull List<Flare> state) {
-        flares = List.copyOf(state);
-        redraw();
-    }
-
-    /**
-     * @return the observer that shows the flares from the point of view of every new camera
-     */
-    public @NotNull Observer<Projection> cameraObserver() {
-        return (subject, camera) -> {
-            projection = camera;
-            redraw();
-        };
-    }
-
-    private void redraw() {
-        view.show(flares.stream()
-                .filter(flare -> projection.clipPoint(flare.position()).isInFrontOfTheCamera())
+    protected void redraw() {
+        view.show(latest().stream()
+                .filter(flare -> projection().clipPoint(flare.position()).isInFrontOfTheCamera())
                 .map(this::glowOf)
                 .toList());
     }
@@ -64,8 +42,8 @@ public class FlaresPresenter implements Observer<List<Flare>> {
      * @param flare precondition: in front of the camera
      */
     private @NotNull Glow glowOf(@NotNull Flare flare) {
-        ClipPoint centre = projection.clipPoint(flare.position());
-        double apparent = projection.apparentSizeInPixels(2.0 * flare.radius(), centre);
+        ClipPoint centre = projection().clipPoint(flare.position());
+        double apparent = projection().apparentSizeInPixels(2.0 * flare.radius(), centre);
         double smallest = flare.radius() > 0.0 ? SMALLEST_FIREBALL : SPARK;
         return new Glow(centre, Math.max(smallest, apparent), colourOf(flare.heat()));
     }
