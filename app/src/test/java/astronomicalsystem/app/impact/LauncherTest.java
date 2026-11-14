@@ -18,7 +18,9 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -58,5 +60,14 @@ class LauncherTest {
 
         verify(system).add(Impactor.ASTEROID.launchedAt(EARTH, FROM_THE_LEFT_TOWARDS_THE_EYE,
                 new BodyName("Asteroid 1")));
+    }
+
+    @Test
+    void nothingIsLaunchedWhileTheCameraFollowsTheBarycentre() {
+        when(following.focus()).thenReturn(Focus.BARYCENTRE);
+
+        SUT.launch(Impactor.ASTEROID);
+
+        verify(system, never()).add(any());
     }
 }
