@@ -6,6 +6,7 @@ import astronomicalsystem.app.camera.Orbit;
 import astronomicalsystem.app.camera.Viewport;
 import astronomicalsystem.app.follow.ObservableBodyFollower;
 import astronomicalsystem.app.forecast.Forecast;
+import astronomicalsystem.app.impact.Launcher;
 import astronomicalsystem.app.presenter.BodiesPresenter;
 import astronomicalsystem.app.presenter.BodyStyle;
 import astronomicalsystem.app.presenter.CameraControlsPresenter;
@@ -78,6 +79,7 @@ public final class Main {
             BodyKind.PLANET, new BodyStyle(new Colour(0.55, 0.75, 1.0), 7.0),
             BodyKind.MOON, new BodyStyle(new Colour(0.75, 0.75, 0.75), 4.0),
             BodyKind.COMET, new BodyStyle(new Colour(0.6, 1.0, 0.95), 4.0),
+            BodyKind.ASTEROID, new BodyStyle(new Colour(0.85, 0.7, 0.55), 4.0),
             BodyKind.DEBRIS, new BodyStyle(new Colour(0.6, 0.5, 0.4), 3.0));
     // The colours of the bodies at half their brightness: the paths stay behind the discs
     private static final Map<BodyKind, Colour> PATH_COLOURS = Map.of(
@@ -85,6 +87,7 @@ public final class Main {
             BodyKind.PLANET, new Colour(0.275, 0.375, 0.5),
             BodyKind.MOON, new Colour(0.375, 0.375, 0.375),
             BodyKind.COMET, new Colour(0.3, 0.5, 0.475),
+            BodyKind.ASTEROID, new Colour(0.425, 0.35, 0.275),
             BodyKind.DEBRIS, new Colour(0.3, 0.25, 0.2));
     // The paths look a year ahead, a point a day. The prediction takes steps of a day, not of an
     // hour like the simulation: 365 steps instead of 8766, and the paths differ by less than a pixel
@@ -136,7 +139,7 @@ public final class Main {
             follower.addObserver(new FocusPresenter(focus));
             new CameraControlsPresenter(window, camera);
             timeline.addObserver(new TimeFlowPresenter(headUpDisplay));
-            new KeyboardPresenter(window, timeline, follower);
+            new KeyboardPresenter(window, timeline, follower, new Launcher(simulation, follower, camera));
             new ControlsHelpPresenter(controlsHelp);
             new ProvenancePresenter(provenance, initialState.provenance());
             simulation.notifyObservers();

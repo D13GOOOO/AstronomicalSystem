@@ -63,4 +63,14 @@ public final class Camera implements Projection {
         return new ImagePoint((1.0 + deviceX) * aspectRatio * pixelsPerDeviceUnit,
                 (1.0 - deviceY) * pixelsPerDeviceUnit);
     }
+
+    @Override
+    public @NotNull Vector3 rightward() {
+        return right;
+    }
+
+    @Override
+    public @NotNull Vector3 forward() {
+        return forward;
+    }
 }

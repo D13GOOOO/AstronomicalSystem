@@ -27,4 +27,14 @@ public interface Projection {
      * @return where the point is in the image, also when it falls outside it
      */
     @NotNull ImagePoint imagePoint(@NotNull ClipPoint point);
+
+    /**
+     * @return the unit vector of space that points to the right of the image
+     */
+    @NotNull Vector3 rightward();
+
+    /**
+     * @return the unit vector of space along the line of sight, away from the eye
+     */
+    @NotNull Vector3 forward();
 }

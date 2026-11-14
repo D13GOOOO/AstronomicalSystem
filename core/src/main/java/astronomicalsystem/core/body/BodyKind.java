@@ -8,5 +8,6 @@ public enum BodyKind {
     PLANET,
     MOON,
     COMET,
+    ASTEROID,
     DEBRIS
 }

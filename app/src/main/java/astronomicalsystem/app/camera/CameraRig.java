@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
  * Camera that orbits a target, with the ecliptic north up in the image: its position, its
  * lens and the size of the image it fills.
  */
-public class CameraRig implements CameraModel, CameraTarget {
+public class CameraRig implements CameraModel, CameraTarget, CurrentCamera {
 
     private static final Vector3 ECLIPTIC_NORTH = new Vector3(0.0, 0.0, 1.0);
 
@@ -27,9 +27,7 @@ public class CameraRig implements CameraModel, CameraTarget {
         this.camera = cameraOf(target, orbit, viewport);
     }
 
-    /**
-     * @return the current camera, the same object until the rig changes
-     */
+    @Override
     public @NotNull Projection camera() {
         return camera;
     }

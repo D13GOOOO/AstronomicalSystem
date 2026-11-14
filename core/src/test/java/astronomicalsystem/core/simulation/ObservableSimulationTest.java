@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static astronomicalsystem.core.simulation.SolarSystemFixtures.ASTEROID;
 import static astronomicalsystem.core.simulation.SolarSystemFixtures.EARTH;
 import static astronomicalsystem.core.simulation.SolarSystemFixtures.INITIAL_BODIES;
 import static astronomicalsystem.core.simulation.SolarSystemFixtures.INTEGRATED_BODIES;
@@ -73,6 +74,24 @@ class ObservableSimulationTest {
 
         verify(observer).update(SUT, INTEGRATED_TWICE);
         verifyNoMoreInteractions(observer);
+    }
+
+    @Test
+    void aBodyJoiningNotifiesTheObservers() {
+        SUT.addObserver(observer);
+
+        SUT.add(ASTEROID);
+
+        verify(observer).update(SUT, List.of(SUN, EARTH, ASTEROID));
+    }
+
+    @Test
+    void aBodyRefusedNotifiesNobody() {
+        SUT.addObserver(observer);
+
+        assertThatThrownBy(() -> SUT.add(EARTH)).isInstanceOf(IllegalArgumentException.class);
+
+        verifyNoInteractions(observer);
     }
 
     @Test

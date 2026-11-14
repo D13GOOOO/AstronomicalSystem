@@ -1,6 +1,7 @@
 package astronomicalsystem.core.simulation;
 
 import astronomicalsystem.core.body.Body;
+import astronomicalsystem.core.math.Vector3;
 import astronomicalsystem.core.physics.CollisionResolver;
 import astronomicalsystem.core.physics.Integrator;
 import org.junit.jupiter.api.BeforeEach;
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
 
+import static astronomicalsystem.core.simulation.SolarSystemFixtures.ASTEROID;
 import static astronomicalsystem.core.simulation.SolarSystemFixtures.EARTH;
 import static astronomicalsystem.core.simulation.SolarSystemFixtures.INITIAL_BODIES;
 import static astronomicalsystem.core.simulation.SolarSystemFixtures.INTEGRATED_BODIES;
@@ -85,6 +87,37 @@ class SimulationTest {
         SUT.advance(TWO_DAYS, TWO_STEPS);
 
         assertThat(SUT.bodies()).containsExactlyElementsOf(INTEGRATED_TWICE);
+    }
+
+    @Test
+    void anAddedBodyJoinsTheOthers() {
+        Simulation SUT = new Simulation(integrator, collisions, INITIAL_BODIES);
+
+        SUT.add(ASTEROID);
+
+        assertThat(SUT.bodies()).containsExactly(SUN, EARTH, ASTEROID);
+    }
+
+    @Test
+    void addingABodyResolvesItsCollisions() {
+        Simulation SUT = new Simulation(integrator, collisions, INITIAL_BODIES);
+        List<Body> joined = List.of(SUN, EARTH, ASTEROID);
+        when(collisions.resolve(joined, joined)).thenReturn(MERGED_BODIES);
+
+        SUT.add(ASTEROID);
+
+        assertThat(SUT.bodies()).containsExactlyElementsOf(MERGED_BODIES);
+    }
+
+    // Bodies are told apart by their names, for example by the paths and the camera
+    @Test
+    void aBodyCannotJoinWithTheNameOfAnotherOne() {
+        Simulation SUT = new Simulation(integrator, collisions, INITIAL_BODIES);
+        Body secondEarth = EARTH.withMotion(new Vector3(0.0, 3.0, 0.0), EARTH.velocity());
+
+        assertThatThrownBy(() -> SUT.add(secondEarth))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("A body named Earth is already in the simulation");
     }
 
     @Test

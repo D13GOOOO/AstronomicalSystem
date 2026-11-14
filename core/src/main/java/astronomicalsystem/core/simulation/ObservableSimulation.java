@@ -12,7 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Simulation that notifies its observers after every advance, however many steps it takes.
+ * Simulation that notifies its observers after every advance, however many steps it takes, and
+ * when a body joins it.
  */
 public class ObservableSimulation extends Simulation implements Observable<List<Body>> {
 
@@ -37,6 +38,12 @@ public class ObservableSimulation extends Simulation implements Observable<List<
     @Override
     public void advance(@NotNull TimeStep timeStep, int steps) {
         super.advance(timeStep, steps);
+        notifyObservers();
+    }
+
+    @Override
+    public void add(@NotNull Body body) {
+        super.add(body);
         notifyObservers();
     }
 
