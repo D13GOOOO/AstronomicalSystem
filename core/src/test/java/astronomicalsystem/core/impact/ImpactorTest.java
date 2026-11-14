@@ -8,6 +8,7 @@ import astronomicalsystem.core.body.Radius;
 import astronomicalsystem.core.math.Vector3;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.withinPercentage;
@@ -34,5 +35,19 @@ class ImpactorTest {
 
         assertThat(impactor.mass().solarMasses())
                 .isCloseTo(massRatio * TARGET_MASS, withinPercentage(PRECISION_PERCENT));
+    }
+
+    // Mass over the cube of the radius, proportional to the density
+    @ParameterizedTest
+    @EnumSource(Impactor.class)
+    void anImpactorHasTheDensityOfItsTarget(Impactor SUT) {
+        Body impactor = SUT.launchedAt(TARGET, FROM_X_AIMING_TOWARDS_Y, IMPACTOR_NAME);
+
+        assertThat(impactor.mass().solarMasses() / cubed(impactor.radius().astronomicalUnits()))
+                .isCloseTo(TARGET_MASS / cubed(TARGET_RADIUS), withinPercentage(PRECISION_PERCENT));
+    }
+
+    private static double cubed(double length) {
+        return length * length * length;
     }
 }
