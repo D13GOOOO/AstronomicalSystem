@@ -20,6 +20,10 @@ public record Blast(@NotNull Collision collision, @NotNull JulianDate start) {
     private static final double G = GravitationalParameter.GRAVITATIONAL_CONSTANT;
     // A fireball the size of the body covers the face it was hit on
     private static final double LARGEST_FIREBALL_IN_RADII = 1.0;
+    // It glows for twenty times as long as it takes to grow, and cools down to 1/e three times in
+    // the time left: about 5% of its heat is left at the end
+    private static final double FIREBALL_LIFE_IN_RISE_TIMES = 20.0;
+    private static final double COOLING_TIMES = 3.0;
 
     /**
      * @param survivor where the body that was hit is now
@@ -29,7 +33,17 @@ public record Blast(@NotNull Collision collision, @NotNull JulianDate start) {
         double age = now.days() - start.days();
         double radius = collision.survivor().radius().astronomicalUnits();
         Vector3 site = survivor.plus(collision.site().times(radius));
-        return List.of(new Flare(site, fireballRadius() * Math.min(1.0, age / riseTime()), 1.0));
+        return List.of(new Flare(site, fireballRadius() * Math.min(1.0, age / riseTime()), heatAt(age)));
+    }
+
+    // As hot as it gets while it grows, then exp(-(age - t) / tau)
+    private double heatAt(double age) {
+        double riseTime = riseTime();
+        if (age <= riseTime) {
+            return 1.0;
+        }
+        double coolingTime = (FIREBALL_LIFE_IN_RISE_TIMES - 1.0) * riseTime / COOLING_TIMES;
+        return Math.exp(-(age - riseTime) / coolingTime);
     }
 
     // The energy E of the impact over the binding energy U = (3/5) G M² / R that would scatter the
