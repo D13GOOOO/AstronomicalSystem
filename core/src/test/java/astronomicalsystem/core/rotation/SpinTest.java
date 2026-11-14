@@ -9,6 +9,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SpinTest {
 
@@ -18,6 +19,25 @@ class SpinTest {
     private static final Vector3 Z_AXIS = new Vector3(0.0, 0.0, 1.0);
     private static final double A_QUARTER_TURN_A_DAY = Math.PI / 2.0;
     private static final RecursiveComparisonConfiguration CLOSE_ENOUGH = Tolerances.closeEnough(1e-12);
+
+    @ParameterizedTest(name = "{0}")
+    @CsvSource(textBlock = """
+            meridian along the pole,    0.0, 0.0, 1.0,   0.0, 0.0, -2.0,  1.0,  A spin needs a pole and a prime meridian across it
+            no pole,                    0.0, 0.0, 0.0,   1.0, 0.0, 0.0,   1.0,  A spin needs a pole and a prime meridian across it
+            no meridian,                0.0, 0.0, 1.0,   0.0, 0.0, 0.0,   1.0,  A spin needs a pole and a prime meridian across it
+            endless rate,               0.0, 0.0, 1.0,   1.0, 0.0, 0.0,   Infinity,  Spin rate must be finite
+            undefined rate,             0.0, 0.0, 1.0,   1.0, 0.0, 0.0,   NaN,  Spin rate must be finite
+            """)
+    void aSpinWithoutAnAxisOrASteadyRateIsRejected(String description, double poleX, double poleY, double poleZ,
+                                                   double meridianX, double meridianY, double meridianZ,
+                                                   double radiansPerDay, String message) {
+        Vector3 pole = new Vector3(poleX, poleY, poleZ);
+        Vector3 meridian = new Vector3(meridianX, meridianY, meridianZ);
+
+        assertThatThrownBy(() -> new Spin(pole, meridian, J2000, radiansPerDay))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage(message);
+    }
 
     // The pole twice as long as a unit vector, the meridian leaning towards it: at the epoch the
     // x-axis is the meridian without its part along the pole, and the y-axis is 90 degrees east
