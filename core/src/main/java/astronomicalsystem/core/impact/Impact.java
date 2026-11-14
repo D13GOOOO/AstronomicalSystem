@@ -1,6 +1,7 @@
 package astronomicalsystem.core.impact;
 
 import astronomicalsystem.core.body.Mass;
+import astronomicalsystem.core.orbit.GravitationalParameter;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -17,8 +18,13 @@ public record Impact(@NotNull Mass target, @NotNull Mass projectile, double cont
 
     /**
      * @return whether the two bodies merge whole: they meet slower than their mutual escape speed
+     *         √(2 G M / d), compared squared
      */
     public boolean merges() {
-        return false;
+        return speed * speed < 2.0 * GravitationalParameter.GRAVITATIONAL_CONSTANT * totalMass() / contactDistance;
+    }
+
+    private double totalMass() {
+        return target.solarMasses() + projectile.solarMasses();
     }
 }
