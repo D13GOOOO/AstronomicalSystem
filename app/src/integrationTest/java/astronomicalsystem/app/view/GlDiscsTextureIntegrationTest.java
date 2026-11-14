@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.withPrecision;
 import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
 import static org.lwjgl.opengl.GL11.GL_DEPTH_BUFFER_BIT;
 import static org.lwjgl.opengl.GL11.GL_FLOAT;
@@ -40,6 +42,9 @@ class GlDiscsTextureIntegrationTest {
     private static final ClipPoint ONE_PIXEL_RIGHT_OF_THE_MIDDLE = new ClipPoint(2.0 / WIDTH, 0.0, 0.0, 1.0);
     private static final double FORTY_PIXELS = 40.0;
     private static final Colour WHITE = new Colour(1.0, 1.0, 1.0);
+    private static final Colour YELLOW = new Colour(1.0, 1.0, 0.0);
+    // One step of an 8-bit colour channel
+    private static final float ONE_LEVEL = 1.0f / 255.0f;
     // The prime meridian faces the viewer, the east is to the right and the north up
     private static final Vector3 TOWARDS_THE_VIEWER = new Vector3(0.0, 0.0, 1.0);
     private static final Vector3 TO_THE_RIGHT = new Vector3(1.0, 0.0, 0.0);
@@ -95,6 +100,29 @@ class GlDiscsTextureIntegrationTest {
         assertThat(hueAt(centre[0] + SIXTEEN_PIXELS, centre[1] + SIX_PIXELS)).isEqualTo(BLUE);
         assertThat(hueAt(centre[0] - SIXTEEN_PIXELS, centre[1] + SIX_PIXELS)).isEqualTo(RED);
         assertThat(hueAt(centre[0], centre[1] - TEN_PIXELS)).isEqualTo(GREEN);
+    }
+
+    // The view was never given a map with that name
+    @Test
+    void aDiscWhoseMapIsMissingIsDrawnInItsColour() {
+        Surface unknown = new Surface.Mapped("unknown", TOWARDS_THE_VIEWER, TO_THE_RIGHT, UP);
+        SUT.show(List.of(new Disc(MIDDLE_OF_THE_IMAGE, FORTY_PIXELS, YELLOW, Lighting.OWN_LIGHT, unknown)));
+        clearToBlack();
+
+        SUT.draw();
+
+        int[] centre = centreOfTheImage();
+        assertThat(pixelAt(centre[0], centre[1]))
+                .containsExactly(new float[]{1.0f, 1.0f, 0.0f}, withPrecision(ONE_LEVEL));
+    }
+
+    @Test
+    void aFileThatIsNotAnImageIsRefused() {
+        byte[] notAnImage = {1, 2, 3, 4};
+
+        assertThatThrownBy(() -> textures.load("broken", notAnImage))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageStartingWith("Map broken cannot be read");
     }
 
     // 180 degrees of longitude face the viewer: there the right edge of the map meets the left one,
