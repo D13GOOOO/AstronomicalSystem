@@ -8,11 +8,15 @@ import astronomicalsystem.core.math.Vector3;
 import astronomicalsystem.core.observer.Observable;
 import astronomicalsystem.core.physics.Collision;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 class SlowMotionTest {
@@ -33,5 +37,20 @@ class SlowMotionTest {
         SUT.update(simulation, List.of(EARTH_HIT));
 
         verify(time).slowest();
+    }
+
+    // The camera shows the barycentre, or another body
+    static Stream<Focus> elsewhere() {
+        return Stream.of(Focus.BARYCENTRE, new Focus.OnBody(new BodyName("Mars")));
+    }
+
+    @ParameterizedTest
+    @MethodSource("elsewhere")
+    void anImpactTheUserIsNotWatchingLeavesTimeAlone(Focus focus) {
+        when(following.focus()).thenReturn(focus);
+
+        SUT.update(simulation, List.of(EARTH_HIT));
+
+        verifyNoInteractions(time);
     }
 }
