@@ -10,6 +10,8 @@ import astronomicalsystem.core.physics.Collision;
 import astronomicalsystem.core.time.JulianDate;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.withinPercentage;
 
@@ -55,5 +57,15 @@ class BlastTest {
                 .getFirst();
 
         assertThat(fireball.heat()).isCloseTo(Math.exp(-1.0), withinPercentage(HEAT_PRECISION_PERCENT));
+    }
+
+    @Test
+    void theFireballIsGoneAfterTwentyTimesItsRiseTime() {
+        Blast SUT = new Blast(new Collision(EARTH, UP, UP, SPEED, BINDING_ENERGY / 8.0), START);
+        double riseTime = EARTH_RADIUS / 2.0 / SPEED;
+
+        List<Flare> flares = SUT.flaresAt(new JulianDate(START.days() + 21.0 * riseTime), Vector3.ZERO);
+
+        assertThat(flares).isEmpty();
     }
 }
