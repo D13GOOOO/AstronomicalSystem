@@ -46,6 +46,7 @@ public class Simulation implements Advanceable, Joinable {
     }
 
     public void advance(@NotNull TimeStep timeStep) {
+        latestCollisions = List.of();
         step(timeStep);
     }
 
@@ -65,6 +66,7 @@ public class Simulation implements Advanceable, Joinable {
      */
     @Override
     public void advance(@NotNull TimeStep timeStep, int steps) {
+        latestCollisions = List.of();
         for (int step = 0; step < steps; step++) {
             step(timeStep);
         }
@@ -75,6 +77,6 @@ public class Simulation implements Advanceable, Joinable {
     private void step(@NotNull TimeStep timeStep) {
         Resolution resolution = collisions.resolve(bodies, integrator.step(bodies, timeStep));
         bodies = resolution.bodies();
-        latestCollisions = resolution.collisions();
+        latestCollisions = Stream.concat(latestCollisions.stream(), resolution.collisions().stream()).toList();
     }
 }
