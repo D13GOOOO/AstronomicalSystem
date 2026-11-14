@@ -24,6 +24,13 @@ public record Impact(@NotNull Mass target, @NotNull Mass projectile, double cont
         return speed * speed < 2.0 * GravitationalParameter.GRAVITATIONAL_CONSTANT * totalMass() / contactDistance;
     }
 
+    /**
+     * @return the mass of the largest body left by the impact
+     */
+    public @NotNull Mass largestRemnant() {
+        return new Mass(totalMass());
+    }
+
     private double totalMass() {
         return target.solarMasses() + projectile.solarMasses();
     }
