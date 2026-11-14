@@ -31,7 +31,16 @@ vec3 surfaceColour(vec3 normal) {
     vec3 onTheBody = vec3(dot(normal, discX), dot(normal, discY), dot(normal, discZ));
     float longitude = atan(onTheBody.y, onTheBody.x);
     float latitude = asin(clamp(onTheBody.z, -1.0, 1.0));
-    return texture(map, vec2(longitude / (2.0 * PI) + 0.5, 0.5 - latitude / PI)).rgb;
+    float across = longitude / (2.0 * PI) + 0.5;
+    float down = 0.5 - latitude / PI;
+    // Across the map the coordinate jumps from 1 to 0 at 180 degrees, and from pixel to pixel it
+    // seems to change by a whole map there: the same coordinate half a turn on jumps at 0 degrees
+    // instead. The smaller of the two changes is the true one, which chooses the copy of the map
+    float halfATurnOn = fract(across + 0.5);
+    float acrossPerColumn = abs(dFdx(across)) < abs(dFdx(halfATurnOn)) ? dFdx(across) : dFdx(halfATurnOn);
+    float acrossPerRow = abs(dFdy(across)) < abs(dFdy(halfATurnOn)) ? dFdy(across) : dFdy(halfATurnOn);
+    return textureGrad(map, vec2(across, down), vec2(acrossPerColumn, dFdx(down)),
+            vec2(acrossPerRow, dFdy(down))).rgb;
 }
 
 void main() {
