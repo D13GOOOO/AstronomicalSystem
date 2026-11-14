@@ -19,6 +19,6 @@ public class FragmentingCollisions extends SweptCollisions {
 
     @Override
     protected @NotNull List<Sweep> outcomeOf(@NotNull Sweep first, @NotNull Sweep second, double fraction) {
-        return List.of(first);
+        return List.of(first.mergedWith(second));
     }
 }
