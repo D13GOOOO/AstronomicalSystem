@@ -3,6 +3,7 @@ package astronomicalsystem.app.texture;
 import astronomicalsystem.app.view.TexturesView;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.concurrent.Executor;
 
 /**
@@ -26,5 +27,7 @@ public class MapDownloads {
     }
 
     public void request(@NotNull MapSource source) {
+        List<byte[]> tiles = source.tiles().stream().map(files::fetch).toList();
+        view.loadMosaic(source.name(), source.columns(), tiles);
     }
 }
