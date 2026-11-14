@@ -40,11 +40,22 @@ public record Ejection(@NotNull Body merged, @NotNull Mass remnant, @NotNull Lis
     public @NotNull List<Body> bodies() {
         List<Vector3> directions = cone.directions(fragments.size());
         double shell = shellRadius(directions);
-        Body largest = new Body(merged.name(), merged.kind(), remnant, radiusOf(remnant), merged.position(),
+        List<Vector3> offsets = directions.stream().map(direction -> direction.times(shell)).toList();
+        // M X = M_lr x + sum m_k (x + a_k): the remnant moves back by sum m_k a_k / M
+        Vector3 position = merged.position().minus(weightedSum(offsets));
+        Body largest = new Body(merged.name(), merged.kind(), remnant, radiusOf(remnant), position,
                 merged.velocity());
         return Stream.concat(Stream.of(largest), IntStream.range(0, fragments.size())
-                .mapToObj(index -> fragment(index, merged.position().plus(directions.get(index).times(shell)))))
+                .mapToObj(index -> fragment(index, position.plus(offsets.get(index)))))
                 .toList();
+    }
+
+    // sum m_k v_k / M, with the masses of the fragments and the total mass
+    private @NotNull Vector3 weightedSum(@NotNull List<Vector3> vectors) {
+        return IntStream.range(0, fragments.size())
+                .mapToObj(index -> vectors.get(index).times(fragments.get(index).solarMasses()))
+                .reduce(Vector3.ZERO, Vector3::plus)
+                .times(1.0 / merged.mass().solarMasses());
     }
 
     private @NotNull Body fragment(int index, @NotNull Vector3 position) {
