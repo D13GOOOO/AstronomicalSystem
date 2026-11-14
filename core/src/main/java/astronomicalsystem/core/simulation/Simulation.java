@@ -11,7 +11,8 @@ import java.util.stream.Stream;
 
 /**
  * State of a running simulation: the bodies of the system and how they evolve.
- * Collisions are resolved on creation and after every step, so no two bodies ever overlap.
+ * Collisions are resolved on creation, after every step and when a body joins, so no two bodies
+ * ever overlap.
  */
 public class Simulation implements Advanceable {
 
@@ -45,7 +46,8 @@ public class Simulation implements Advanceable {
         if (bodies.stream().anyMatch(present -> present.name().equals(body.name()))) {
             throw new IllegalArgumentException("A body named " + body.name().value() + " is already in the simulation");
         }
-        bodies = Stream.concat(bodies.stream(), Stream.of(body)).toList();
+        List<Body> joined = Stream.concat(bodies.stream(), Stream.of(body)).toList();
+        bodies = List.copyOf(collisions.resolve(joined, joined));
     }
 
     /**
