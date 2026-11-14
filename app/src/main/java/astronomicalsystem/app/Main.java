@@ -30,9 +30,11 @@ import astronomicalsystem.app.view.GlText;
 import astronomicalsystem.app.view.GlfwWindow;
 import astronomicalsystem.app.view.Layers;
 import astronomicalsystem.core.body.BodyKind;
+import astronomicalsystem.core.body.Mass;
+import astronomicalsystem.core.impact.FragmentSizes;
 import astronomicalsystem.core.math.Vector3;
 import astronomicalsystem.core.orbit.GravitationalParameter;
-import astronomicalsystem.core.physics.MergingCollisions;
+import astronomicalsystem.core.physics.FragmentingCollisions;
 import astronomicalsystem.core.physics.NewtonianGravity;
 import astronomicalsystem.core.physics.TimeStep;
 import astronomicalsystem.core.physics.VelocityVerlet;
@@ -51,6 +53,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Creates the solar system as it is now, the simulation and the window, and connects them.
@@ -61,8 +64,11 @@ public final class Main {
     private static final int WIDTH = 1280;
     private static final int HEIGHT = 720;
     private static final Duration HORIZONS_TIMEOUT = Duration.ofSeconds(10);
-    // Exact Newtonian attraction: bodies never get closer than the sum of their radii, since they merge
+    // Exact Newtonian attraction: bodies never get closer than the sum of their radii, since they collide
     private static final double NO_SOFTENING = 0.0;
+    // Impacts break off at most 24 fragments, none lighter than 2e18 kg, a body some 100 km across:
+    // enough to see the debris fly, few enough to keep every body in the gravity of the others
+    private static final FragmentSizes FRAGMENT_SIZES = new FragmentSizes(new Mass(1e-12), 24);
     // About 2100 steps along the orbit of Mercury, the fastest planet
     private static final TimeStep ONE_HOUR = new TimeStep(1.0 / 24.0);
     // Mercury goes round the Sun in about nine seconds, the Earth in about thirty-seven; the user
@@ -81,6 +87,8 @@ public final class Main {
             BodyKind.COMET, new BodyStyle(new Colour(0.6, 1.0, 0.95), 4.0),
             BodyKind.ASTEROID, new BodyStyle(new Colour(0.85, 0.7, 0.55), 4.0),
             BodyKind.DEBRIS, new BodyStyle(new Colour(0.6, 0.5, 0.4), 3.0));
+    // Debris comes in dozens of fragments, whose names would cover each other
+    private static final Set<BodyKind> UNNAMED = Set.of(BodyKind.DEBRIS);
     // The colours of the bodies at half their brightness: the paths stay behind the discs
     private static final Map<BodyKind, Colour> PATH_COLOURS = Map.of(
             BodyKind.STAR, new Colour(0.5, 0.425, 0.225),
@@ -107,10 +115,11 @@ public final class Main {
         Ephemeris initialState = solarSystem.ephemerisAt(now);
         VelocityVerlet gravity = new VelocityVerlet(
                 new NewtonianGravity(GravitationalParameter.GRAVITATIONAL_CONSTANT, NO_SOFTENING));
-        ObservableSimulation simulation = new ObservableSimulation(gravity, new MergingCollisions(),
-                initialState.bodies());
+        // Without state of their own, the gravity and the collisions serve the prediction too
+        FragmentingCollisions collisions = new FragmentingCollisions(FRAGMENT_SIZES);
+        ObservableSimulation simulation = new ObservableSimulation(gravity, collisions, initialState.bodies());
         Forecast forecast = new Forecast(
-                new TrajectoryPredictor(gravity, new MergingCollisions(), ONE_DAY, A_YEAR_DAY_BY_DAY),
+                new TrajectoryPredictor(gravity, collisions, ONE_DAY, A_YEAR_DAY_BY_DAY),
                 FRAMES_PER_PREDICTION);
         ObservableTimeline timeline = new ObservableTimeline(simulation, now, ONE_HOUR, TEN_DAYS_PER_SECOND);
         // The scene, the paths and the font need the OpenGL context of the window
@@ -126,7 +135,7 @@ public final class Main {
             BodiesPresenter bodies = new BodiesPresenter(scene, camera.camera(), STYLES);
             simulation.addObserver(bodies);
             camera.addObserver(bodies.cameraObserver());
-            LabelsPresenter labels = new LabelsPresenter(names, camera.camera(), STYLES);
+            LabelsPresenter labels = new LabelsPresenter(names, camera.camera(), STYLES, UNNAMED);
             simulation.addObserver(labels);
             camera.addObserver(labels.cameraObserver());
             TrajectoriesPresenter trajectories = new TrajectoriesPresenter(paths, camera.camera(), PATH_COLOURS);

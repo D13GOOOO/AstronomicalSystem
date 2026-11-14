@@ -61,6 +61,14 @@ public abstract class ProjectedBodiesPresenter<M> implements Observer<List<Body>
     protected abstract void show(@NotNull List<M> marks);
 
     /**
+     * @return whether the body gets a mark when it is in front of the camera; every body, unless a
+     *         subclass leaves some out
+     */
+    protected boolean isMarked(@NotNull Body body) {
+        return true;
+    }
+
+    /**
      * @param point precondition: in front of the camera
      */
     protected final @NotNull ImagePoint imagePointOf(@NotNull ClipPoint point) {
@@ -71,7 +79,7 @@ public abstract class ProjectedBodiesPresenter<M> implements Observer<List<Body>
         List<M> marks = new ArrayList<>();
         for (Body body : bodies) {
             ClipPoint centre = projection.clipPoint(body.position());
-            if (centre.isInFrontOfTheCamera()) {
+            if (isMarked(body) && centre.isInFrontOfTheCamera()) {
                 BodyStyle style = styles.get(body.kind());
                 marks.add(markOf(body, style, centre, diameterOf(body, style, centre)));
             }
