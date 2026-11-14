@@ -33,6 +33,10 @@ class BodiesPresenterLightingTest {
             Vector3.ZERO, AT_REST);
     private static final Body EARTH = new Body(new BodyName("Earth"), BodyKind.PLANET, new Mass(3e-6),
             new Radius(0.125), new Vector3(1.0, 0.0, 0.0), AT_REST);
+    // A lighter star on the other side of the Earth, along +x
+    private static final Body DWARF = new Body(new BodyName("Dwarf"), BodyKind.STAR, new Mass(0.1), new Radius(0.05),
+            new Vector3(2.0, 0.0, 0.0), AT_REST);
+    private static final ClipPoint DWARF_IN_CLIP_SPACE = new ClipPoint(1.0, 0.0, 0.5, 2.0);
     private static final ClipPoint SUN_IN_CLIP_SPACE = new ClipPoint(0.0, 0.0, 0.5, 2.0);
     private static final ClipPoint EARTH_IN_CLIP_SPACE = new ClipPoint(0.5, 0.0, 0.5, 2.0);
     private static final double FORTY_PIXELS = 40.0;
@@ -58,6 +62,18 @@ class BodiesPresenterLightingTest {
         when(projection.clipPoint(SUN.position())).thenReturn(SUN_IN_CLIP_SPACE);
         when(projection.clipPoint(EARTH.position())).thenReturn(EARTH_IN_CLIP_SPACE);
         when(projection.inTheImage(FROM_THE_EARTH_TO_THE_SUN)).thenReturn(UP_AND_TO_THE_RIGHT);
+    }
+
+    // The light of a lighter star is neglected
+    @Test
+    void theMostMassiveStarLightsTheOtherBodies() {
+        when(projection.clipPoint(DWARF.position())).thenReturn(DWARF_IN_CLIP_SPACE);
+
+        SUT.update(simulation, List.of(DWARF, EARTH, SUN));
+
+        verify(view).show(List.of(new Disc(DWARF_IN_CLIP_SPACE, FORTY_PIXELS, YELLOW, Lighting.OWN_LIGHT),
+                new Disc(EARTH_IN_CLIP_SPACE, FORTY_PIXELS, BLUE, new Lighting.LitFrom(0.6, 0.8, 0.0)),
+                new Disc(SUN_IN_CLIP_SPACE, FORTY_PIXELS, YELLOW, Lighting.OWN_LIGHT)));
     }
 
     @Test
