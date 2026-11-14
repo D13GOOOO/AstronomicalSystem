@@ -22,8 +22,8 @@ public class FixedStepTimeline implements Timeline, TimeControls {
     private static final double SPEED_RATIO = 2.0;
     // A year per second
     private static final double FASTEST_DAYS_PER_SECOND = 365.25;
-    // An hour per second
-    private static final double SLOWEST_DAYS_PER_SECOND = 1.0 / 24.0;
+    // Half a minute per second, slow enough to watch an impact
+    private static final double SLOWEST_DAYS_PER_SECOND = 1.0 / 2880.0;
 
     private final Advanceable simulation;
     private final JulianDate start;
