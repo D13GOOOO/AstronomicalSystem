@@ -94,6 +94,33 @@ class GlDiscsTextureIntegrationTest {
         assertThat(hueAt(centre[0], centre[1] - TEN_PIXELS)).isEqualTo(GREEN);
     }
 
+    // 180 degrees of longitude face the viewer: there the right edge of the map meets the left one,
+    // blue in the east and red in the west. A pixel on that line must be of those colours: the green
+    // of the south would come from a copy of the map so small that it is all one colour
+    @Test
+    void theEdgesOfTheMapMeetWithoutAShow() {
+        Surface seenFromBehind = new Surface.Mapped(HEMISPHERES, new Vector3(0.0, 0.0, -1.0),
+                new Vector3(-1.0, 0.0, 0.0), UP);
+        SUT.show(List.of(new Disc(MIDDLE_OF_THE_IMAGE, FORTY_PIXELS, WHITE, Lighting.OWN_LIGHT, seenFromBehind)));
+        clearToBlack();
+
+        SUT.draw();
+
+        int[] centre = centreOfTheImage();
+        assertThat(greenAlongTheLine(centre[0], centre[1] + 2, centre[1] + SIXTEEN_PIXELS)).isLessThan(UNLIT);
+    }
+
+    // The most green light among the pixels of the column x and its two neighbours, between the rows
+    private static float greenAlongTheLine(int x, int fromY, int toY) {
+        float most = 0.0f;
+        for (int column = x - 1; column <= x + 1; column++) {
+            for (int row = fromY; row <= toY; row++) {
+                most = Math.max(most, pixelAt(column, row)[1]);
+            }
+        }
+        return most;
+    }
+
     // The only primary colour the pixel has light of; "mixed" if it has more than one, "dark" if none
     private static String hueAt(int x, int y) {
         float[] pixel = pixelAt(x, y);
