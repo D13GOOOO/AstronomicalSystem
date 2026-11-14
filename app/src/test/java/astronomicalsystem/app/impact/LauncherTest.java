@@ -62,6 +62,18 @@ class LauncherTest {
                 new BodyName("Asteroid 1")));
     }
 
+    // Named after its size, with a number that counts the launches
+    @Test
+    void everyImpactorHasANameOfItsOwn() {
+        when(following.focus()).thenReturn(new Focus.OnBody(EARTH.name()));
+        SUT.launch(Impactor.ASTEROID);
+
+        SUT.launch(Impactor.PROTOPLANET);
+
+        verify(system).add(Impactor.PROTOPLANET.launchedAt(EARTH, FROM_THE_LEFT_TOWARDS_THE_EYE,
+                new BodyName("Protoplanet 2")));
+    }
+
     @Test
     void nothingIsLaunchedWhileTheCameraFollowsTheBarycentre() {
         when(following.focus()).thenReturn(Focus.BARYCENTRE);
