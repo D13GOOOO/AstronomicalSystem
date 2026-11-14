@@ -36,6 +36,9 @@ class GlDiscsIntegrationTest {
     private static final double TWENTY_PIXELS = 20.0;
     private static final double FORTY_PIXELS = 40.0;
     private static final int FIFTEEN_PIXELS = 15;
+    private static final int FIVE_PIXELS = 5;
+    private static final ClipPoint BEYOND_THE_RIGHT_EDGE = new ClipPoint(1.2, 0.0, 0.0, 1.0);
+    private static final double A_HUNDRED_AND_TWENTY_PIXELS = 120.0;
     private static final Colour WHITE = new Colour(1.0, 1.0, 1.0);
     private static final Lighting FROM_THE_RIGHT = new Lighting.LitFrom(1.0, 0.0, 0.0);
     private static final float BRIGHT = 0.7f;
@@ -99,6 +102,20 @@ class GlDiscsIntegrationTest {
         int[] centre = centreOfTheImage();
         assertThat(pixelAt(centre[0] + FIFTEEN_PIXELS, centre[1])[0]).isGreaterThan(BRIGHT);
         assertThat(pixelAt(centre[0] - FIFTEEN_PIXELS, centre[1])[0]).isLessThan(DARK);
+    }
+
+    // The centre a tenth of the width beyond the right edge, the radius much more: the left part of
+    // the disc is in the image, close to its right edge
+    @Test
+    void aDiscWhoseCentreIsOutsideTheImageStillShowsThePartInside() {
+        SUT.show(List.of(new Disc(BEYOND_THE_RIGHT_EDGE, A_HUNDRED_AND_TWENTY_PIXELS, new Colour(1.0, 0.0, 0.0),
+                Lighting.OWN_LIGHT)));
+        clearToBlack();
+
+        SUT.draw();
+
+        int[] centre = centreOfTheImage();
+        assertThat(pixelAt(2 * centre[0] - FIVE_PIXELS, centre[1])).containsExactly(RED, withPrecision(ONE_LEVEL));
     }
 
     private static void clearToBlack() {
