@@ -18,6 +18,7 @@ import astronomicalsystem.app.presenter.FocusPresenter;
 import astronomicalsystem.app.presenter.LabelsPresenter;
 import astronomicalsystem.app.presenter.ProvenancePresenter;
 import astronomicalsystem.app.presenter.Skin;
+import astronomicalsystem.app.presenter.Skins;
 import astronomicalsystem.app.presenter.KeyboardPresenter;
 import astronomicalsystem.app.presenter.TimeFlowPresenter;
 import astronomicalsystem.app.presenter.TrajectoriesPresenter;
@@ -124,10 +125,10 @@ public final class Main {
     }
 
     // Every mapped body with its map and the way it turns, from the catalogue
-    private static Map<BodyName, Skin> skins() {
+    private static Skins skins() {
         Map<BodyName, Spin> spins = SolarSystem.spins();
-        return MAPS.entrySet().stream().collect(Collectors.toMap(map -> new BodyName(map.getKey()),
-                map -> new Skin(map.getValue(), spins.get(new BodyName(map.getKey())))));
+        return new Skins(MAPS.entrySet().stream().collect(Collectors.toMap(map -> new BodyName(map.getKey()),
+                map -> new Skin(map.getValue(), spins.get(new BodyName(map.getKey()))))), Map.of());
     }
 
     public static void main(String[] args) {

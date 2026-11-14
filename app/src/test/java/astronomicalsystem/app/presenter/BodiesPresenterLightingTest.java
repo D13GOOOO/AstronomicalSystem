@@ -54,7 +54,7 @@ class BodiesPresenterLightingTest {
             BodyKind.STAR, new BodyStyle(YELLOW, FORTY_PIXELS, SHINES),
             BodyKind.PLANET, new BodyStyle(BLUE, FORTY_PIXELS, DOES_NOT_SHINE));
 
-    private static final Map<BodyName, Skin> NO_SKINS = Map.of();
+    private static final Skins NO_SKINS = new Skins(Map.of(), Map.of());
     private static final JulianDate START_OF_2026 = new JulianDate(2461041.5);
 
     private final SceneView view = mock();

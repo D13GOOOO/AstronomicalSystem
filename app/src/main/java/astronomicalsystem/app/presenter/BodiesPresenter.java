@@ -9,7 +9,6 @@ import astronomicalsystem.app.view.SceneView;
 import astronomicalsystem.app.view.Surface;
 import astronomicalsystem.core.body.Body;
 import astronomicalsystem.core.body.BodyKind;
-import astronomicalsystem.core.body.BodyName;
 import astronomicalsystem.core.math.Vector3;
 import astronomicalsystem.core.observer.Observer;
 import astronomicalsystem.core.rotation.Axes;
@@ -19,7 +18,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * Shows the bodies of the simulation as discs, lit by the brightest star and wrapped in the maps of
@@ -28,21 +26,21 @@ import java.util.Optional;
 public class BodiesPresenter extends ProjectedBodiesPresenter<Disc> {
 
     private final SceneView view;
-    private final Map<BodyName, Skin> skins;
+    private final Skins skins;
     private JulianDate date;
 
     /**
      * @param styles precondition: a style for every kind of body the simulation contains
-     * @param skins  the bodies that have a map of their surface, by their names; the others are
-     *               drawn in the colour of their kind
+     * @param skins  the maps of the surfaces of the bodies that have one; the others are drawn in
+     *               the colour of their kind
      * @param start  the date of the simulation when it begins
      */
     public BodiesPresenter(@NotNull SceneView view, @NotNull Projection projection,
-                           @NotNull Map<BodyKind, BodyStyle> styles, @NotNull Map<BodyName, Skin> skins,
+                           @NotNull Map<BodyKind, BodyStyle> styles, @NotNull Skins skins,
                            @NotNull JulianDate start) {
         super(projection, styles);
         this.view = view;
-        this.skins = Map.copyOf(skins);
+        this.skins = skins;
         this.date = start;
     }
 
@@ -65,7 +63,7 @@ public class BodiesPresenter extends ProjectedBodiesPresenter<Disc> {
 
     // The map of the body turned as the body is now, if it has one
     private @NotNull Surface surfaceOf(@NotNull Body body) {
-        return Optional.ofNullable(skins.get(body.name())).map(this::mapped).orElse(Surface.PLAIN);
+        return skins.of(body).map(this::mapped).orElse(Surface.PLAIN);
     }
 
     private @NotNull Surface mapped(@NotNull Skin skin) {
