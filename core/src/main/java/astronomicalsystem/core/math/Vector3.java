@@ -61,6 +61,14 @@ public record Vector3(double x, double y, double z) {
     }
 
     /**
+     * @param axis  the direction of the axis, of any length; precondition: not zero
+     * @param angle in radians, counterclockwise when seen from the tip of the axis
+     */
+    public @NotNull Vector3 rotatedAbout(@NotNull Vector3 axis, double angle) {
+        return this;
+    }
+
+    /**
      * @param angle in radians, counterclockwise when seen from the positive x-axis
      */
     public @NotNull Vector3 rotatedAboutX(double angle) {
