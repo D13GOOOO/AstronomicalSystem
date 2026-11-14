@@ -45,6 +45,19 @@ class ImpactorTest {
                 .isCloseTo(massRatio * TARGET_MASS, withinPercentage(PRECISION_PERCENT));
     }
 
+    // A protoplanet is as large as a planet already
+    @ParameterizedTest(name = "{0}")
+    @CsvSource(textBlock = """
+            ASTEROID,     ASTEROID
+            PLANETESIMAL, ASTEROID
+            PROTOPLANET,  PLANET
+            """)
+    void anImpactorHasTheNameGivenAndAKindForItsSize(Impactor SUT, BodyKind kind) {
+        Body impactor = SUT.launchedAt(TARGET, FROM_X_AIMING_TOWARDS_Y, IMPACTOR_NAME);
+
+        assertThat(List.of(impactor.name(), impactor.kind())).containsExactly(IMPACTOR_NAME, kind);
+    }
+
     // Mass over the cube of the radius, proportional to the density
     @ParameterizedTest
     @EnumSource(Impactor.class)
