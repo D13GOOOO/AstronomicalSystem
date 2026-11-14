@@ -25,6 +25,6 @@ public record Skins(@NotNull Map<BodyName, Skin> byName, @NotNull Map<BodyKind, 
      * @return the skin of the body; empty for a body that is drawn in the plain colour of its kind
      */
     public @NotNull Optional<Skin> of(@NotNull Body body) {
-        return Optional.empty();
+        return Optional.ofNullable(byName.get(body.name()));
     }
 }
