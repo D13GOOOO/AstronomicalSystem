@@ -40,8 +40,17 @@ public class MapDeliveries implements TexturesView, Drawable {
         // The queue gives null when nothing is waiting
         Consumer<TexturesView> delivery = waiting.poll();
         while (delivery != null) {
-            delivery.accept(view);
+            handOver(delivery);
             delivery = waiting.poll();
+        }
+    }
+
+    // A map that the view cannot read is done without: its body is drawn in its plain colour
+    private void handOver(@NotNull Consumer<TexturesView> delivery) {
+        try {
+            delivery.accept(view);
+        } catch (IllegalArgumentException unreadable) {
+            // Nothing to do: the view has refused the map and kept what it had
         }
     }
 }
