@@ -5,7 +5,9 @@ import astronomicalsystem.core.body.BodyKind;
 import astronomicalsystem.core.body.BodyName;
 import astronomicalsystem.core.body.Mass;
 import astronomicalsystem.core.body.Radius;
+import astronomicalsystem.core.math.Tolerances;
 import astronomicalsystem.core.math.Vector3;
+import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -26,6 +28,7 @@ class EjectionTest {
     private static final BodyName PROTOPLANET = new BodyName("Protoplanet 1");
 
     private static final double PRECISION_PERCENT = 1e-9;
+    private static final RecursiveComparisonConfiguration CLOSE_ENOUGH = Tolerances.closeEnough(1e-14);
 
     private final Ejection SUT = new Ejection(MERGED, REMNANT, FRAGMENTS, UPWARDS, PROTOPLANET);
 
@@ -59,6 +62,24 @@ class EjectionTest {
             assertThat(offset.normalized().dot(UPWARDS.axis())).isGreaterThanOrEqualTo(Math.cos(UPWARDS.halfAngle()));
         });
         assertThat(smallestGapBetween(bodies)).isPositive();
+    }
+
+    // No external force acts in the impact: the bodies move on as a whole
+    @Test
+    void theCentreOfMassStaysWhereTheBodiesWere() {
+        List<Body> bodies = SUT.bodies();
+
+        assertThat(totalMassOf(bodies)).isCloseTo(MERGED.mass().solarMasses(), withinPercentage(PRECISION_PERCENT));
+        assertThat(centreOfMassOf(bodies)).usingRecursiveComparison(CLOSE_ENOUGH).isEqualTo(MERGED.position());
+    }
+
+    private static double totalMassOf(List<Body> bodies) {
+        return bodies.stream().mapToDouble(body -> body.mass().solarMasses()).sum();
+    }
+
+    private static Vector3 centreOfMassOf(List<Body> bodies) {
+        return bodies.stream().map(body -> body.position().times(body.mass().solarMasses()))
+                .reduce(Vector3.ZERO, Vector3::plus).times(1.0 / totalMassOf(bodies));
     }
 
     // The least distance between the surfaces of two of the bodies
