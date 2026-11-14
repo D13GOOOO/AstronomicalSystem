@@ -13,6 +13,7 @@ import java.util.List;
 
 import static astronomicalsystem.core.simulation.SolarSystemFixtures.ASTEROID;
 import static astronomicalsystem.core.simulation.SolarSystemFixtures.EARTH;
+import static astronomicalsystem.core.simulation.SolarSystemFixtures.EARTH_INTO_THE_SUN;
 import static astronomicalsystem.core.simulation.SolarSystemFixtures.INITIAL_BODIES;
 import static astronomicalsystem.core.simulation.SolarSystemFixtures.INTEGRATED_BODIES;
 import static astronomicalsystem.core.simulation.SolarSystemFixtures.INTEGRATED_TWICE;
@@ -30,6 +31,7 @@ import static org.mockito.Mockito.when;
 class ObservableSimulationTest {
 
     private static final int TWO_STEPS = 2;
+    private static final int ONE_STEP = 1;
     private static final List<Collision> NO_COLLISIONS = List.of();
 
     private final Integrator integrator = mock();
@@ -95,6 +97,19 @@ class ObservableSimulationTest {
         assertThatThrownBy(() -> SUT.add(EARTH)).isInstanceOf(IllegalArgumentException.class);
 
         verifyNoInteractions(observer);
+    }
+
+    @Test
+    void theCollisionsOfAnAdvanceAreToldToTheirObservers() {
+        Observer<List<Collision>> collisionObserver = mock();
+        when(integrator.step(INITIAL_BODIES, TWO_DAYS)).thenReturn(INTEGRATED_BODIES);
+        when(collisions.resolve(INITIAL_BODIES, INTEGRATED_BODIES))
+                .thenReturn(new Resolution(INTEGRATED_BODIES, List.of(EARTH_INTO_THE_SUN)));
+        SUT.collisionNews().addObserver(collisionObserver);
+
+        SUT.advance(TWO_DAYS, ONE_STEP);
+
+        verify(collisionObserver).update(SUT.collisionNews(), List.of(EARTH_INTO_THE_SUN));
     }
 
     @Test

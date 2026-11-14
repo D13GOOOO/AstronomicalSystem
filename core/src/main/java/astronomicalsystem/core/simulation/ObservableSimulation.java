@@ -3,6 +3,7 @@ package astronomicalsystem.core.simulation;
 import astronomicalsystem.core.body.Body;
 import astronomicalsystem.core.observer.Observable;
 import astronomicalsystem.core.observer.Observer;
+import astronomicalsystem.core.physics.Collision;
 import astronomicalsystem.core.physics.CollisionResolver;
 import astronomicalsystem.core.physics.Integrator;
 import astronomicalsystem.core.physics.TimeStep;
@@ -18,6 +19,7 @@ import java.util.List;
 public class ObservableSimulation extends Simulation implements Observable<List<Body>> {
 
     private final List<Observer<List<Body>>> observers = new ArrayList<>();
+    private final CollisionNews collisionNews = new CollisionNews();
 
     public ObservableSimulation(@NotNull Integrator integrator, @NotNull CollisionResolver collisions,
                                 @NotNull List<Body> initialBodies) {
@@ -47,6 +49,13 @@ public class ObservableSimulation extends Simulation implements Observable<List<
         notifyObservers();
     }
 
+    /**
+     * @return what tells its observers the collisions of every advance that has some
+     */
+    public @NotNull Observable<List<Collision>> collisionNews() {
+        return collisionNews;
+    }
+
     @Override
     public void addObserver(@NotNull Observer<List<Body>> observer) {
         observers.add(observer);
@@ -62,5 +71,28 @@ public class ObservableSimulation extends Simulation implements Observable<List<
     @Override
     public @NotNull List<Body> getState() {
         return bodies();
+    }
+
+    // A second subject: one class cannot implement Observable for two types, which have the same erasure
+    private final class CollisionNews implements Observable<List<Collision>> {
+
+        private final List<Observer<List<Collision>>> observers = new ArrayList<>();
+
+        @Override
+        public void addObserver(@NotNull Observer<List<Collision>> observer) {
+            observers.add(observer);
+        }
+
+        @Override
+        public void notifyObservers() {
+            for (Observer<List<Collision>> observer : observers) {
+                observer.update(this, getState());
+            }
+        }
+
+        @Override
+        public @NotNull List<Collision> getState() {
+            return collisions();
+        }
     }
 }
