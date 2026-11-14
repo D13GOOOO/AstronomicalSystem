@@ -19,7 +19,9 @@ import java.util.List;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
 
 class BlastsTest {
 
@@ -59,14 +61,15 @@ class BlastsTest {
         verify(observer).update(SUT, new Blast(EARTH_HIT, IMPACT).flaresAt(FIVE_MINUTES_LATER, EARTH_LATER.position()));
     }
 
-    // Once to clear what was shown, then never again
+    // The blast is shown, then once more to clear it, then never again
     @Test
     void whenNothingGlowsAnyMoreTheObserversAreToldOnce() {
+        SUT.timeObserver().update(timeline, new TimeFlow(FIVE_MINUTES_LATER, SLOWEST, false));
         SUT.timeObserver().update(timeline, new TimeFlow(A_DAY_LATER, SLOWEST, false));
 
         SUT.timeObserver().update(timeline, new TimeFlow(A_DAY_AND_A_MINUTE_LATER, SLOWEST, false));
 
         verify(observer).update(SUT, List.of());
-        verifyNoMoreInteractions(observer);
+        verify(observer, times(2)).update(eq(SUT), anyList());
     }
 }
