@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.withinPercentage;
 
 class FragmentingCollisionsTest {
 
@@ -21,8 +22,13 @@ class FragmentingCollisionsTest {
     // A tenth of the mass of the Earth and as dense: 0.464 of its radius
     private static final double PROTOPLANET_RADIUS = 1.977e-5;
     private static final double CONTACT = EARTH_RADIUS + PROTOPLANET_RADIUS;
+    private static final int MOST_FRAGMENTS = 24;
     // Up to 24 fragments, none lighter than about 2e18 kg, a body some 100 km across
-    private static final FragmentSizes SIZES = new FragmentSizes(new Mass(1e-12), 24);
+    private static final FragmentSizes SIZES = new FragmentSizes(new Mass(1e-12), MOST_FRAGMENTS);
+
+    // About 20 km/s, twice the escape speed: a giant impact
+    private static final double FAST = 0.01155;
+    private static final double PRECISION_PERCENT = 1e-9;
 
     private final FragmentingCollisions SUT = new FragmentingCollisions(SIZES);
 
@@ -35,6 +41,25 @@ class FragmentingCollisionsTest {
         List<Body> resolved = SUT.resolve(List.of(EARTH, before), List.of(EARTH, after));
 
         assertThat(resolved).containsExactly(EARTH.mergedWith(after));
+    }
+
+    // Q_R is about a sixth of Q*_RD: some 9% of the mass flies off, enough for every fragment
+    @Test
+    void aGiantImpactLeavesTheLargestRemnantAndFragments() {
+        Body before = protoplanet(new Vector3(3.0 * CONTACT, 0.0, 0.0), new Vector3(-FAST, 0.0, 0.0));
+        Body after = protoplanet(new Vector3(-3.0 * CONTACT, 0.0, 0.0), new Vector3(-FAST, 0.0, 0.0));
+
+        List<Body> resolved = SUT.resolve(List.of(EARTH, before), List.of(EARTH, after));
+
+        assertThat(resolved).hasSize(1 + MOST_FRAGMENTS);
+        assertThat(resolved.getFirst().name()).isEqualTo(EARTH.name());
+        assertThat(resolved.subList(1, resolved.size())).extracting(Body::kind).containsOnly(BodyKind.DEBRIS);
+        assertThat(totalMassOf(resolved))
+                .isCloseTo(EARTH.mass().solarMasses() + after.mass().solarMasses(), withinPercentage(PRECISION_PERCENT));
+    }
+
+    private static double totalMassOf(List<Body> bodies) {
+        return bodies.stream().mapToDouble(body -> body.mass().solarMasses()).sum();
     }
 
     private static Body protoplanet(Vector3 position, Vector3 velocity) {
