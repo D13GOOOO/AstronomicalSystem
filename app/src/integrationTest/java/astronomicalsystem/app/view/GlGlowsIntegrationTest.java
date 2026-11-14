@@ -64,6 +64,19 @@ class GlGlowsIntegrationTest {
         assertThat(pixelAt(centre[0] + EIGHTEEN_PIXELS, centre[1])[0]).isLessThan(NEARLY_DARK);
     }
 
+    // Light adds up: two glows of 0.4 in the same place make 0.8
+    @Test
+    void glowsAddTheirLight() {
+        SUT.show(List.of(new Glow(MIDDLE_OF_THE_IMAGE, FORTY_PIXELS, GREY),
+                new Glow(MIDDLE_OF_THE_IMAGE, FORTY_PIXELS, GREY)));
+        clearToBlack();
+
+        SUT.draw();
+
+        int[] centre = centreOfTheImage();
+        assertThat(pixelAt(centre[0], centre[1])[0]).isCloseTo(0.8f, within(TWO_LEVELS));
+    }
+
     private static void clearToBlack() {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
