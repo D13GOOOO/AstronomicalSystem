@@ -38,6 +38,3 @@ bin/
 
 ### Mac OS ###
 .DS_Store
-
-### Application ###
-quicksave.dat
