@@ -41,4 +41,16 @@ class ImpactTest {
 
         assertThat(remnant.solarMasses()).isCloseTo(2.25e-6, withinPercentage(PRECISION_PERCENT));
     }
+
+    // A tenth of the mass of the target at 13.8 km/s, a giant impact like the one that formed the
+    // Moon: the projectile shares only part of its energy, and the threshold grows by
+    // ((1 + gamma)² / (4 gamma))^(2 / (3 mu) - 1) = 2.57 with mu = 0.36; Q_R / Q*_RD = 0.0713
+    @Test
+    void aSmallerProjectileDisruptsLessThanAnEqualOneWithTheSameEnergy() {
+        Impact SUT = new Impact(new Mass(3.0e-6), new Mass(3.0e-7), EARTH_RADIUS, 0.007970166917623114);
+
+        Mass remnant = SUT.largestRemnant();
+
+        assertThat(remnant.solarMasses()).isCloseTo(3.1823568615992685e-6, withinPercentage(PRECISION_PERCENT));
+    }
 }
