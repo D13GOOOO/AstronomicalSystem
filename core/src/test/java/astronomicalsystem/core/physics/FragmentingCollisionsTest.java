@@ -58,6 +58,23 @@ class FragmentingCollisionsTest {
                 .isCloseTo(EARTH.mass().solarMasses() + after.mass().solarMasses(), withinPercentage(PRECISION_PERCENT));
     }
 
+    // An asteroid a millionth of the mass of the Earth at the same speed throws out less than the
+    // smallest fragment: the dust falls back, and the bodies merge
+    @Test
+    void anImpactThatThrowsOutOnlyDustMergesTheBodies() {
+        Body before = asteroid(new Vector3(3.0 * CONTACT, 0.0, 0.0));
+        Body after = asteroid(new Vector3(-3.0 * CONTACT, 0.0, 0.0));
+
+        List<Body> resolved = SUT.resolve(List.of(EARTH, before), List.of(EARTH, after));
+
+        assertThat(resolved).containsExactly(EARTH.mergedWith(after));
+    }
+
+    private static Body asteroid(Vector3 position) {
+        return new Body(new BodyName("Asteroid 1"), BodyKind.ASTEROID, new Mass(3.003e-12), new Radius(4.259e-7),
+                position, new Vector3(-FAST, 0.0, 0.0));
+    }
+
     private static double totalMassOf(List<Body> bodies) {
         return bodies.stream().mapToDouble(body -> body.mass().solarMasses()).sum();
     }
