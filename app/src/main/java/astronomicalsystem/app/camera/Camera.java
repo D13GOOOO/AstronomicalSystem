@@ -66,11 +66,11 @@ public final class Camera implements Projection {
 
     @Override
     public @NotNull Vector3 rightward() {
-        return Vector3.ZERO;
+        return right;
     }
 
     @Override
     public @NotNull Vector3 forward() {
-        return Vector3.ZERO;
+        return forward;
     }
 }
