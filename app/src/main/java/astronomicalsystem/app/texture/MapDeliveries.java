@@ -4,6 +4,8 @@ import astronomicalsystem.app.view.Drawable;
 import astronomicalsystem.app.view.TexturesView;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Consumer;
 
 /**
@@ -14,6 +16,8 @@ import java.util.function.Consumer;
 public class MapDeliveries implements Drawable {
 
     private final TexturesView view;
+    // Filled by the threads that download, emptied by the thread that draws
+    private final Queue<Consumer<TexturesView>> waiting = new ConcurrentLinkedQueue<>();
 
     public MapDeliveries(@NotNull TexturesView view) {
         this.view = view;
@@ -25,9 +29,15 @@ public class MapDeliveries implements Drawable {
      * @param delivery gives the view a map, later, on the thread that draws
      */
     public void post(@NotNull Consumer<TexturesView> delivery) {
+        waiting.add(delivery);
     }
 
     @Override
     public void draw() {
+        Consumer<TexturesView> delivery = waiting.poll();
+        while (delivery != null) {
+            delivery.accept(view);
+            delivery = waiting.poll();
+        }
     }
 }
