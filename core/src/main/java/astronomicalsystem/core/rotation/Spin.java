@@ -17,10 +17,16 @@ import org.jetbrains.annotations.NotNull;
 public record Spin(@NotNull Vector3 pole, @NotNull Vector3 meridian, @NotNull JulianDate epoch,
                    double radiansPerDay) {
 
+    public Spin {
+        pole = pole.normalized();
+        // Gram-Schmidt: without its component along the pole
+        meridian = meridian.minus(pole.times(meridian.dot(pole))).normalized();
+    }
+
     /**
      * @return the axes of the body at the date
      */
     public @NotNull Axes axesAt(@NotNull JulianDate date) {
-        return new Axes(meridian, meridian, pole);
+        return new Axes(meridian, pole.cross(meridian), pole);
     }
 }
