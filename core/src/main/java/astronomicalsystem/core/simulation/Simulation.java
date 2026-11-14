@@ -1,6 +1,7 @@
 package astronomicalsystem.core.simulation;
 
 import astronomicalsystem.core.body.Body;
+import astronomicalsystem.core.physics.Collision;
 import astronomicalsystem.core.physics.CollisionResolver;
 import astronomicalsystem.core.physics.Integrator;
 import astronomicalsystem.core.physics.TimeStep;
@@ -33,6 +34,13 @@ public class Simulation implements Advanceable, Joinable {
     @Override
     public @NotNull List<Body> bodies() {
         return bodies;
+    }
+
+    /**
+     * @return the collisions of the steps of the latest advance, in the order in which they happened
+     */
+    public @NotNull List<Collision> collisions() {
+        return List.of();
     }
 
     public void advance(@NotNull TimeStep timeStep) {

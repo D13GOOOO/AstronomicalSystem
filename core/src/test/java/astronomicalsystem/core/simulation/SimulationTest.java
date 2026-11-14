@@ -14,6 +14,7 @@ import java.util.List;
 
 import static astronomicalsystem.core.simulation.SolarSystemFixtures.ASTEROID;
 import static astronomicalsystem.core.simulation.SolarSystemFixtures.EARTH;
+import static astronomicalsystem.core.simulation.SolarSystemFixtures.EARTH_INTO_THE_SUN;
 import static astronomicalsystem.core.simulation.SolarSystemFixtures.INITIAL_BODIES;
 import static astronomicalsystem.core.simulation.SolarSystemFixtures.INTEGRATED_BODIES;
 import static astronomicalsystem.core.simulation.SolarSystemFixtures.INTEGRATED_TWICE;
@@ -80,6 +81,18 @@ class SimulationTest {
         SUT.advance(TWO_DAYS);
 
         assertThat(SUT.bodies()).containsExactlyElementsOf(MERGED_BODIES);
+    }
+
+    @Test
+    void anAdvanceTellsTheCollisionsOfItsStep() {
+        Simulation SUT = new Simulation(integrator, collisions, INITIAL_BODIES);
+        when(integrator.step(INITIAL_BODIES, TWO_DAYS)).thenReturn(INTEGRATED_BODIES);
+        when(collisions.resolve(INITIAL_BODIES, INTEGRATED_BODIES))
+                .thenReturn(new Resolution(MERGED_BODIES, List.of(EARTH_INTO_THE_SUN)));
+
+        SUT.advance(TWO_DAYS);
+
+        assertThat(SUT.collisions()).containsExactly(EARTH_INTO_THE_SUN);
     }
 
     @Test
