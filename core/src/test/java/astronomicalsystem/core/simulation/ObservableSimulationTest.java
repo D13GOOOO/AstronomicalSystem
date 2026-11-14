@@ -113,6 +113,19 @@ class ObservableSimulationTest {
     }
 
     @Test
+    void aSingleStepTellsItsCollisionsToo() {
+        Observer<List<Collision>> collisionObserver = mock();
+        when(integrator.step(INITIAL_BODIES, TWO_DAYS)).thenReturn(INTEGRATED_BODIES);
+        when(collisions.resolve(INITIAL_BODIES, INTEGRATED_BODIES))
+                .thenReturn(new Resolution(INTEGRATED_BODIES, List.of(EARTH_INTO_THE_SUN)));
+        SUT.collisionNews().addObserver(collisionObserver);
+
+        SUT.advance(TWO_DAYS);
+
+        verify(collisionObserver).update(SUT.collisionNews(), List.of(EARTH_INTO_THE_SUN));
+    }
+
+    @Test
     void anAdvanceWithoutCollisionsTellsTheirObserversNothing() {
         Observer<List<Collision>> collisionObserver = mock();
         when(integrator.step(INITIAL_BODIES, TWO_DAYS)).thenReturn(INTEGRATED_BODIES);
