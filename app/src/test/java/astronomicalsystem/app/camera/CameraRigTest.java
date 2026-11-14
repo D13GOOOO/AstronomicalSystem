@@ -33,6 +33,8 @@ class CameraRigTest {
     private static final Orbit AS_FAR_AS_POSSIBLE = new Orbit(100.0, 0.0, 0.0);
     private static final double TWICE_AS_FAR = 2.0;
     private static final double THREE_AU = 3.0;
+    // Nearer than any orbit
+    private static final double NO_CLEARANCE = 1e-9;
     private static final double ONE_AND_A_HALF_AU = 1.5;
     // 2 AU away on the ecliptic, looking along the positive y-axis
     private static final Orbit ON_THE_ECLIPTIC = new Orbit(2.0, 0.0, 0.0);
@@ -85,7 +87,7 @@ class CameraRigTest {
     // the image and the old one, 1 AU to its left, is half the image width from the middle
     @Test
     void lookingAtANewTargetMovesTheCameraWithIt() {
-        SUT.lookAt(EAST_OF_THE_TARGET);
+        SUT.lookAt(EAST_OF_THE_TARGET, NO_CLEARANCE);
 
         assertThat(SUT.camera().clipPoint(EAST_OF_THE_TARGET)).usingRecursiveComparison(CLOSE_ENOUGH)
                 .isEqualTo(new ClipPoint(0.0, 0.0, 1.0, 2.0));
@@ -117,7 +119,7 @@ class CameraRigTest {
                 Arguments.of(Named.of("no rotation", (Consumer<CameraRig>) rig -> rig.orbitBy(0.0, 0.0))),
                 Arguments.of(Named.of("no zoom", (Consumer<CameraRig>) rig -> rig.zoomBy(SAME_DISTANCE))),
                 Arguments.of(Named.of("same viewport", (Consumer<CameraRig>) rig -> rig.resize(TWO_BY_ONE))),
-                Arguments.of(Named.of("same target", (Consumer<CameraRig>) rig -> rig.lookAt(TARGET))));
+                Arguments.of(Named.of("same target", (Consumer<CameraRig>) rig -> rig.lookAt(TARGET, NO_CLEARANCE))));
     }
 
     @ParameterizedTest
