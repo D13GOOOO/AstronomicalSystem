@@ -3,6 +3,7 @@ package astronomicalsystem.core.impact;
 import astronomicalsystem.core.body.Body;
 import astronomicalsystem.core.body.BodyKind;
 import astronomicalsystem.core.body.BodyName;
+import astronomicalsystem.core.body.Mass;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -29,6 +30,7 @@ public enum Impactor {
      * @return the impactor on its way towards the target
      */
     public @NotNull Body launchedAt(@NotNull Body target, @NotNull Approach approach, @NotNull BodyName name) {
-        return target;
+        return new Body(name, kind, new Mass(massRatio * target.mass().solarMasses()), target.radius(),
+                target.position(), target.velocity());
     }
 }
