@@ -29,13 +29,15 @@ class BlastTest {
     private static final double PRECISION_PERCENT = 1e-9;
 
     // An eighth of the binding energy: the fireball grows to half a radius of the Earth, cbrt(1/8),
-    // at the speed of the impact, so that it takes R / 2 / v to reach it
+    // at the speed of the impact, so that it takes R / 2 / v to reach it; looked at twice as late,
+    // since a Julian date of this century is precise only to some 40 microseconds
     @Test
     void theFireballGrowsToTheCubeRootOfTheEnergyOverTheBindingEnergy() {
         Blast SUT = new Blast(new Collision(EARTH, UP, UP, SPEED, BINDING_ENERGY / 8.0), START);
         double halfARadius = EARTH_RADIUS / 2.0;
 
-        Flare fireball = SUT.flaresAt(new JulianDate(START.days() + halfARadius / SPEED), Vector3.ZERO).getFirst();
+        Flare fireball = SUT.flaresAt(new JulianDate(START.days() + 2.0 * halfARadius / SPEED), Vector3.ZERO)
+                .getFirst();
 
         assertThat(fireball.radius()).isCloseTo(halfARadius, withinPercentage(PRECISION_PERCENT));
     }
