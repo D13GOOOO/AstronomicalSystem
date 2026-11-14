@@ -22,7 +22,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verifyNoInteractions;
 
 class BlastsTest {
 
@@ -64,14 +63,14 @@ class BlastsTest {
         verify(observer).update(SUT, new Blast(EARTH_HIT, IMPACT).flaresAt(FIVE_MINUTES_LATER, EARTH_LATER.position()));
     }
 
-    // Merged into a larger body, it took its blast with it
+    // Merged into a larger body, it took its blast with it: what was shown is cleared
     @Test
     void aBlastWhoseBodyIsGoneShowsNothing() {
         SUT.bodiesObserver().update(simulation, List.of());
 
         SUT.timeObserver().update(timeline, new TimeFlow(FIVE_MINUTES_LATER, SLOWEST, false));
 
-        verifyNoInteractions(observer);
+        verify(observer).update(SUT, List.of());
     }
 
     // The blast is shown, then once more to clear it, then never again
