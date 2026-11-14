@@ -70,6 +70,18 @@ class MergingCollisionsTest {
         assertThat(resolved).containsExactly(first.mergedWith(second).mergedWith(third));
     }
 
+    // The second body runs through the first one within the step and ends on its other side
+    @Test
+    void bodiesThatPassThroughEachOtherDuringTheStepMerge() {
+        Body first = sphereAt("First", 0.0);
+        Body secondBefore = sphereAt("Second", 10.0);
+        Body secondAfter = sphereAt("Second", -10.0);
+
+        List<Body> resolved = SUT.resolve(List.of(first, secondBefore), List.of(first, secondAfter));
+
+        assertThat(resolved).containsExactly(first.mergedWith(secondAfter));
+    }
+
     private static Body sphereAt(String name, double x) {
         return new Body(new BodyName(name), BodyKind.PLANET, UNIT_MASS, UNIT_RADIUS,
                 new Vector3(x, 0.0, 0.0), Vector3.ZERO);
