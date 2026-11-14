@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Names the bodies of the simulation next to their discs, every time they or the camera move.
@@ -21,15 +22,18 @@ public class LabelsPresenter extends ProjectedBodiesPresenter<Label> {
     private static final double GAP_IN_PIXELS = 4.0;
 
     private final LabelsView view;
+    private final Set<BodyKind> unnamed;
 
     /**
-     * @param styles precondition: a style for every kind of body the simulation contains, the same
-     *               the discs are drawn with
+     * @param styles  precondition: a style for every kind of body the simulation contains, the same
+     *                the discs are drawn with
+     * @param unnamed kinds of bodies that get no label
      */
     public LabelsPresenter(@NotNull LabelsView view, @NotNull Projection projection,
-                           @NotNull Map<BodyKind, BodyStyle> styles) {
+                           @NotNull Map<BodyKind, BodyStyle> styles, @NotNull Set<BodyKind> unnamed) {
         super(projection, styles);
         this.view = view;
+        this.unnamed = Set.copyOf(unnamed);
     }
 
     @Override

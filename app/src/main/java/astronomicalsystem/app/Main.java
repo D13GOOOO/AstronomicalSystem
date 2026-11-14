@@ -51,6 +51,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Creates the solar system as it is now, the simulation and the window, and connects them.
@@ -81,6 +82,8 @@ public final class Main {
             BodyKind.COMET, new BodyStyle(new Colour(0.6, 1.0, 0.95), 4.0),
             BodyKind.ASTEROID, new BodyStyle(new Colour(0.85, 0.7, 0.55), 4.0),
             BodyKind.DEBRIS, new BodyStyle(new Colour(0.6, 0.5, 0.4), 3.0));
+    // Debris comes in dozens of fragments, whose names would cover each other
+    private static final Set<BodyKind> UNNAMED = Set.of(BodyKind.DEBRIS);
     // The colours of the bodies at half their brightness: the paths stay behind the discs
     private static final Map<BodyKind, Colour> PATH_COLOURS = Map.of(
             BodyKind.STAR, new Colour(0.5, 0.425, 0.225),
@@ -126,7 +129,7 @@ public final class Main {
             BodiesPresenter bodies = new BodiesPresenter(scene, camera.camera(), STYLES);
             simulation.addObserver(bodies);
             camera.addObserver(bodies.cameraObserver());
-            LabelsPresenter labels = new LabelsPresenter(names, camera.camera(), STYLES);
+            LabelsPresenter labels = new LabelsPresenter(names, camera.camera(), STYLES, UNNAMED);
             simulation.addObserver(labels);
             camera.addObserver(labels.cameraObserver());
             TrajectoriesPresenter trajectories = new TrajectoriesPresenter(paths, camera.camera(), PATH_COLOURS);
