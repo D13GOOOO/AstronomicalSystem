@@ -1,6 +1,7 @@
 package astronomicalsystem.app.camera;
 
 import astronomicalsystem.app.view.ClipPoint;
+import astronomicalsystem.app.view.ImagePoint;
 import astronomicalsystem.core.math.Vector3;
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -63,6 +64,24 @@ class CameraTest {
         double apparentSize = SUT.apparentSizeInPixels(size, new ClipPoint(0.0, 0.0, 0.0, depth));
 
         assertThat(apparentSize).isCloseTo(pixels, within(TOLERANCE));
+    }
+
+    // Normalised device coordinates x/w and y/w from -1 to 1 span the 200 x 100 pixels of the image,
+    // whose rows are counted downwards from the top
+    @ParameterizedTest
+    @CsvSource(textBlock = """
+             0.0,  0.0, 2.0,  100.0,  50.0
+             1.0,  1.0, 2.0,  150.0,  25.0
+            -2.0, -2.0, 2.0,    0.0, 100.0
+             2.0, -1.0, 1.0,  300.0, 100.0
+            """)
+    void imagePointCountsPixelsFromTheTopLeftCorner(double clipX, double clipY, double clipW,
+                                                   double pixelX, double pixelY) {
+        Camera SUT = new Camera(new Vector3(0.0, 0.0, 2.0), ORIGIN, Y_AXIS, RIGHT_ANGLE_LENS, TWO_BY_ONE);
+
+        ImagePoint point = SUT.imagePoint(new ClipPoint(clipX, clipY, 0.0, clipW));
+
+        assertThat(point).usingRecursiveComparison(CLOSE_ENOUGH).isEqualTo(new ImagePoint(pixelX, pixelY));
     }
 
     // Without a line of sight, or with an up direction along it, the camera has no orientation

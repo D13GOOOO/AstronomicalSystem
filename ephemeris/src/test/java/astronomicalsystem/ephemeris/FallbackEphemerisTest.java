@@ -26,6 +26,8 @@ class FallbackEphemerisTest {
     private static final JulianDate DATE = new JulianDate(2461041.5);
     private static final List<Body> PRIMARY_BODIES = List.of(sunAt(new Vector3(1.0, 0.0, 0.0)));
     private static final List<Body> FALLBACK_BODIES = List.of(sunAt(new Vector3(2.0, 0.0, 0.0)));
+    private static final Ephemeris PRIMARY_ANSWER = new Ephemeris(PRIMARY_BODIES, Provenance.JPL_HORIZONS);
+    private static final Ephemeris FALLBACK_ANSWER = new Ephemeris(FALLBACK_BODIES, Provenance.KEPLER_ELEMENTS);
 
     private final EphemerisSource primary = mock();
     private final EphemerisSource fallback = mock();
@@ -37,32 +39,33 @@ class FallbackEphemerisTest {
     }
 
     @Test
-    void theAnswerOfThePrimarySourceIsTakenWithoutAskingTheFallback() {
-        when(primary.bodiesAt(DATE)).thenReturn(PRIMARY_BODIES);
+    void theEphemerisOfThePrimarySourceIsTakenWithoutAskingTheFallback() {
+        when(primary.ephemerisAt(DATE)).thenReturn(PRIMARY_ANSWER);
 
-        List<Body> bodies = SUT.bodiesAt(DATE);
+        Ephemeris ephemeris = SUT.ephemerisAt(DATE);
 
-        assertThat(bodies).isEqualTo(PRIMARY_BODIES);
+        assertThat(ephemeris).isEqualTo(PRIMARY_ANSWER);
         verifyNoInteractions(fallback);
     }
 
+    // The provenance tells that the fallback answered
     @ParameterizedTest
     @MethodSource("failuresOfThePrimary")
-    void theFallbackAnswersWhenThePrimarySourceFails(RuntimeException failure) {
-        when(primary.bodiesAt(DATE)).thenThrow(failure);
-        when(fallback.bodiesAt(DATE)).thenReturn(FALLBACK_BODIES);
+    void theFallbackGivesTheEphemerisWhenThePrimarySourceFails(RuntimeException failure) {
+        when(primary.ephemerisAt(DATE)).thenThrow(failure);
+        when(fallback.ephemerisAt(DATE)).thenReturn(FALLBACK_ANSWER);
 
-        List<Body> bodies = SUT.bodiesAt(DATE);
+        Ephemeris ephemeris = SUT.ephemerisAt(DATE);
 
-        assertThat(bodies).isEqualTo(FALLBACK_BODIES);
+        assertThat(ephemeris).isEqualTo(FALLBACK_ANSWER);
     }
 
     @Test
     void aDefectOfThePrimarySourceIsNotHiddenByTheFallback() {
         IllegalStateException defect = new IllegalStateException("not yet managed");
-        when(primary.bodiesAt(DATE)).thenThrow(defect);
+        when(primary.ephemerisAt(DATE)).thenThrow(defect);
 
-        assertThatThrownBy(() -> SUT.bodiesAt(DATE)).isSameAs(defect);
+        assertThatThrownBy(() -> SUT.ephemerisAt(DATE)).isSameAs(defect);
         verifyNoInteractions(fallback);
     }
 

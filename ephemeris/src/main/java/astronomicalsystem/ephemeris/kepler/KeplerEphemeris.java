@@ -5,6 +5,8 @@ import astronomicalsystem.core.math.Vector3;
 import astronomicalsystem.core.orbit.StateVector;
 import astronomicalsystem.core.time.JulianDate;
 import astronomicalsystem.ephemeris.BodyProperties;
+import astronomicalsystem.ephemeris.Ephemeris;
+import astronomicalsystem.ephemeris.Provenance;
 import astronomicalsystem.ephemeris.EphemerisSource;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,15 +33,16 @@ public final class KeplerEphemeris implements EphemerisSource {
 
     /**
      * @return the central body followed by the orbiting ones, in the order of the orbits, with the
-     *         centre of mass of all of them at rest in the origin
+     *         centre of mass of all of them at rest in the origin, computed from orbital elements
      */
     @Override
-    public @NotNull List<Body> bodiesAt(@NotNull JulianDate date) {
+    public @NotNull Ephemeris ephemerisAt(@NotNull JulianDate date) {
         double daysSinceEpoch = date.days() - epochOfElements.days();
         List<Body> aroundTheCentralBody = Stream.concat(Stream.of(centralBody.in(AT_REST_IN_THE_ORIGIN)),
                 orbits.stream().map(orbit -> orbit.around(centralBody.mass(), daysSinceEpoch))).toList();
         StateVector centreOfMass = centreOfMass(aroundTheCentralBody);
-        return aroundTheCentralBody.stream().map(body -> relativeTo(centreOfMass, body)).toList();
+        return new Ephemeris(aroundTheCentralBody.stream().map(body -> relativeTo(centreOfMass, body)).toList(),
+                Provenance.KEPLER_ELEMENTS);
     }
 
     private static @NotNull StateVector centreOfMass(@NotNull List<Body> bodies) {

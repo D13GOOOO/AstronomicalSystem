@@ -1,10 +1,7 @@
 package astronomicalsystem.ephemeris;
 
-import astronomicalsystem.core.body.Body;
 import astronomicalsystem.core.time.JulianDate;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 /**
  * Asks a primary source and turns to a fallback when the primary has no usable answer: when it is
@@ -21,11 +18,11 @@ public final class FallbackEphemeris implements EphemerisSource {
     }
 
     @Override
-    public @NotNull List<Body> bodiesAt(@NotNull JulianDate date) {
+    public @NotNull Ephemeris ephemerisAt(@NotNull JulianDate date) {
         try {
-            return primary.bodiesAt(date);
+            return primary.ephemerisAt(date);
         } catch (EphemerisUnavailableException | IllegalArgumentException e) {
-            return fallback.bodiesAt(date);
+            return fallback.ephemerisAt(date);
         }
     }
 }

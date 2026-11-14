@@ -26,24 +26,28 @@ class GlTextIntegrationTest {
     private static final int HEIGHT = 240;
     // Capitals with wide strokes: whole pixels of the first line are covered by the letters
     private static final String CAPITALS = "MMMM";
-    // The first line of text lies within this corner of the image
+    // A line of text lies within this corner of the image
     private static final int CORNER_WIDTH = 120;
     private static final int CORNER_HEIGHT = 40;
+    // Half of the margin that keeps the text away from the edges
+    private static final int MARGIN_STRIP_WIDTH = 5;
     private static final float HALF_BRIGHT = 0.5f;
 
     private GlfwWindow window;
+    private GlFont font;
     private GlText SUT;
 
     @BeforeEach
     void openAWindow() {
         window = GlfwWindow.open(TITLE, WIDTH, HEIGHT);
-        SUT = GlText.create();
+        font = GlFont.create();
+        SUT = new GlText(font, Corner.TOP_LEFT);
     }
 
     // The font atlas is deleted while the context still exists
     @AfterEach
     void closeTheWindow() {
-        SUT.close();
+        font.close();
         window.close();
     }
 
@@ -68,17 +72,63 @@ class GlTextIntegrationTest {
         assertThat(brightestRedInTheTopLeftCorner()).isZero();
     }
 
+    @Test
+    void textForTheBottomLeftCornerLightsThatCornerOnly() {
+        GlText bottomLeft = new GlText(font, Corner.BOTTOM_LEFT);
+        bottomLeft.show(List.of(CAPITALS));
+        clearToBlack();
+
+        bottomLeft.draw();
+
+        assertThat(brightestRedInTheBottomLeftCorner()).isGreaterThan(HALF_BRIGHT);
+        assertThat(brightestRedInTheTopLeftCorner()).isZero();
+    }
+
+    // Right-aligned: within the image and short of its right edge
+    @Test
+    void textForTheBottomRightCornerEndsAMarginAwayFromTheRightEdge() {
+        GlText bottomRight = new GlText(font, Corner.BOTTOM_RIGHT);
+        bottomRight.show(List.of(CAPITALS));
+        clearToBlack();
+
+        bottomRight.draw();
+
+        assertThat(brightestRedInTheBottomRightCorner()).isGreaterThan(HALF_BRIGHT);
+        assertThat(brightestRedInTheRightMargin()).isZero();
+        assertThat(brightestRedInTheBottomLeftCorner()).isZero();
+    }
+
     private static void clearToBlack() {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
-    // Rows of pixels are read from the bottom of the image
     private static float brightestRedInTheTopLeftCorner() {
+        return brightestRedIn(0, viewport()[3] - CORNER_HEIGHT, CORNER_WIDTH, CORNER_HEIGHT);
+    }
+
+    private static float brightestRedInTheBottomLeftCorner() {
+        return brightestRedIn(0, 0, CORNER_WIDTH, CORNER_HEIGHT);
+    }
+
+    private static float brightestRedInTheBottomRightCorner() {
+        return brightestRedIn(viewport()[2] - CORNER_WIDTH, 0, CORNER_WIDTH, CORNER_HEIGHT);
+    }
+
+    private static float brightestRedInTheRightMargin() {
+        return brightestRedIn(viewport()[2] - MARGIN_STRIP_WIDTH, 0, MARGIN_STRIP_WIDTH, CORNER_HEIGHT);
+    }
+
+    private static int[] viewport() {
         int[] viewport = new int[4];
         glGetIntegerv(GL_VIEWPORT, viewport);
-        float[] reds = new float[CORNER_WIDTH * CORNER_HEIGHT];
-        glReadPixels(0, viewport[3] - CORNER_HEIGHT, CORNER_WIDTH, CORNER_HEIGHT, GL_RED, GL_FLOAT, reds);
+        return viewport;
+    }
+
+    // Rows of pixels are counted from the bottom of the image
+    private static float brightestRedIn(int firstColumn, int lowestRow, int width, int height) {
+        float[] reds = new float[width * height];
+        glReadPixels(firstColumn, lowestRow, width, height, GL_RED, GL_FLOAT, reds);
         float brightest = 0.0f;
         for (float red : reds) {
             brightest = Math.max(brightest, red);

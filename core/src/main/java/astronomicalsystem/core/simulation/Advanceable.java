@@ -8,5 +8,10 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface Advanceable {
 
-    void advance(@NotNull TimeStep timeStep);
+    /**
+     * Takes several steps, one after the other.
+     *
+     * @param steps precondition: positive
+     */
+    void advance(@NotNull TimeStep timeStep, int steps);
 }

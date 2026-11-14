@@ -33,13 +33,13 @@ class SolarSystemTest {
         when(horizons.entryOf(any())).thenReturn(SOME_ENTRY);
         EphemerisSource SUT = SolarSystem.fromHorizons(horizons);
 
-        List<Body> bodies = SUT.bodiesAt(DATE);
+        List<Body> bodies = SUT.ephemerisAt(DATE).bodies();
 
         ArgumentCaptor<HorizonsQuery> queries = ArgumentCaptor.forClass(HorizonsQuery.class);
         verify(horizons, times(SUN_AND_PLANETS)).entryOf(queries.capture());
         assertThat(queries.getAllValues()).containsExactly(query("10"), query("1"), query("2"), query("3"),
                 query("4"), query("5"), query("6"), query("7"), query("8"));
-        assertThat(propertiesOf(bodies)).isEqualTo(propertiesOf(SolarSystem.meanOrbits().bodiesAt(DATE)));
+        assertThat(propertiesOf(bodies)).isEqualTo(propertiesOf(SolarSystem.meanOrbits().ephemerisAt(DATE).bodies()));
     }
 
     @Test
@@ -47,7 +47,7 @@ class SolarSystemTest {
         when(horizons.entryOf(any())).thenReturn(SOME_ENTRY);
         EphemerisSource SUT = SolarSystem.withFallback(horizons);
 
-        List<Body> bodies = SUT.bodiesAt(DATE);
+        List<Body> bodies = SUT.ephemerisAt(DATE).bodies();
 
         assertThat(bodies).hasSize(SUN_AND_PLANETS).extracting(Body::position)
                 .containsOnly(SOME_ENTRY.state().position());
@@ -58,9 +58,9 @@ class SolarSystemTest {
         when(horizons.entryOf(any())).thenThrow(new EphemerisUnavailableException("Horizons cannot be reached"));
         EphemerisSource SUT = SolarSystem.withFallback(horizons);
 
-        List<Body> bodies = SUT.bodiesAt(DATE);
+        List<Body> bodies = SUT.ephemerisAt(DATE).bodies();
 
-        assertThat(bodies).isEqualTo(SolarSystem.meanOrbits().bodiesAt(DATE));
+        assertThat(bodies).isEqualTo(SolarSystem.meanOrbits().ephemerisAt(DATE).bodies());
     }
 
     private static HorizonsQuery query(String command) {
