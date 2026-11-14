@@ -30,6 +30,8 @@ class BlastTest {
     private static final JulianDate START = new JulianDate(2461041.5);
     private static final double PRECISION_PERCENT = 1e-9;
     private static final double NINE_MINUTES = 9.0 / 1440.0;
+    private static final double TEN_MINUTES = 10.0 / 1440.0;
+    private static final int EMBERS = 240;
     // The age is known to some 40 microseconds out of minutes
     private static final double HEAT_PRECISION_PERCENT = 1e-4;
 
@@ -69,6 +71,17 @@ class BlastTest {
         List<Flare> flares = SUT.flaresAt(new JulianDate(START.days() + NINE_MINUTES), Vector3.ZERO);
 
         assertThat(flares.getFirst().heat()).isPositive();
+    }
+
+    // Ten minutes after the impact the embers are on their way up, all of them above the ground
+    @Test
+    void theImpactThrowsUpEmbersAboveTheGround() {
+        Blast SUT = new Blast(new Collision(EARTH, UP, UP, SPEED, BINDING_ENERGY / 8.0), START);
+
+        List<Flare> flares = SUT.flaresAt(new JulianDate(START.days() + TEN_MINUTES), Vector3.ZERO);
+
+        assertThat(flares.subList(1, flares.size())).hasSize(EMBERS)
+                .allSatisfy(ember -> assertThat(ember.position().length()).isGreaterThan(EARTH_RADIUS));
     }
 
     @Test
