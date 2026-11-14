@@ -18,6 +18,13 @@ public record Spin(@NotNull Vector3 pole, @NotNull Vector3 meridian, @NotNull Ju
                    double radiansPerDay) {
 
     public Spin {
+        // Zero also when one of the two is zero
+        if (pole.cross(meridian).lengthSquared() == 0.0) {
+            throw new IllegalArgumentException("A spin needs a pole and a prime meridian across it");
+        }
+        if (!Double.isFinite(radiansPerDay)) {
+            throw new IllegalArgumentException("Spin rate must be finite");
+        }
         pole = pole.normalized();
         // Gram-Schmidt: without its component along the pole
         meridian = meridian.minus(pole.times(meridian.dot(pole))).normalized();
