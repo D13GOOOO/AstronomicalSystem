@@ -19,11 +19,26 @@ public record RotationalElements(double rightAscension, double declination, doub
                                  double degreesPerDay) {
 
     private static final JulianDate J2000 = new JulianDate(2451545.0);
+    // Obliquity of the ecliptic at J2000 (IAU 1976), 84381.448 arcseconds: the angle between the
+    // equator of the ICRF and the ecliptic, which share the x-axis towards the equinox
+    private static final double OBLIQUITY = Math.toRadians(84_381.448 / 3600.0);
 
     /**
      * @return the rotation of the body in the frame of the simulation, ecliptic of J2000
      */
     public @NotNull Spin spin() {
-        return new Spin(new Vector3(0.0, 0.0, 1.0), new Vector3(1.0, 0.0, 0.0), J2000, 0.0);
+        double alpha = Math.toRadians(rightAscension);
+        double delta = Math.toRadians(declination);
+        Vector3 pole = new Vector3(Math.cos(delta) * Math.cos(alpha), Math.cos(delta) * Math.sin(alpha),
+                Math.sin(delta));
+        // The ascending node of the equator of the body on the equator of the ICRF, a quarter turn
+        // after the right ascension of the pole
+        Vector3 node = new Vector3(-Math.sin(alpha), Math.cos(alpha), 0.0);
+        return new Spin(inTheEclipticFrame(pole), inTheEclipticFrame(node), J2000, 0.0);
+    }
+
+    // The ecliptic frame is the equatorial one turned about their common x-axis by the obliquity
+    private static @NotNull Vector3 inTheEclipticFrame(@NotNull Vector3 equatorial) {
+        return equatorial.rotatedAboutX(-OBLIQUITY);
     }
 }
