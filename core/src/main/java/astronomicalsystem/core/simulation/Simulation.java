@@ -36,6 +36,9 @@ public class Simulation implements Advanceable {
         step(timeStep);
     }
 
+    public void add(@NotNull Body body) {
+    }
+
     /**
      * Takes several steps, one after the other.
      *
