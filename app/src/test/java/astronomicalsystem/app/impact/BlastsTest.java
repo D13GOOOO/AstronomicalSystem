@@ -19,6 +19,7 @@ import java.util.List;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 class BlastsTest {
 
@@ -30,6 +31,9 @@ class BlastsTest {
     private static final JulianDate IMPACT = new JulianDate(2461041.5);
     private static final JulianDate FIVE_MINUTES_LATER = new JulianDate(2461041.5 + 5.0 / 1440.0);
     private static final TimeWarp SLOWEST = new TimeWarp(1.0 / 2048.0);
+    // The fireball has gone out and the embers have fallen back
+    private static final JulianDate A_DAY_LATER = new JulianDate(2461042.5);
+    private static final JulianDate A_DAY_AND_A_MINUTE_LATER = new JulianDate(2461042.5 + 1.0 / 1440.0);
 
     private final Observable<List<Collision>> collisionNews = mock();
     private final Observable<TimeFlow> timeline = mock();
@@ -53,5 +57,16 @@ class BlastsTest {
         SUT.timeObserver().update(timeline, new TimeFlow(FIVE_MINUTES_LATER, SLOWEST, false));
 
         verify(observer).update(SUT, new Blast(EARTH_HIT, IMPACT).flaresAt(FIVE_MINUTES_LATER, EARTH_LATER.position()));
+    }
+
+    // Once to clear what was shown, then never again
+    @Test
+    void whenNothingGlowsAnyMoreTheObserversAreToldOnce() {
+        SUT.timeObserver().update(timeline, new TimeFlow(A_DAY_LATER, SLOWEST, false));
+
+        SUT.timeObserver().update(timeline, new TimeFlow(A_DAY_AND_A_MINUTE_LATER, SLOWEST, false));
+
+        verify(observer).update(SUT, List.of());
+        verifyNoMoreInteractions(observer);
     }
 }
