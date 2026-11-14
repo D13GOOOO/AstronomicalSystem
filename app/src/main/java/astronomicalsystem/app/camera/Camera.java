@@ -73,4 +73,9 @@ public final class Camera implements Projection {
     public @NotNull Vector3 forward() {
         return forward;
     }
+
+    @Override
+    public @NotNull Vector3 inTheImage(@NotNull Vector3 direction) {
+        return Vector3.ZERO;
+    }
 }
