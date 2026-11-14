@@ -52,6 +52,11 @@ public class CameraRig implements CameraModel, CameraTarget, CurrentCamera {
         change(newTarget, orbit, viewport);
     }
 
+    @Override
+    public void lookAt(@NotNull Vector3 newTarget, double clearance) {
+        lookAt(newTarget);
+    }
+
     private void change(@NotNull Vector3 newTarget, @NotNull Orbit newOrbit, @NotNull Viewport newViewport) {
         if (newTarget.equals(target) && newOrbit.equals(orbit) && newViewport.equals(viewport)) {
             return;

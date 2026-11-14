@@ -13,4 +13,12 @@ public interface CameraTarget {
      * direction.
      */
     void lookAt(@NotNull Vector3 target);
+
+    /**
+     * Moves the camera with its target, as {@link #lookAt(Vector3)}, and keeps it at least as far
+     * from it as the clearance, for example outside the body it follows.
+     *
+     * @param clearance in AU; precondition: positive and finite
+     */
+    void lookAt(@NotNull Vector3 target, double clearance);
 }

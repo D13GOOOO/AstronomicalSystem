@@ -13,6 +13,7 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 class CameraRigTest {
 
@@ -31,6 +32,7 @@ class CameraRigTest {
     private static final double SAME_DISTANCE = 1.0;
     private static final Orbit AS_FAR_AS_POSSIBLE = new Orbit(100.0, 0.0, 0.0);
     private static final double TWICE_AS_FAR = 2.0;
+    private static final double THREE_AU = 3.0;
     // 2 AU away on the ecliptic, looking along the positive y-axis
     private static final Orbit ON_THE_ECLIPTIC = new Orbit(2.0, 0.0, 0.0);
     // Focal factor 1, depth from 1 to 3 AU: the target, 2 AU away, has z = w / 2
@@ -88,6 +90,14 @@ class CameraRigTest {
                 .isEqualTo(new ClipPoint(0.0, 0.0, 1.0, 2.0));
         assertThat(SUT.camera().clipPoint(TARGET)).usingRecursiveComparison(CLOSE_ENOUGH)
                 .isEqualTo(new ClipPoint(-0.5, 0.0, 1.0, 2.0));
+    }
+
+    // 2 AU away as before would be too close: the camera backs off to 3 AU along its line of sight
+    @Test
+    void theCameraKeepsClearOfItsTarget() {
+        SUT.lookAt(EAST_OF_THE_TARGET, THREE_AU);
+
+        assertThat(SUT.camera().clipPoint(EAST_OF_THE_TARGET).w()).isCloseTo(3.0, within(TOLERANCE));
     }
 
     // Nothing turns, nothing moves closer or farther, the image keeps its size, the target stays
