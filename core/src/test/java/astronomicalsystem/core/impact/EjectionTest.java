@@ -29,6 +29,7 @@ class EjectionTest {
 
     private static final double PRECISION_PERCENT = 1e-9;
     private static final RecursiveComparisonConfiguration CLOSE_ENOUGH = Tolerances.closeEnough(1e-14);
+    private static final double G = 2.959122082855911e-4;
 
     private final Ejection SUT = new Ejection(MERGED, REMNANT, FRAGMENTS, UPWARDS, PROTOPLANET);
 
@@ -62,6 +63,21 @@ class EjectionTest {
             assertThat(offset.normalized().dot(UPWARDS.axis())).isGreaterThanOrEqualTo(Math.cos(UPWARDS.halfAngle()));
         });
         assertThat(smallestGapBetween(bodies)).isPositive();
+    }
+
+    // Moving outwards with v² > 2 G M_lr / r, the energy that frees them from the remnant
+    @Test
+    void theFragmentsFlyAwayFasterThanTheyCanEscapeTheRemnant() {
+        List<Body> bodies = SUT.bodies();
+
+        Body remnant = bodies.getFirst();
+        assertThat(bodies.subList(1, bodies.size())).allSatisfy(fragment -> {
+            Vector3 offset = fragment.position().minus(remnant.position());
+            Vector3 relativeVelocity = fragment.velocity().minus(remnant.velocity());
+            assertThat(relativeVelocity.dot(offset)).isPositive();
+            assertThat(relativeVelocity.lengthSquared())
+                    .isGreaterThan(2.0 * G * remnant.mass().solarMasses() / offset.length());
+        });
     }
 
     // No external force acts in the impact: the bodies move on as a whole
