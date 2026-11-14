@@ -4,8 +4,10 @@ import astronomicalsystem.core.body.BodyKind;
 import astronomicalsystem.core.body.BodyName;
 import astronomicalsystem.core.body.Mass;
 import astronomicalsystem.core.body.Radius;
+import astronomicalsystem.core.math.Vector3;
 import astronomicalsystem.core.orbit.Eccentricity;
 import astronomicalsystem.core.orbit.OrbitalElements;
+import astronomicalsystem.core.rotation.Spin;
 import astronomicalsystem.core.time.JulianDate;
 import astronomicalsystem.ephemeris.horizons.Horizons;
 import astronomicalsystem.ephemeris.horizons.HorizonsCommand;
@@ -16,6 +18,9 @@ import astronomicalsystem.ephemeris.kepler.KeplerOrbit;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Catalogue of the Sun and the planets. Sources:
@@ -98,6 +103,15 @@ public final class SolarSystem {
      */
     public static @NotNull EphemerisSource withFallback(@NotNull Horizons horizons) {
         return new FallbackEphemeris(fromHorizons(horizons), meanOrbits());
+    }
+
+    /**
+     * @return how the Sun and each planet turn about their axes, by their names
+     */
+    public static @NotNull Map<BodyName, Spin> spins() {
+        Spin still = new Spin(new Vector3(0.0, 0.0, 1.0), new Vector3(1.0, 0.0, 0.0), J2000, 0.0);
+        return Stream.of(SUN, MERCURY, VENUS, EARTH, MARS, JUPITER, SATURN, URANUS, NEPTUNE)
+                .collect(Collectors.toMap(BodyProperties::name, body -> still));
     }
 
     private static @NotNull BodyProperties planet(@NotNull String name, double gmKm3PerS2, double meanRadiusKm) {
