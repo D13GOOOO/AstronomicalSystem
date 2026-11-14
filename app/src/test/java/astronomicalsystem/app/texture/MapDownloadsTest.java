@@ -38,6 +38,17 @@ class MapDownloadsTest {
         verify(view).loadMosaic("mars", TWO_COLUMNS, List.of(WEST_TILE, EAST_TILE));
     }
 
+    // Without the network, or with a tile missing: the body keeps its plain colour
+    @Test
+    void aMapWithATileThatCannotBeHadIsDoneWithout() {
+        when(files.fetch(WEST)).thenReturn(WEST_TILE);
+        when(files.fetch(EAST)).thenThrow(new MapUnavailableException("The map server cannot be reached"));
+
+        SUT.request(MARS);
+
+        verifyNoInteractions(view);
+    }
+
     // An executor that only takes note: nothing is fetched by the one who asks
     @Test
     void aRequestIsLeftToTheExecutor() {
