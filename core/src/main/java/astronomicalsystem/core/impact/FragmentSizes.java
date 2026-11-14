@@ -19,6 +19,9 @@ public record FragmentSizes(@NotNull Mass smallest, int most) {
      * @return the masses of the fragments, from the largest
      */
     public @NotNull List<Mass> split(double debris) {
+        if (debris < smallest.solarMasses()) {
+            return List.of();
+        }
         return List.of(new Mass(debris));
     }
 }
