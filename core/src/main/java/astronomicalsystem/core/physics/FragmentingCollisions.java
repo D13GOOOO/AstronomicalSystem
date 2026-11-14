@@ -28,9 +28,8 @@ public class FragmentingCollisions extends SweptCollisions {
     }
 
     @Override
-    protected @NotNull List<Sweep> outcomeOf(@NotNull Sweep first, @NotNull Sweep second, double fraction) {
-        Sweep merged = first.mergedWith(second);
-        Contact contact = Contact.between(first, second, fraction);
+    protected @NotNull List<Sweep> outcomeOf(@NotNull Contact contact) {
+        Sweep merged = contact.target().mergedWith(contact.projectile());
         Impact impact = contact.impact();
         if (impact.merges()) {
             return List.of(merged);

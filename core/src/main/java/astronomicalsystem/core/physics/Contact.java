@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
  * @param projectile the smaller body
  * @param fraction   of the step at which they touch, in [0, 1)
  */
-record Contact(@NotNull Sweep target, @NotNull Sweep projectile, double fraction) {
+public record Contact(@NotNull Sweep target, @NotNull Sweep projectile, double fraction) {
 
     private static final double G = GravitationalParameter.GRAVITATIONAL_CONSTANT;
 
