@@ -36,6 +36,8 @@ class FlaresPresenterTest {
     private final GlowsView view = mock();
     private final Projection projection = mock();
     private final Observable<List<Flare>> blasts = mock();
+    private final Projection movedCamera = mock();
+    private final Observable<Projection> cameraRig = mock();
     private final FlaresPresenter SUT = new FlaresPresenter(view, projection);
 
     // Seen from afar, smaller than sixteen pixels across, it is drawn that large
@@ -45,6 +47,18 @@ class FlaresPresenterTest {
         when(projection.apparentSizeInPixels(2.0 * FIREBALL_RADIUS, SITE_IN_CLIP_SPACE)).thenReturn(FIVE_PIXELS);
 
         SUT.update(blasts, List.of(new Flare(SITE, FIREBALL_RADIUS, AS_HOT_AS_IT_GETS)));
+
+        verify(view).show(List.of(new Glow(SITE_IN_CLIP_SPACE, SIXTEEN_PIXELS, WHITE_HOT)));
+    }
+
+    @Test
+    void theFlaresAreShownFromThePointOfViewOfANewCamera() {
+        when(projection.clipPoint(SITE)).thenReturn(ON_THE_PLANE_OF_THE_EYE);
+        when(movedCamera.clipPoint(SITE)).thenReturn(SITE_IN_CLIP_SPACE);
+        when(movedCamera.apparentSizeInPixels(2.0 * FIREBALL_RADIUS, SITE_IN_CLIP_SPACE)).thenReturn(FIVE_PIXELS);
+        SUT.update(blasts, List.of(new Flare(SITE, FIREBALL_RADIUS, AS_HOT_AS_IT_GETS)));
+
+        SUT.cameraObserver().update(cameraRig, movedCamera);
 
         verify(view).show(List.of(new Glow(SITE_IN_CLIP_SPACE, SIXTEEN_PIXELS, WHITE_HOT)));
     }

@@ -47,6 +47,14 @@ public class FlaresPresenter implements Observer<List<Flare>> {
     }
 
     /**
+     * @return the observer that shows the flares from the point of view of every new camera
+     */
+    public @NotNull Observer<Projection> cameraObserver() {
+        return (subject, camera) -> {
+        };
+    }
+
+    /**
      * @param flare precondition: in front of the camera
      */
     private @NotNull Glow glowOf(@NotNull Flare flare) {
