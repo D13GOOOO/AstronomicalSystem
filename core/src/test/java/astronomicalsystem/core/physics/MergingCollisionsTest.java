@@ -5,7 +5,9 @@ import astronomicalsystem.core.body.BodyKind;
 import astronomicalsystem.core.body.BodyName;
 import astronomicalsystem.core.body.Mass;
 import astronomicalsystem.core.body.Radius;
+import astronomicalsystem.core.math.Tolerances;
 import astronomicalsystem.core.math.Vector3;
+import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -18,6 +20,8 @@ class MergingCollisionsTest {
 
     private static final Mass UNIT_MASS = new Mass(1.0);
     private static final Radius UNIT_RADIUS = new Radius(1.0);
+
+    private static final RecursiveComparisonConfiguration CLOSE_ENOUGH = Tolerances.closeEnough(1e-15);
 
     private final MergingCollisions SUT = new MergingCollisions();
 
@@ -118,6 +122,24 @@ class MergingCollisionsTest {
         List<Body> resolved = SUT.resolve(List.of(first, secondBefore), List.of(first, secondAfter)).bodies();
 
         assertThat(resolved).containsExactly(first, secondAfter);
+    }
+
+    // Falling from rest 10 AU apart, two suns meet 2 AU apart: v² = 2 G M (1/2 - 1/10) = 1.6 G, and
+    // the energy in the frame of their centre of mass is (1/2) mu v² with mu = 1/2. Head-on, the
+    // debris flies straight back out of the site, on the side of the second body
+    @Test
+    void everyCollisionIsToldWithTheSurvivorTheSiteAndHowHardTheBodiesMet() {
+        Body first = sphereAt("First", 0.0);
+        Body secondBefore = sphereAt("Second", 10.0);
+        Body secondAfter = sphereAt("Second", -10.0);
+
+        List<Collision> collisions = SUT.resolve(List.of(first, secondBefore), List.of(first, secondAfter))
+                .collisions();
+
+        Vector3 towardsTheSecond = new Vector3(1.0, 0.0, 0.0);
+        assertThat(collisions).usingRecursiveFieldByFieldElementComparator(CLOSE_ENOUGH).containsExactly(
+                new Collision(first.name(), towardsTheSecond, towardsTheSecond, 0.021759125287036375,
+                        1.1836488331423645e-4));
     }
 
     private static Body sphereAt(String name, double x) {
