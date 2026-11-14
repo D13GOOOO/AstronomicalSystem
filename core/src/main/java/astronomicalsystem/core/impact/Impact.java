@@ -25,6 +25,8 @@ public record Impact(@NotNull Mass target, @NotNull Mass projectile, double cont
             / KILOGRAMS_PER_SUN;
     // c* of the scaling law for planets, which hold together by gravity alone
     private static final double PLANETARY_COEFFICIENT = 1.9;
+    // mu-bar, the exponent of the coupling of the projectile's energy with the target
+    private static final double COUPLING_EXPONENT = 0.36;
 
     /**
      * @return whether the two bodies merge whole: they meet slower than their mutual escape speed
@@ -49,11 +51,16 @@ public record Impact(@NotNull Mass target, @NotNull Mass projectile, double cont
         return 0.5 * reducedMass * speed * speed / totalMass();
     }
 
-    // Q*_RD: the specific energy that leaves half of the mass in the largest remnant, c* times the
-    // binding energy per unit mass (4/5) pi rho G R² of a sphere of the total mass at 1 g/cm³
+    // Q*_RD: the specific energy that leaves half of the mass in the largest remnant. For equal
+    // masses, c* times the binding energy per unit mass (4/5) pi rho G R² of a sphere of the total
+    // mass at 1 g/cm³; a smaller projectile couples less of its energy with the target, and the
+    // threshold grows by ((1 + gamma)² / (4 gamma))^(2 / (3 mu-bar) - 1), gamma = m / M
     private double disruptionEnergy() {
         double radius = Math.cbrt(3.0 * totalMass() / (4.0 * Math.PI * UNIT_DENSITY));
-        return PLANETARY_COEFFICIENT * 0.8 * Math.PI * UNIT_DENSITY * G * radius * radius;
+        double equalMasses = PLANETARY_COEFFICIENT * 0.8 * Math.PI * UNIT_DENSITY * G * radius * radius;
+        double massRatio = projectile.solarMasses() / target.solarMasses();
+        double coupling = (1.0 + massRatio) * (1.0 + massRatio) / (4.0 * massRatio);
+        return equalMasses * Math.pow(coupling, 2.0 / (3.0 * COUPLING_EXPONENT) - 1.0);
     }
 
     private double totalMass() {
