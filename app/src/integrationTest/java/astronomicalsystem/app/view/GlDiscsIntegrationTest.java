@@ -45,6 +45,8 @@ class GlDiscsIntegrationTest {
     private static final Lighting FROM_THE_RIGHT = new Lighting.LitFrom(1.0, 0.0, 0.0);
     private static final float BRIGHT = 0.7f;
     private static final float DARK = 0.1f;
+    private static final float NEARLY_WHITE = 0.98f;
+    private static final int EIGHTEEN_PIXELS = 18;
     // From the centre of the disc, 8.5 px right and 8.5 px up: 12 px away, outside the circle of
     // radius 10 but inside the square that encloses it
     private static final int DIAGONAL_OFFSET = 8;
@@ -117,7 +119,7 @@ class GlDiscsIntegrationTest {
         SUT.draw();
 
         int[] centre = centreOfTheImage();
-        assertThat(pixelAt(2 * centre[0] - FIVE_PIXELS, centre[1])).containsExactly(RED, withPrecision(ONE_LEVEL));
+        assertThat(pixelAt(2 * centre[0] - FIVE_PIXELS, centre[1])[0]).isGreaterThan(BRIGHT);
     }
 
     // Points are drawn at most as large as the card allows, 255 px on some: a body seen from close by
@@ -131,8 +133,22 @@ class GlDiscsIntegrationTest {
         SUT.draw();
 
         int[] centre = centreOfTheImage();
-        assertThat(pixelAt(centre[0] + A_HUNDRED_AND_FIFTY_PIXELS, centre[1]))
-                .containsExactly(RED, withPrecision(ONE_LEVEL));
+        assertThat(pixelAt(centre[0] + A_HUNDRED_AND_FIFTY_PIXELS, centre[1])[0]).isGreaterThan(BRIGHT);
+    }
+
+    // The light of a star comes from deeper and hotter layers in the middle: I = 1 - u (1 - mu), with
+    // mu the cosine between the normal and the line of sight and u = 0.6, as for the Sun. 18 px from
+    // the centre of a disc of radius 20, mu = 0.44 and I = 0.66
+    @Test
+    void aDiscWithItsOwnLightIsDarkerAtTheEdge() {
+        SUT.show(List.of(new Disc(MIDDLE_OF_THE_IMAGE, FORTY_PIXELS, WHITE, Lighting.OWN_LIGHT)));
+        clearToBlack();
+
+        SUT.draw();
+
+        int[] centre = centreOfTheImage();
+        assertThat(pixelAt(centre[0], centre[1])[0]).isGreaterThan(NEARLY_WHITE);
+        assertThat(pixelAt(centre[0] + EIGHTEEN_PIXELS, centre[1])[0]).isBetween(0.62f, 0.70f);
     }
 
     private static void clearToBlack() {
