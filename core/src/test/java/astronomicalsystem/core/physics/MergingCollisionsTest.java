@@ -7,6 +7,8 @@ import astronomicalsystem.core.body.Mass;
 import astronomicalsystem.core.body.Radius;
 import astronomicalsystem.core.math.Vector3;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.util.List;
 
@@ -98,8 +100,32 @@ class MergingCollisionsTest {
         assertThat(resolved).containsExactly(first, secondAfter.mergedWith(thirdAfter));
     }
 
+    // The second body moves along a line parallel to the x-axis, at a distance y from it
+    @ParameterizedTest(name = "{0}")
+    @CsvSource(textBlock = """
+            moving apart,            3.0,  10.0, 0.0
+            passing beside,         10.0, -10.0, 2.5
+            touching at the closest, 10.0, -10.0, 2.0
+            touching at the end,    10.0,   2.0, 0.0
+            meeting after the step, 10.0,   4.0, 0.0
+            """)
+    void bodiesThatDoNotOverlapWithinTheStepAreLeftUnchanged(String description, double startX, double endX,
+                                                             double y) {
+        Body first = sphereAt("First", 0.0);
+        Body secondBefore = sphereAt("Second", startX, y);
+        Body secondAfter = sphereAt("Second", endX, y);
+
+        List<Body> resolved = SUT.resolve(List.of(first, secondBefore), List.of(first, secondAfter));
+
+        assertThat(resolved).containsExactly(first, secondAfter);
+    }
+
     private static Body sphereAt(String name, double x) {
+        return sphereAt(name, x, 0.0);
+    }
+
+    private static Body sphereAt(String name, double x, double y) {
         return new Body(new BodyName(name), BodyKind.PLANET, UNIT_MASS, UNIT_RADIUS,
-                new Vector3(x, 0.0, 0.0), Vector3.ZERO);
+                new Vector3(x, y, 0.0), Vector3.ZERO);
     }
 }
