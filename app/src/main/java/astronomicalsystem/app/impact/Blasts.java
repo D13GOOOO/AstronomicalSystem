@@ -17,10 +17,20 @@ import java.util.List;
  */
 public class Blasts implements Observer<List<Collision>>, Observable<List<Flare>> {
 
+    // Until the timeline tells the date, which it does before the first collision
+    private static final JulianDate BEFORE_THE_TIMELINE = new JulianDate(0.0);
+
     private final List<Observer<List<Flare>>> observers = new ArrayList<>();
+    private final List<Blast> blasts = new ArrayList<>();
+    private JulianDate now = BEFORE_THE_TIMELINE;
+    private List<Body> bodies = List.of();
+    private List<Flare> flares = List.of();
 
     @Override
     public void update(@NotNull Observable<List<Collision>> subject, @NotNull List<Collision> state) {
+        for (Collision collision : state) {
+            blasts.add(new Blast(collision, now));
+        }
     }
 
     /**
@@ -28,6 +38,9 @@ public class Blasts implements Observer<List<Collision>>, Observable<List<Flare>
      */
     public @NotNull Observer<TimeFlow> timeObserver() {
         return (subject, flow) -> {
+            now = flow.date();
+            flares = blasts.stream().flatMap(blast -> flaresOf(blast).stream()).toList();
+            notifyObservers();
         };
     }
 
@@ -35,8 +48,7 @@ public class Blasts implements Observer<List<Collision>>, Observable<List<Flare>
      * @return the observer that keeps the blasts on the bodies that survived them
      */
     public @NotNull Observer<List<Body>> bodiesObserver() {
-        return (subject, bodies) -> {
-        };
+        return (subject, state) -> bodies = List.copyOf(state);
     }
 
     @Override
@@ -53,6 +65,15 @@ public class Blasts implements Observer<List<Collision>>, Observable<List<Flare>
 
     @Override
     public @NotNull List<Flare> getState() {
-        return List.of();
+        return flares;
+    }
+
+    // Where the body that survived the blast is now
+    private @NotNull List<Flare> flaresOf(@NotNull Blast blast) {
+        return bodies.stream()
+                .filter(body -> body.name().equals(blast.collision().survivor().name()))
+                .findFirst()
+                .map(survivor -> blast.flaresAt(now, survivor.position()))
+                .orElse(List.of());
     }
 }
