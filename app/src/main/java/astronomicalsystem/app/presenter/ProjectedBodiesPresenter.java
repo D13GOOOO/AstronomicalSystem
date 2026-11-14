@@ -5,6 +5,7 @@ import astronomicalsystem.app.view.ClipPoint;
 import astronomicalsystem.app.view.ImagePoint;
 import astronomicalsystem.core.body.Body;
 import astronomicalsystem.core.body.BodyKind;
+import astronomicalsystem.core.math.Vector3;
 import astronomicalsystem.core.observer.Observable;
 import astronomicalsystem.core.observer.Observer;
 import org.jetbrains.annotations.NotNull;
@@ -75,12 +76,30 @@ public abstract class ProjectedBodiesPresenter<M> implements Observer<List<Body>
         return projection.imagePoint(point);
     }
 
+    /**
+     * @return the direction in the frame of the image of the latest camera
+     */
+    protected final @NotNull Vector3 inTheImage(@NotNull Vector3 direction) {
+        return projection.inTheImage(direction);
+    }
+
+    /**
+     * @return the latest bodies, all of them, also those not in front of the camera
+     */
+    protected final @NotNull List<Body> bodies() {
+        return bodies;
+    }
+
+    protected final @NotNull BodyStyle styleOf(@NotNull Body body) {
+        return styles.get(body.kind());
+    }
+
     private void redraw() {
         List<M> marks = new ArrayList<>();
         for (Body body : bodies) {
             ClipPoint centre = projection.clipPoint(body.position());
             if (isMarked(body) && centre.isInFrontOfTheCamera()) {
-                BodyStyle style = styles.get(body.kind());
+                BodyStyle style = styleOf(body);
                 marks.add(markOf(body, style, centre, diameterOf(body, style, centre)));
             }
         }

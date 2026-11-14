@@ -7,13 +7,16 @@ import astronomicalsystem.app.view.Lighting;
 import astronomicalsystem.app.view.SceneView;
 import astronomicalsystem.core.body.Body;
 import astronomicalsystem.core.body.BodyKind;
+import astronomicalsystem.core.math.Vector3;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Shows the bodies of the simulation as discs, every time they or the camera move.
+ * Shows the bodies of the simulation as discs, lit by the brightest star, every time they or the
+ * camera move.
  */
 public class BodiesPresenter extends ProjectedBodiesPresenter<Disc> {
 
@@ -31,7 +34,22 @@ public class BodiesPresenter extends ProjectedBodiesPresenter<Disc> {
     @Override
     protected @NotNull Disc markOf(@NotNull Body body, @NotNull BodyStyle style, @NotNull ClipPoint centre,
                                    double diameter) {
-        return new Disc(centre, diameter, style.colour(), Lighting.OWN_LIGHT);
+        return new Disc(centre, diameter, style.colour(), style.shines() ? Lighting.OWN_LIGHT : lightingOf(body));
+    }
+
+    // Lit by the most massive body that shines, the brightest star; by its own light if none does
+    private @NotNull Lighting lightingOf(@NotNull Body body) {
+        return bodies().stream()
+                .filter(other -> styleOf(other).shines())
+                .max(Comparator.comparingDouble(other -> other.mass().solarMasses()))
+                .map(star -> litFrom(star.position().minus(body.position())))
+                .orElse(Lighting.OWN_LIGHT);
+    }
+
+    // A unit vector in space stays one in the frame of the image, which only turns it
+    private @NotNull Lighting litFrom(@NotNull Vector3 towardsTheLight) {
+        Vector3 inTheImage = inTheImage(towardsTheLight.normalized());
+        return new Lighting.LitFrom(inTheImage.x(), inTheImage.y(), inTheImage.z());
     }
 
     @Override
