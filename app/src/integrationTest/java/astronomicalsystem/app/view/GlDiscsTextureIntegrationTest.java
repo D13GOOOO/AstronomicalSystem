@@ -35,6 +35,9 @@ class GlDiscsTextureIntegrationTest {
     private static final int HEIGHT = 240;
     private static final String HEMISPHERES = "hemispheres";
     private static final ClipPoint MIDDLE_OF_THE_IMAGE = new ClipPoint(0.0, 0.0, 0.0, 1.0);
+    // The card shades pixels two by two, in pairs that start at even columns: one pixel to the right
+    // of the middle of an image 320 px wide, the centre of a disc is inside a pair, not between two
+    private static final ClipPoint ONE_PIXEL_RIGHT_OF_THE_MIDDLE = new ClipPoint(2.0 / WIDTH, 0.0, 0.0, 1.0);
     private static final double FORTY_PIXELS = 40.0;
     private static final Colour WHITE = new Colour(1.0, 1.0, 1.0);
     // The prime meridian faces the viewer, the east is to the right and the north up
@@ -95,19 +98,22 @@ class GlDiscsTextureIntegrationTest {
     }
 
     // 180 degrees of longitude face the viewer: there the right edge of the map meets the left one,
-    // blue in the east and red in the west. A pixel on that line must be of those colours: the green
-    // of the south would come from a copy of the map so small that it is all one colour
+    // blue in the east and red in the west. A pixel on that line, far enough north of the equator
+    // (17 degrees and more), must be of those colours: the green of the south would come from a copy
+    // of the map so small that it is all one colour
     @Test
     void theEdgesOfTheMapMeetWithoutAShow() {
         Surface seenFromBehind = new Surface.Mapped(HEMISPHERES, new Vector3(0.0, 0.0, -1.0),
                 new Vector3(-1.0, 0.0, 0.0), UP);
-        SUT.show(List.of(new Disc(MIDDLE_OF_THE_IMAGE, FORTY_PIXELS, WHITE, Lighting.OWN_LIGHT, seenFromBehind)));
+        SUT.show(List.of(new Disc(ONE_PIXEL_RIGHT_OF_THE_MIDDLE, FORTY_PIXELS, WHITE, Lighting.OWN_LIGHT,
+                seenFromBehind)));
         clearToBlack();
 
         SUT.draw();
 
         int[] centre = centreOfTheImage();
-        assertThat(greenAlongTheLine(centre[0], centre[1] + 2, centre[1] + SIXTEEN_PIXELS)).isLessThan(UNLIT);
+        assertThat(greenAlongTheLine(centre[0] + 1, centre[1] + SIX_PIXELS, centre[1] + SIXTEEN_PIXELS))
+                .isLessThan(UNLIT);
     }
 
     // The most green light among the pixels of the column x and its two neighbours, between the rows
