@@ -26,7 +26,7 @@ class CollisionAcceptanceTest {
     private static final double NO_SOFTENING = 0.0;
     private static final double IMPACTOR_DISTANCE = 1e-3;
     private static final double IMPACT_SPEED = 1e-2;
-    // Small enough that the bodies cannot pass through each other within a single step
+    // Small enough to follow the fall of the impactor closely
     private static final TimeStep A_THOUSANDTH_OF_A_DAY = new TimeStep(1e-3);
     private static final int STEPS_UNTIL_AFTER_THE_IMPACT = 150;
     private static final double MOMENTUM_TOLERANCE_PERCENT = 1e-9;
