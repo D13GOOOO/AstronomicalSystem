@@ -4,16 +4,17 @@ import astronomicalsystem.app.view.Drawable;
 import astronomicalsystem.app.view.TexturesView;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Consumer;
 
 /**
- * Hands to the view, before a frame is drawn, the maps that have arrived since the frame before.
- * Maps arrive from the threads that download them, and the view can be used only from the thread
- * that draws: this is where they change hands.
+ * Stands in for the view of the maps on the threads that download them: the view can be used only
+ * from the thread that draws, so the maps given here wait, and are handed to the view before the
+ * next frame is drawn.
  */
-public class MapDeliveries implements Drawable {
+public class MapDeliveries implements TexturesView, Drawable {
 
     private final TexturesView view;
     // Filled by the threads that download, emptied by the thread that draws
@@ -23,17 +24,20 @@ public class MapDeliveries implements Drawable {
         this.view = view;
     }
 
-    /**
-     * From any thread.
-     *
-     * @param delivery gives the view a map, later, on the thread that draws
-     */
-    public void post(@NotNull Consumer<TexturesView> delivery) {
-        waiting.add(delivery);
+    @Override
+    public void load(@NotNull String name, byte @NotNull [] image) {
+        waiting.add(textures -> textures.load(name, image));
+    }
+
+    @Override
+    public void loadMosaic(@NotNull String name, int columns, @NotNull List<byte[]> tiles) {
+        List<byte[]> asGiven = List.copyOf(tiles);
+        waiting.add(textures -> textures.loadMosaic(name, columns, asGiven));
     }
 
     @Override
     public void draw() {
+        // The queue gives null when nothing is waiting
         Consumer<TexturesView> delivery = waiting.poll();
         while (delivery != null) {
             delivery.accept(view);
