@@ -9,6 +9,7 @@ import astronomicalsystem.core.math.Vector3;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
@@ -45,6 +46,31 @@ class EjectionTest {
 
         assertThat(bodies).allSatisfy(body -> assertThat(densityOf(body))
                 .isCloseTo(densityOf(MERGED), withinPercentage(PRECISION_PERCENT)));
+    }
+
+    // Seen from the remnant, every fragment lies inside the cone, and no two bodies overlap
+    @Test
+    void theFragmentsStartInsideTheConeClearOfEachOtherAndOfTheRemnant() {
+        List<Body> bodies = SUT.bodies();
+
+        Vector3 remnant = bodies.getFirst().position();
+        assertThat(bodies.subList(1, bodies.size())).allSatisfy(fragment -> {
+            Vector3 offset = fragment.position().minus(remnant);
+            assertThat(offset.normalized().dot(UPWARDS.axis())).isGreaterThanOrEqualTo(Math.cos(UPWARDS.halfAngle()));
+        });
+        assertThat(smallestGapBetween(bodies)).isPositive();
+    }
+
+    // The least distance between the surfaces of two of the bodies
+    private static double smallestGapBetween(List<Body> bodies) {
+        return IntStream.range(0, bodies.size()).boxed()
+                .flatMap(i -> IntStream.range(i + 1, bodies.size()).mapToObj(j -> gap(bodies.get(i), bodies.get(j))))
+                .min(Double::compare).orElseThrow();
+    }
+
+    private static double gap(Body first, Body second) {
+        return second.position().minus(first.position()).length() - first.radius().astronomicalUnits()
+                - second.radius().astronomicalUnits();
     }
 
     private static double densityOf(Body body) {
