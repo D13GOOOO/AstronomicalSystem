@@ -39,8 +39,12 @@ public class Simulation implements Advanceable {
 
     /**
      * @param body joins the system after the bodies already there
+     * @throws IllegalArgumentException if a body with the same name is already in the system
      */
     public void add(@NotNull Body body) {
+        if (bodies.stream().anyMatch(present -> present.name().equals(body.name()))) {
+            throw new IllegalArgumentException("A body named " + body.name().value() + " is already in the simulation");
+        }
         bodies = Stream.concat(bodies.stream(), Stream.of(body)).toList();
     }
 
