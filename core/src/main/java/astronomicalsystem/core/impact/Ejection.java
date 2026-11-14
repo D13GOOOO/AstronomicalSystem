@@ -30,9 +30,10 @@ public record Ejection(@NotNull Body merged, @NotNull Mass remnant, @NotNull Lis
     // The fragments start on a sphere around the remnant a little wider than they need to clear it
     // and to keep apart from each other
     private static final double CLEARANCE = 1.1;
-    // Debris leaves the surface a little faster than the escape speed, the least speed at which it
-    // does not fall back
+    // The largest fragment leaves the surface a little faster than the escape speed, the least speed
+    // at which it does not fall back; smaller ones faster, as m^(-1/6), as measured for ejecta
     private static final double ESCAPE_MARGIN = 1.05;
+    private static final double SPEED_EXPONENT = -1.0 / 6.0;
     private static final double G = GravitationalParameter.GRAVITATIONAL_CONSTANT;
 
     public Ejection {
@@ -46,8 +47,9 @@ public record Ejection(@NotNull Body merged, @NotNull Mass remnant, @NotNull Lis
         List<Vector3> directions = cone.directions(fragments.size());
         double shell = shellRadius(directions);
         List<Vector3> offsets = directions.stream().map(direction -> direction.times(shell)).toList();
-        double speed = speedAt(shell);
-        List<Vector3> kicks = directions.stream().map(direction -> direction.times(speed)).toList();
+        List<Vector3> kicks = IntStream.range(0, fragments.size())
+                .mapToObj(index -> directions.get(index).times(speedAt(shell, fragments.get(index))))
+                .toList();
         // M X = M_lr x + sum m_k (x + a_k): the remnant moves back by sum m_k a_k / M, and likewise
         // its velocity, so that the centre of mass and the momentum stay
         Vector3 position = merged.position().minus(weightedSum(offsets));
@@ -60,11 +62,12 @@ public record Ejection(@NotNull Body merged, @NotNull Mass remnant, @NotNull Lis
 
     // Leaving the surface at u, a fragment keeps u² - v_e² (1 - R / r) at a distance r, where
     // v_e² = 2 G M_lr / R: the energy u² / 2 - G M_lr / R is the same at both places
-    private double speedAt(double distance) {
+    private double speedAt(double distance, @NotNull Mass fragment) {
         double remnantRadius = radiusOf(remnant).astronomicalUnits();
         double escapeSquared = 2.0 * G * remnant.solarMasses() / remnantRadius;
-        double surfaceSquared = ESCAPE_MARGIN * ESCAPE_MARGIN * escapeSquared;
-        return Math.sqrt(surfaceSquared - escapeSquared * (1.0 - remnantRadius / distance));
+        double surface = ESCAPE_MARGIN
+                * Math.pow(fragment.solarMasses() / fragments.getFirst().solarMasses(), SPEED_EXPONENT);
+        return Math.sqrt(surface * surface * escapeSquared - escapeSquared * (1.0 - remnantRadius / distance));
     }
 
     // sum m_k v_k / M, with the masses of the fragments and the total mass
