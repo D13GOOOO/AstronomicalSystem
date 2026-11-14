@@ -14,8 +14,8 @@ public interface CollisionResolver {
      * @param after  the bodies at the end of the step; precondition: the element at index {@code i}
      *               is the body at index {@code i} of {@code before}, moved (as an {@link Integrator}
      *               returns them), or the same body if the system has not moved
-     * @return the bodies at the end of the step after every collision has been resolved, no two of
-     *         which overlap
+     * @return the bodies at the end of the step after every collision has been resolved, and the
+     *         collisions
      */
-    @NotNull List<Body> resolve(@NotNull List<Body> before, @NotNull List<Body> after);
+    @NotNull Resolution resolve(@NotNull List<Body> before, @NotNull List<Body> after);
 }

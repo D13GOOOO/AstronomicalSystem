@@ -15,7 +15,7 @@ import java.util.stream.IntStream;
 public abstract class SweptCollisions implements CollisionResolver {
 
     @Override
-    public final @NotNull List<Body> resolve(@NotNull List<Body> before, @NotNull List<Body> after) {
+    public final @NotNull Resolution resolve(@NotNull List<Body> before, @NotNull List<Body> after) {
         List<Sweep> sweeps = new ArrayList<>(IntStream.range(0, after.size())
                 .mapToObj(i -> new Sweep(before.get(i), after.get(i)))
                 .toList());
@@ -27,7 +27,7 @@ public abstract class SweptCollisions implements CollisionResolver {
             sweeps.addAll(outcome.subList(1, outcome.size()));
             meeting = earliestMeeting(sweeps);
         }
-        return sweeps.stream().map(Sweep::end).toList();
+        return new Resolution(sweeps.stream().map(Sweep::end).toList(), List.of());
     }
 
     /**

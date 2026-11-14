@@ -42,7 +42,7 @@ class FragmentingCollisionsTest {
         Body before = protoplanet(new Vector3(1.5 * CONTACT, 0.0, 0.0), Vector3.ZERO);
         Body after = protoplanet(new Vector3(0.5 * CONTACT, 0.0, 0.0), Vector3.ZERO);
 
-        List<Body> resolved = SUT.resolve(List.of(EARTH, before), List.of(EARTH, after));
+        List<Body> resolved = SUT.resolve(List.of(EARTH, before), List.of(EARTH, after)).bodies();
 
         assertThat(resolved).containsExactly(EARTH.mergedWith(after));
     }
@@ -53,7 +53,7 @@ class FragmentingCollisionsTest {
         Body before = protoplanet(new Vector3(3.0 * CONTACT, 0.0, 0.0), new Vector3(-FAST, 0.0, 0.0));
         Body after = protoplanet(new Vector3(-3.0 * CONTACT, 0.0, 0.0), new Vector3(-FAST, 0.0, 0.0));
 
-        List<Body> resolved = SUT.resolve(List.of(EARTH, before), List.of(EARTH, after));
+        List<Body> resolved = SUT.resolve(List.of(EARTH, before), List.of(EARTH, after)).bodies();
 
         assertThat(resolved).hasSize(1 + MOST_FRAGMENTS);
         assertThat(resolved.getFirst().name()).isEqualTo(EARTH.name());
@@ -73,7 +73,7 @@ class FragmentingCollisionsTest {
         Body before = protoplanet(new Vector3(0.0, -3.0 * CONTACT, 0.0), chasing);
         Body after = protoplanet(new Vector3(0.0, -3.0 * CONTACT + (ORBITAL_SPEED + FAST) * AN_HOUR, 0.0), chasing);
 
-        List<Body> resolved = SUT.resolve(List.of(earthBefore, before), List.of(earthAfter, after));
+        List<Body> resolved = SUT.resolve(List.of(earthBefore, before), List.of(earthAfter, after)).bodies();
 
         assertThat(resolved).hasSize(1 + MOST_FRAGMENTS);
     }
@@ -85,7 +85,7 @@ class FragmentingCollisionsTest {
         Body before = protoplanet(new Vector3(3.0 * CONTACT, 0.5 * CONTACT, 0.0), new Vector3(-FAST, 0.0, 0.0));
         Body after = protoplanet(new Vector3(-3.0 * CONTACT, 0.5 * CONTACT, 0.0), new Vector3(-FAST, 0.0, 0.0));
 
-        List<Body> resolved = SUT.resolve(List.of(EARTH, before), List.of(EARTH, after));
+        List<Body> resolved = SUT.resolve(List.of(EARTH, before), List.of(EARTH, after)).bodies();
 
         Vector3 downrange = new Vector3(-0.5, Math.sqrt(0.75), 0.0);
         assertThat(meanDirectionFromTheFirst(resolved).dot(downrange)).isGreaterThan(CLEARLY_DOWNRANGE);
@@ -96,7 +96,7 @@ class FragmentingCollisionsTest {
     void bodiesAlreadyOverlappingAtRestMergeWhole() {
         Body overlapping = protoplanet(new Vector3(0.5 * CONTACT, 0.0, 0.0), Vector3.ZERO);
 
-        List<Body> resolved = SUT.resolve(List.of(EARTH, overlapping), List.of(EARTH, overlapping));
+        List<Body> resolved = SUT.resolve(List.of(EARTH, overlapping), List.of(EARTH, overlapping)).bodies();
 
         assertThat(resolved).containsExactly(EARTH.mergedWith(overlapping));
     }
@@ -107,7 +107,7 @@ class FragmentingCollisionsTest {
         Body before = protoplanet(new Vector3(3.0 * CONTACT, 0.0, 0.0), new Vector3(-FAST, 0.0, 0.0));
         Body after = protoplanet(new Vector3(-3.0 * CONTACT, 0.0, 0.0), new Vector3(-FAST, 0.0, 0.0));
 
-        List<Body> resolved = SUT.resolve(List.of(before, EARTH), List.of(after, EARTH));
+        List<Body> resolved = SUT.resolve(List.of(before, EARTH), List.of(after, EARTH)).bodies();
 
         assertThat(resolved).extracting(Body::name).startsWith(EARTH.name(), new BodyName("Protoplanet 1 fragment 1"));
     }
@@ -119,7 +119,7 @@ class FragmentingCollisionsTest {
         Body before = asteroid(new Vector3(3.0 * CONTACT, 0.0, 0.0));
         Body after = asteroid(new Vector3(-3.0 * CONTACT, 0.0, 0.0));
 
-        List<Body> resolved = SUT.resolve(List.of(EARTH, before), List.of(EARTH, after));
+        List<Body> resolved = SUT.resolve(List.of(EARTH, before), List.of(EARTH, after)).bodies();
 
         assertThat(resolved).containsExactly(EARTH.mergedWith(after));
     }

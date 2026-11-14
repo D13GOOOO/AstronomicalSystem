@@ -27,7 +27,7 @@ public class Simulation implements Advanceable, Joinable {
                       @NotNull List<Body> initialBodies) {
         this.integrator = integrator;
         this.collisions = collisions;
-        this.bodies = List.copyOf(collisions.resolve(initialBodies, initialBodies));
+        this.bodies = List.copyOf(collisions.resolve(initialBodies, initialBodies).bodies());
     }
 
     @Override
@@ -45,7 +45,7 @@ public class Simulation implements Advanceable, Joinable {
             throw new IllegalArgumentException("A body named " + body.name().value() + " is already in the simulation");
         }
         List<Body> joined = Stream.concat(bodies.stream(), Stream.of(body)).toList();
-        bodies = List.copyOf(collisions.resolve(joined, joined));
+        bodies = List.copyOf(collisions.resolve(joined, joined).bodies());
     }
 
     /**
@@ -63,6 +63,6 @@ public class Simulation implements Advanceable, Joinable {
     // Not overridable, unlike the advances: a subclass that acts after an advance acts once however
     // many steps it takes
     private void step(@NotNull TimeStep timeStep) {
-        bodies = List.copyOf(collisions.resolve(bodies, integrator.step(bodies, timeStep)));
+        bodies = List.copyOf(collisions.resolve(bodies, integrator.step(bodies, timeStep)).bodies());
     }
 }
