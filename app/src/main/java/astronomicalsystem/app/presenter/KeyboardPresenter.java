@@ -5,11 +5,12 @@ import astronomicalsystem.app.impact.LaunchControls;
 import astronomicalsystem.app.time.TimeControls;
 import astronomicalsystem.app.view.KeyboardHandler;
 import astronomicalsystem.app.view.KeyboardView;
+import astronomicalsystem.core.impact.Impactor;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Lets the user change the flow of simulated time and choose what the camera follows from the
- * keyboard.
+ * Lets the user change the flow of simulated time, choose what the camera follows and throw
+ * impactors at it from the keyboard.
  */
 public class KeyboardPresenter implements KeyboardHandler {
 
@@ -33,6 +34,9 @@ public class KeyboardPresenter implements KeyboardHandler {
             case ' ' -> time.togglePause();
             case '.' -> follow.followNext();
             case ',' -> follow.followPrevious();
+            case '1' -> launch.launch(Impactor.ASTEROID);
+            case '2' -> launch.launch(Impactor.PLANETESIMAL);
+            case '3' -> launch.launch(Impactor.PROTOPLANET);
         }
     }
 }
