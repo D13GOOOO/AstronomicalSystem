@@ -39,8 +39,14 @@ public class Blasts implements Observer<List<Collision>>, Observable<List<Flare>
     public @NotNull Observer<TimeFlow> timeObserver() {
         return (subject, flow) -> {
             now = flow.date();
+            List<Flare> before = flares;
+            // A blast that no longer shows anything is over
+            blasts.removeIf(blast -> flaresOf(blast).isEmpty());
             flares = blasts.stream().flatMap(blast -> flaresOf(blast).stream()).toList();
-            notifyObservers();
+            // Nothing to tell while nothing glows, before or now
+            if (!before.isEmpty() || !flares.isEmpty()) {
+                notifyObservers();
+            }
         };
     }
 
