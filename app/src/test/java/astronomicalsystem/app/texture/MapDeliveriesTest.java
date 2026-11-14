@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 class MapDeliveriesTest {
 
@@ -23,5 +24,23 @@ class MapDeliveriesTest {
 
         verify(view).load("earth", EARTH_MAP);
         verify(view).load("mars", MARS_MAP);
+    }
+
+    // The thread that posts must not touch the view
+    @Test
+    void aMapPostedWaitsForTheFrame() {
+        SUT.post(textures -> textures.load("earth", EARTH_MAP));
+
+        verifyNoInteractions(view);
+    }
+
+    @Test
+    void aMapIsHandedOverOnlyOnce() {
+        SUT.post(textures -> textures.load("earth", EARTH_MAP));
+        SUT.draw();
+
+        SUT.draw();
+
+        verify(view).load("earth", EARTH_MAP);
     }
 }
