@@ -39,6 +39,8 @@ class GlDiscsIntegrationTest {
     private static final int FIVE_PIXELS = 5;
     private static final ClipPoint BEYOND_THE_RIGHT_EDGE = new ClipPoint(1.2, 0.0, 0.0, 1.0);
     private static final double A_HUNDRED_AND_TWENTY_PIXELS = 120.0;
+    private static final double FOUR_HUNDRED_PIXELS = 400.0;
+    private static final int A_HUNDRED_AND_FIFTY_PIXELS = 150;
     private static final Colour WHITE = new Colour(1.0, 1.0, 1.0);
     private static final Lighting FROM_THE_RIGHT = new Lighting.LitFrom(1.0, 0.0, 0.0);
     private static final float BRIGHT = 0.7f;
@@ -116,6 +118,21 @@ class GlDiscsIntegrationTest {
 
         int[] centre = centreOfTheImage();
         assertThat(pixelAt(2 * centre[0] - FIVE_PIXELS, centre[1])).containsExactly(RED, withPrecision(ONE_LEVEL));
+    }
+
+    // Points are drawn at most as large as the card allows, 255 px on some: a body seen from close by
+    // is larger, and 150 px from its centre it must still be drawn
+    @Test
+    void aDiscLargerThanTheLargestPointIsDrawnWhole() {
+        SUT.show(List.of(new Disc(MIDDLE_OF_THE_IMAGE, FOUR_HUNDRED_PIXELS, new Colour(1.0, 0.0, 0.0),
+                Lighting.OWN_LIGHT)));
+        clearToBlack();
+
+        SUT.draw();
+
+        int[] centre = centreOfTheImage();
+        assertThat(pixelAt(centre[0] + A_HUNDRED_AND_FIFTY_PIXELS, centre[1]))
+                .containsExactly(RED, withPrecision(ONE_LEVEL));
     }
 
     private static void clearToBlack() {
