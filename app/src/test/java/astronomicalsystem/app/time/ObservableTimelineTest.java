@@ -16,6 +16,7 @@ import java.util.stream.Stream;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 class ObservableTimelineTest {
 
@@ -40,6 +41,17 @@ class ObservableTimelineTest {
                 Arguments.of(Named.of("speed up", (Consumer<ObservableTimeline>) ObservableTimeline::speedUp)),
                 Arguments.of(Named.of("slow down", (Consumer<ObservableTimeline>) ObservableTimeline::slowDown)),
                 Arguments.of(Named.of("pause", (Consumer<ObservableTimeline>) ObservableTimeline::togglePause)));
+    }
+
+    // Twelve halvings at once are a single change
+    @Test
+    void goingToTheSlowestWarpNotifiesTheObserversOnce() {
+        SUT.addObserver(observer);
+
+        SUT.slowest();
+
+        verify(observer).update(SUT, SUT.getState());
+        verifyNoMoreInteractions(observer);
     }
 
     @ParameterizedTest
