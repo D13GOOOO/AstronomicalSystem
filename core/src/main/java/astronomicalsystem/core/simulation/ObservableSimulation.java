@@ -14,7 +14,7 @@ import java.util.List;
 
 /**
  * Simulation that notifies its observers after every advance, however many steps it takes, and
- * when a body joins it.
+ * when a body joins it; a second subject tells the collisions of every advance that has some.
  */
 public class ObservableSimulation extends Simulation implements Observable<List<Body>> {
 
@@ -29,7 +29,7 @@ public class ObservableSimulation extends Simulation implements Observable<List<
     @Override
     public void advance(@NotNull TimeStep timeStep) {
         super.advance(timeStep);
-        notifyObservers();
+        tellTheAdvance();
     }
 
     /**
@@ -40,10 +40,7 @@ public class ObservableSimulation extends Simulation implements Observable<List<
     @Override
     public void advance(@NotNull TimeStep timeStep, int steps) {
         super.advance(timeStep, steps);
-        notifyObservers();
-        if (!collisions().isEmpty()) {
-            collisionNews.notifyObservers();
-        }
+        tellTheAdvance();
     }
 
     @Override
@@ -57,6 +54,14 @@ public class ObservableSimulation extends Simulation implements Observable<List<
      */
     public @NotNull Observable<List<Collision>> collisionNews() {
         return collisionNews;
+    }
+
+    // The new bodies, and the collisions if there were any
+    private void tellTheAdvance() {
+        notifyObservers();
+        if (!collisions().isEmpty()) {
+            collisionNews.notifyObservers();
+        }
     }
 
     @Override
