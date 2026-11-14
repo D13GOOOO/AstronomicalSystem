@@ -6,11 +6,14 @@ import astronomicalsystem.app.camera.Orbit;
 import astronomicalsystem.app.camera.Viewport;
 import astronomicalsystem.app.follow.ObservableBodyFollower;
 import astronomicalsystem.app.forecast.Forecast;
+import astronomicalsystem.app.impact.Blasts;
 import astronomicalsystem.app.impact.Launcher;
+import astronomicalsystem.app.impact.SlowMotion;
 import astronomicalsystem.app.presenter.BodiesPresenter;
 import astronomicalsystem.app.presenter.BodyStyle;
 import astronomicalsystem.app.presenter.CameraControlsPresenter;
 import astronomicalsystem.app.presenter.ControlsHelpPresenter;
+import astronomicalsystem.app.presenter.FlaresPresenter;
 import astronomicalsystem.app.presenter.FocusPresenter;
 import astronomicalsystem.app.presenter.LabelsPresenter;
 import astronomicalsystem.app.presenter.ProvenancePresenter;
@@ -24,6 +27,7 @@ import astronomicalsystem.app.view.Colour;
 import astronomicalsystem.app.view.Corner;
 import astronomicalsystem.app.view.GlDiscs;
 import astronomicalsystem.app.view.GlFont;
+import astronomicalsystem.app.view.GlGlows;
 import astronomicalsystem.app.view.GlLabels;
 import astronomicalsystem.app.view.GlPaths;
 import astronomicalsystem.app.view.GlText;
@@ -127,7 +131,7 @@ public final class Main {
                 A_STEP_PER_FRAME);
         // The scene, the paths and the font need the OpenGL context of the window
         try (GlfwWindow window = GlfwWindow.open(TITLE, WIDTH, HEIGHT); GlDiscs scene = GlDiscs.create();
-             GlPaths paths = GlPaths.create(); GlFont font = GlFont.create()) {
+             GlPaths paths = GlPaths.create(); GlGlows glows = GlGlows.create(); GlFont font = GlFont.create()) {
             GlText headUpDisplay = new GlText(font, Corner.TOP_LEFT);
             GlText controlsHelp = new GlText(font, Corner.BOTTOM_LEFT);
             GlText provenance = new GlText(font, Corner.BOTTOM_RIGHT);
@@ -149,6 +153,16 @@ public final class Main {
             ObservableBodyFollower follower = new ObservableBodyFollower(camera);
             simulation.addObserver(follower);
             follower.addObserver(new FocusPresenter(focus));
+            // What glows of the impacts, on the bodies that survived them, as time goes by
+            Blasts blasts = new Blasts();
+            simulation.addObserver(blasts.bodiesObserver());
+            simulation.collisionNews().addObserver(blasts);
+            timeline.addObserver(blasts.timeObserver());
+            FlaresPresenter flares = new FlaresPresenter(glows, camera.camera());
+            blasts.addObserver(flares);
+            camera.addObserver(flares.cameraObserver());
+            // After the follower: it knows whether the body hit is the one the user watches
+            simulation.collisionNews().addObserver(new SlowMotion(follower, timeline));
             new CameraControlsPresenter(window, camera);
             timeline.addObserver(new TimeFlowPresenter(headUpDisplay));
             new KeyboardPresenter(window, timeline, follower, new Launcher(simulation, follower, camera));
@@ -157,7 +171,8 @@ public final class Main {
             simulation.notifyObservers();
             timeline.notifyObservers();
             follower.notifyObservers();
-            Layers picture = new Layers(List.of(paths, scene, names, headUpDisplay, focus, controlsHelp, provenance));
+            Layers picture = new Layers(List.of(paths, scene, glows, names, headUpDisplay, focus, controlsHelp,
+                    provenance));
             new MainLoop(window, new SystemClock(), timeline, picture).run();
         }
     }
