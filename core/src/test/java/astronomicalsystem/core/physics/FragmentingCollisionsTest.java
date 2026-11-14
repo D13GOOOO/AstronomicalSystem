@@ -29,6 +29,8 @@ class FragmentingCollisionsTest {
     // About 20 km/s, twice the escape speed: a giant impact
     private static final double FAST = 0.01155;
     private static final double PRECISION_PERCENT = 1e-9;
+    private static final double ORBITAL_SPEED = 0.0172;
+    private static final double AN_HOUR = 1.0 / 24.0;
     // Well away from the normal, where a head-on impact sends the debris
     private static final double CLEARLY_DOWNRANGE = 0.2;
 
@@ -58,6 +60,22 @@ class FragmentingCollisionsTest {
         assertThat(resolved.subList(1, resolved.size())).extracting(Body::kind).containsOnly(BodyKind.DEBRIS);
         assertThat(totalMassOf(resolved))
                 .isCloseTo(EARTH.mass().solarMasses() + after.mass().solarMasses(), withinPercentage(PRECISION_PERCENT));
+    }
+
+    // The Earth along its orbit covers 17 radii in the hour of a step; hit from behind, it throws the
+    // debris back along its path, where it would run into it again were the fragments left behind
+    @Test
+    void theFragmentsKeepTheirPlaceAroundAMovingRemnant() {
+        Vector3 orbiting = new Vector3(0.0, ORBITAL_SPEED, 0.0);
+        Body earthBefore = EARTH.withMotion(Vector3.ZERO, orbiting);
+        Body earthAfter = EARTH.withMotion(orbiting.times(AN_HOUR), orbiting);
+        Vector3 chasing = new Vector3(0.0, ORBITAL_SPEED + FAST, 0.0);
+        Body before = protoplanet(new Vector3(0.0, -3.0 * CONTACT, 0.0), chasing);
+        Body after = protoplanet(new Vector3(0.0, -3.0 * CONTACT + (ORBITAL_SPEED + FAST) * AN_HOUR, 0.0), chasing);
+
+        List<Body> resolved = SUT.resolve(List.of(earthBefore, before), List.of(earthAfter, after));
+
+        assertThat(resolved).hasSize(1 + MOST_FRAGMENTS);
     }
 
     // Half a contact distance off the line of the centres, the projectile touches where the normal is
