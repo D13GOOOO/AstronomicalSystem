@@ -25,7 +25,7 @@ public class Simulation implements Advanceable {
                       @NotNull List<Body> initialBodies) {
         this.integrator = integrator;
         this.collisions = collisions;
-        this.bodies = List.copyOf(collisions.resolve(initialBodies));
+        this.bodies = List.copyOf(collisions.resolve(initialBodies, initialBodies));
     }
 
     public @NotNull List<Body> bodies() {
@@ -51,6 +51,6 @@ public class Simulation implements Advanceable {
     // Not overridable, unlike the advances: a subclass that acts after an advance acts once however
     // many steps it takes
     private void step(@NotNull TimeStep timeStep) {
-        bodies = List.copyOf(collisions.resolve(integrator.step(bodies, timeStep)));
+        bodies = List.copyOf(collisions.resolve(bodies, integrator.step(bodies, timeStep)));
     }
 }

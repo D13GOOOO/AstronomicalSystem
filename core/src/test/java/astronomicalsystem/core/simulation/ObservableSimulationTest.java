@@ -17,7 +17,7 @@ import static astronomicalsystem.core.simulation.SolarSystemFixtures.SUN;
 import static astronomicalsystem.core.simulation.SolarSystemFixtures.TWO_DAYS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.AdditionalAnswers.returnsFirstArg;
+import static org.mockito.AdditionalAnswers.returnsLastArg;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -36,7 +36,7 @@ class ObservableSimulationTest {
 
     @BeforeEach
     void createSimulationWithoutCollisions() {
-        when(collisions.resolve(anyList())).thenAnswer(returnsFirstArg());
+        when(collisions.resolve(anyList(), anyList())).thenAnswer(returnsLastArg());
         SUT = new ObservableSimulation(integrator, collisions, INITIAL_BODIES);
     }
 

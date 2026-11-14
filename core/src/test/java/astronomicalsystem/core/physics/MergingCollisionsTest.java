@@ -7,6 +7,8 @@ import astronomicalsystem.core.body.Mass;
 import astronomicalsystem.core.body.Radius;
 import astronomicalsystem.core.math.Vector3;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.util.List;
 
@@ -24,7 +26,9 @@ class MergingCollisionsTest {
         Body first = sphereAt("First", 0.0);
         Body second = sphereAt("Second", 1.0);
 
-        List<Body> resolved = SUT.resolve(List.of(first, second));
+        List<Body> atRest = List.of(first, second);
+
+        List<Body> resolved = SUT.resolve(atRest, atRest);
 
         assertThat(resolved).containsExactly(first.mergedWith(second));
     }
@@ -35,7 +39,9 @@ class MergingCollisionsTest {
         Body second = sphereAt("Second", 3.0);
         Body third = sphereAt("Third", 6.0);
 
-        List<Body> resolved = SUT.resolve(List.of(first, second, third));
+        List<Body> atRest = List.of(first, second, third);
+
+        List<Body> resolved = SUT.resolve(atRest, atRest);
 
         assertThat(resolved).containsExactly(first, second, third);
     }
@@ -46,7 +52,9 @@ class MergingCollisionsTest {
         Body middle = sphereAt("Middle", 5.0);
         Body last = sphereAt("Last", 1.0);
 
-        List<Body> resolved = SUT.resolve(List.of(first, middle, last));
+        List<Body> atRest = List.of(first, middle, last);
+
+        List<Body> resolved = SUT.resolve(atRest, atRest);
 
         assertThat(resolved).containsExactly(first.mergedWith(last), middle);
     }
@@ -57,13 +65,67 @@ class MergingCollisionsTest {
         Body second = sphereAt("Second", 1.0);
         Body third = sphereAt("Third", 2.5);
 
-        List<Body> resolved = SUT.resolve(List.of(first, second, third));
+        List<Body> atRest = List.of(first, second, third);
+
+        List<Body> resolved = SUT.resolve(atRest, atRest);
 
         assertThat(resolved).containsExactly(first.mergedWith(second).mergedWith(third));
     }
 
+    // The second body runs through the first one within the step and ends on its other side
+    @Test
+    void bodiesThatPassThroughEachOtherDuringTheStepMerge() {
+        Body first = sphereAt("First", 0.0);
+        Body secondBefore = sphereAt("Second", 10.0);
+        Body secondAfter = sphereAt("Second", -10.0);
+
+        List<Body> resolved = SUT.resolve(List.of(first, secondBefore), List.of(first, secondAfter));
+
+        assertThat(resolved).containsExactly(first.mergedWith(secondAfter));
+    }
+
+    // The third body runs into the second one before reaching the first one, and their merged body
+    // stops short of the first one; in index order the first pair would be the first and the third
+    @Test
+    void theEarliestMeetingOfTheStepIsResolvedFirst() {
+        Body first = sphereAt("First", 0.0);
+        Body secondBefore = sphereAt("Second", 10.0);
+        Body secondAfter = sphereAt("Second", 30.0);
+        Body thirdBefore = sphereAt("Third", 20.0);
+        Body thirdAfter = sphereAt("Third", -20.0);
+
+        List<Body> resolved = SUT.resolve(List.of(first, secondBefore, thirdBefore),
+                List.of(first, secondAfter, thirdAfter));
+
+        assertThat(resolved).containsExactly(first, secondAfter.mergedWith(thirdAfter));
+    }
+
+    // The second body moves along a line parallel to the x-axis, at a distance y from it
+    @ParameterizedTest(name = "{0}")
+    @CsvSource(textBlock = """
+            moving apart,            3.0,  10.0, 0.0
+            passing beside,         10.0, -10.0, 2.5
+            touching at the closest, 10.0, -10.0, 2.0
+            touching at the end,    10.0,   2.0, 0.0
+            meeting after the step, 10.0,   4.0, 0.0
+            """)
+    void bodiesThatDoNotOverlapWithinTheStepAreLeftUnchanged(String description, double startX, double endX,
+                                                             double y) {
+        Body first = sphereAt("First", 0.0);
+        Body secondBefore = sphereAt("Second", startX, y);
+        Body secondAfter = sphereAt("Second", endX, y);
+
+        List<Body> resolved = SUT.resolve(List.of(first, secondBefore), List.of(first, secondAfter));
+
+        assertThat(resolved).containsExactly(first, secondAfter);
+    }
+
     private static Body sphereAt(String name, double x) {
+        return sphereAt(name, x, 0.0);
+    }
+
+    private static Body sphereAt(String name, double x, double y) {
         return new Body(new BodyName(name), BodyKind.PLANET, UNIT_MASS, UNIT_RADIUS,
-                new Vector3(x, 0.0, 0.0), Vector3.ZERO);
+                new Vector3(x, y, 0.0), Vector3.ZERO);
     }
 }

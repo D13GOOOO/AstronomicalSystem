@@ -49,31 +49,6 @@ class BodyTest {
                 new Vector3(1.0, 0.0, 0.0), new Vector3(-0.25, 0.25, 0.0)));
     }
 
-    @ParameterizedTest(name = "{0}")
-    @CsvSource(textBlock = """
-            apart,                       1.0, 0.5,  2.0,  0.0, false
-            touching,                    1.0, 0.5,  1.5,  0.0, false
-            overlapping,                 1.0, 0.5,  1.25, 0.0, true
-            inside,                      1.0, 0.5,  0.25, 0.0, true
-            coincident,                  1.0, 0.5,  0.0,  0.0, true
-            overlapping on the left,     1.0, 0.5, -1.25, 0.0, true
-            overlapping off axis,        1.0, 0.5,  0.75, 1.0, true
-            apart off axis,              1.0, 0.5,  1.2,  1.6, false
-            overlapping (radii swapped), 0.5, 1.0,  1.25, 0.0, true
-            touching (radii swapped),    0.5, 1.0,  1.5,  0.0, false
-            """)
-    void overlapsWhenTheDistanceIsLessThanTheSumOfTheRadii(String description,
-                                                           double ownRadius, double otherRadius,
-                                                           double otherX, double otherY,
-                                                           boolean expected) {
-        Body SUT = sphere(EARTH, ownRadius, Vector3.ZERO);
-        Body other = sphere(MOON, otherRadius, new Vector3(otherX, otherY, 0.0));
-
-        boolean overlaps = SUT.overlaps(other);
-
-        assertThat(overlaps).isEqualTo(expected);
-    }
-
     @Test
     void mergedWithAddsTheMasses() {
         Body SUT = withMass(EARTH, 0.75);

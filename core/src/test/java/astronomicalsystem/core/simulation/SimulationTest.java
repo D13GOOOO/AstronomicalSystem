@@ -19,7 +19,7 @@ import static astronomicalsystem.core.simulation.SolarSystemFixtures.SUN;
 import static astronomicalsystem.core.simulation.SolarSystemFixtures.TWO_DAYS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.AdditionalAnswers.returnsFirstArg;
+import static org.mockito.AdditionalAnswers.returnsLastArg;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -33,7 +33,7 @@ class SimulationTest {
 
     @BeforeEach
     void noCollisionsByDefault() {
-        when(collisions.resolve(anyList())).thenAnswer(returnsFirstArg());
+        when(collisions.resolve(anyList(), anyList())).thenAnswer(returnsLastArg());
     }
 
     @Test
@@ -47,7 +47,7 @@ class SimulationTest {
 
     @Test
     void aNewSimulationResolvesTheCollisionsOfTheInitialBodies() {
-        when(collisions.resolve(INITIAL_BODIES)).thenReturn(MERGED_BODIES);
+        when(collisions.resolve(INITIAL_BODIES, INITIAL_BODIES)).thenReturn(MERGED_BODIES);
         Simulation SUT = new Simulation(integrator, collisions, INITIAL_BODIES);
 
         List<Body> bodies = SUT.bodies();
@@ -69,7 +69,7 @@ class SimulationTest {
     void advancingResolvesTheCollisionsOfTheIntegratedBodies() {
         Simulation SUT = new Simulation(integrator, collisions, INITIAL_BODIES);
         when(integrator.step(INITIAL_BODIES, TWO_DAYS)).thenReturn(INTEGRATED_BODIES);
-        when(collisions.resolve(INTEGRATED_BODIES)).thenReturn(MERGED_BODIES);
+        when(collisions.resolve(INITIAL_BODIES, INTEGRATED_BODIES)).thenReturn(MERGED_BODIES);
 
         SUT.advance(TWO_DAYS);
 
