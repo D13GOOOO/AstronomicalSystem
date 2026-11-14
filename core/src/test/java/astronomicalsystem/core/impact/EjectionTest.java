@@ -65,6 +65,18 @@ class EjectionTest {
         assertThat(smallestGapBetween(bodies)).isPositive();
     }
 
+    // A few minutes after the impact the debris is ten radii of the remnant out: nearer, the pull of
+    // the remnant changes faster than steps of an hour can follow
+    @Test
+    void theFragmentsStartTenRadiiOfTheRemnantAway() {
+        List<Body> bodies = SUT.bodies();
+
+        Body remnant = bodies.getFirst();
+        assertThat(bodies.subList(1, bodies.size())).allSatisfy(fragment ->
+                assertThat(fragment.position().minus(remnant.position()).length())
+                        .isCloseTo(10.0 * remnant.radius().astronomicalUnits(), withinPercentage(PRECISION_PERCENT)));
+    }
+
     // Moving outwards with v² > 2 G M_lr / r, the energy that frees them from the remnant
     @Test
     void theFragmentsFlyAwayFasterThanTheyCanEscapeTheRemnant() {
