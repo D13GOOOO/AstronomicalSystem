@@ -14,7 +14,7 @@ import java.util.stream.Stream;
  * Collisions are resolved on creation, after every step and when a body joins, so no two bodies
  * ever overlap.
  */
-public class Simulation implements Advanceable {
+public class Simulation implements Advanceable, Joinable {
 
     private final Integrator integrator;
     private final CollisionResolver collisions;
@@ -30,6 +30,7 @@ public class Simulation implements Advanceable {
         this.bodies = List.copyOf(collisions.resolve(initialBodies, initialBodies));
     }
 
+    @Override
     public @NotNull List<Body> bodies() {
         return bodies;
     }
@@ -38,10 +39,7 @@ public class Simulation implements Advanceable {
         step(timeStep);
     }
 
-    /**
-     * @param body joins the system after the bodies already there
-     * @throws IllegalArgumentException if a body with the same name is already in the system
-     */
+    @Override
     public void add(@NotNull Body body) {
         if (bodies.stream().anyMatch(present -> present.name().equals(body.name()))) {
             throw new IllegalArgumentException("A body named " + body.name().value() + " is already in the simulation");
