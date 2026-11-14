@@ -82,6 +82,22 @@ class MergingCollisionsTest {
         assertThat(resolved).containsExactly(first.mergedWith(secondAfter));
     }
 
+    // The third body runs into the second one before reaching the first one, and their merged body
+    // stops short of the first one; in index order the first pair would be the first and the third
+    @Test
+    void theEarliestMeetingOfTheStepIsResolvedFirst() {
+        Body first = sphereAt("First", 0.0);
+        Body secondBefore = sphereAt("Second", 10.0);
+        Body secondAfter = sphereAt("Second", 30.0);
+        Body thirdBefore = sphereAt("Third", 20.0);
+        Body thirdAfter = sphereAt("Third", -20.0);
+
+        List<Body> resolved = SUT.resolve(List.of(first, secondBefore, thirdBefore),
+                List.of(first, secondAfter, thirdAfter));
+
+        assertThat(resolved).containsExactly(first, secondAfter.mergedWith(thirdAfter));
+    }
+
     private static Body sphereAt(String name, double x) {
         return new Body(new BodyName(name), BodyKind.PLANET, UNIT_MASS, UNIT_RADIUS,
                 new Vector3(x, 0.0, 0.0), Vector3.ZERO);
