@@ -11,4 +11,10 @@ import org.jetbrains.annotations.NotNull;
  *              centre of the target
  */
 public record Approach(@NotNull Vector3 from, @NotNull Vector3 aside) {
+
+    public Approach {
+        if (from.cross(aside).lengthSquared() == 0.0) {
+            throw new IllegalArgumentException("Approach directions must not be parallel");
+        }
+    }
 }
