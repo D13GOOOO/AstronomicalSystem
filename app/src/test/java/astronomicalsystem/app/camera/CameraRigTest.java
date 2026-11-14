@@ -33,6 +33,7 @@ class CameraRigTest {
     private static final Orbit AS_FAR_AS_POSSIBLE = new Orbit(100.0, 0.0, 0.0);
     private static final double TWICE_AS_FAR = 2.0;
     private static final double THREE_AU = 3.0;
+    private static final double A_THOUSANDTH = 1e-3;
     // Nearer than any orbit
     private static final double NO_CLEARANCE = 1e-9;
     private static final double ONE_AND_A_HALF_AU = 1.5;
@@ -111,6 +112,16 @@ class CameraRigTest {
         SUT.zoomBy(HALF_THE_DISTANCE);
 
         assertThat(SUT.camera().clipPoint(TARGET).w()).isCloseTo(1.5, within(TOLERANCE));
+    }
+
+    // 2 mAU away the target would be far nearer than the near plane of the lens, 1 AU: the near
+    // plane comes closer with the camera, and the target is between it and the far plane
+    @Test
+    void aCameraCloseToItsTargetStillSeesIt() {
+        SUT.zoomBy(A_THOUSANDTH);
+
+        ClipPoint target = SUT.camera().clipPoint(TARGET);
+        assertThat(target.z()).isBetween(-target.w(), target.w());
     }
 
     // Nothing turns, nothing moves closer or farther, the image keeps its size, the target stays
