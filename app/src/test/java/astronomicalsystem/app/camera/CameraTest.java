@@ -4,8 +4,11 @@ import astronomicalsystem.app.view.ClipPoint;
 import astronomicalsystem.app.view.ImagePoint;
 import astronomicalsystem.core.math.Vector3;
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -49,6 +52,36 @@ class CameraTest {
 
         assertThat(projected).usingRecursiveComparison(CLOSE_ENOUGH)
                 .isEqualTo(new ClipPoint(clipX, clipY, clipZ, clipW));
+    }
+
+    // From 2 AU behind the origin along -y, with z up: looking along +y, x to the right
+    @Test
+    void theCameraTellsTheDirectionsOfItsImageInSpace() {
+        Camera SUT = new Camera(new Vector3(0.0, -2.0, 0.0), ORIGIN, new Vector3(0.0, 0.0, 1.0), RIGHT_ANGLE_LENS,
+                TWO_BY_ONE);
+
+        List<Vector3> directions = List.of(SUT.rightward(), SUT.forward());
+
+        assertThat(directions).usingRecursiveComparison(CLOSE_ENOUGH)
+                .isEqualTo(List.of(new Vector3(1.0, 0.0, 0.0), new Vector3(0.0, 1.0, 0.0)));
+    }
+
+    // From 2 AU behind the origin along -y, with z up: x is to the right, z up, and -y towards the eye
+    @ParameterizedTest
+    @CsvSource(textBlock = """
+            1.0,  0.0, 0.0,   1.0, 0.0, 0.0
+            0.0,  0.0, 1.0,   0.0, 1.0, 0.0
+            0.0, -1.0, 0.0,   0.0, 0.0, 1.0
+            """)
+    void aDirectionOfSpaceIsSeenInTheFrameOfTheImage(double x, double y, double z,
+                                                      double right, double up, double towardsTheViewer) {
+        Camera SUT = new Camera(new Vector3(0.0, -2.0, 0.0), ORIGIN, new Vector3(0.0, 0.0, 1.0), RIGHT_ANGLE_LENS,
+                TWO_BY_ONE);
+
+        Vector3 inTheImage = SUT.inTheImage(new Vector3(x, y, z));
+
+        assertThat(inTheImage).usingRecursiveComparison(CLOSE_ENOUGH)
+                .isEqualTo(new Vector3(right, up, towardsTheViewer));
     }
 
     // Half the image height (50 px) spans focal * size / depth in normalised device coordinates

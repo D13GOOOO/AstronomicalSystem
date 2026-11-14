@@ -26,10 +26,19 @@ class CollisionAcceptanceTest {
     private static final double NO_SOFTENING = 0.0;
     private static final double IMPACTOR_DISTANCE = 1e-3;
     private static final double IMPACT_SPEED = 1e-2;
-    // Small enough that the bodies cannot pass through each other within a single step
+    // Small enough to follow the fall of the impactor closely
     private static final TimeStep A_THOUSANDTH_OF_A_DAY = new TimeStep(1e-3);
     private static final int STEPS_UNTIL_AFTER_THE_IMPACT = 150;
     private static final double MOMENTUM_TOLERANCE_PERCENT = 1e-9;
+    // The step of the application
+    private static final TimeStep ONE_HOUR = new TimeStep(1.0 / 24.0);
+    private static final int A_DAY_IN_HOURS = 24;
+    // About 20 km/s: the impactor covers more than eleven radii of the planet in an hour
+    private static final double FAST_IMPACT_SPEED = 0.01155;
+    // Far enough that no end of a step finds the impactor inside the planet
+    private static final double FAST_IMPACTOR_DISTANCE = 1.1e-3;
+    private static final Body EARTH_LIKE_PLANET = new Body(new BodyName("Planet"), BodyKind.PLANET, new Mass(3.003e-6),
+            new Radius(4.259e-5), Vector3.ZERO, Vector3.ZERO);
 
     @Test
     void aHeadOnImpactLeavesOneBodyWithTheSameMomentum() {
@@ -46,6 +55,18 @@ class CollisionAcceptanceTest {
         assertThat(SUT.bodies()).hasSize(1);
         assertThat(totalMomentum(SUT.bodies()).x())
                 .isCloseTo(totalMomentum(initial).x(), withinPercentage(MOMENTUM_TOLERANCE_PERCENT));
+    }
+
+    @Test
+    void aFastImpactorHitsThePlanetItCrossesWithinAStep() {
+        Body impactor = new Body(new BodyName("Impactor"), BodyKind.PLANET, new Mass(1e-18), new Radius(6.7e-9),
+                new Vector3(FAST_IMPACTOR_DISTANCE, 0.0, 0.0), new Vector3(-FAST_IMPACT_SPEED, 0.0, 0.0));
+        Simulation SUT = new Simulation(new VelocityVerlet(new NewtonianGravity(G, NO_SOFTENING)),
+                new MergingCollisions(), List.of(EARTH_LIKE_PLANET, impactor));
+
+        SUT.advance(ONE_HOUR, A_DAY_IN_HOURS);
+
+        assertThat(SUT.bodies()).extracting(Body::name).containsExactly(EARTH_LIKE_PLANET.name());
     }
 
     private static void advanceUntilAfterTheImpact(Simulation simulation) {

@@ -6,6 +6,7 @@ import astronomicalsystem.core.body.BodyName;
 import astronomicalsystem.core.body.Mass;
 import astronomicalsystem.core.body.Radius;
 import astronomicalsystem.core.math.Vector3;
+import astronomicalsystem.core.physics.Collision;
 import astronomicalsystem.core.physics.TimeStep;
 
 import java.util.List;
@@ -28,6 +29,12 @@ final class SolarSystemFixtures {
     static final List<Body> INTEGRATED_TWICE = List.of(SUN,
             MOVED_EARTH.withMotion(new Vector3(-1.0, 0.0, 0.0), new Vector3(0.0, -0.0172, 0.0)));
     static final List<Body> MERGED_BODIES = List.of(SUN.mergedWith(MOVED_EARTH));
+    // The Earth falling into the Sun, hit on its side towards x
+    static final Collision EARTH_INTO_THE_SUN = new Collision(SUN, new Vector3(1.0, 0.0, 0.0),
+            new Vector3(1.0, 0.0, 0.0), 0.35, 1e-7);
+    // A small body that joins the system, far from the others
+    static final Body ASTEROID = new Body(new BodyName("Asteroid 1"), BodyKind.ASTEROID, new Mass(1e-18),
+            new Radius(6.7e-9), new Vector3(0.0, 2.0, 0.0), new Vector3(0.01, 0.0, 0.0));
 
     private SolarSystemFixtures() {
     }

@@ -19,6 +19,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -48,16 +49,22 @@ class LabelsPresenterTest {
     private static final Colour BLUE = new Colour(0.0, 0.0, 1.0);
     private static final double STAR_MINIMUM = 16.0;
     private static final double PLANET_MINIMUM = 8.0;
+    private static final double DEBRIS_MINIMUM = 3.0;
     private static final Map<BodyKind, BodyStyle> STYLES = Map.of(
-            BodyKind.STAR, new BodyStyle(YELLOW, STAR_MINIMUM),
-            BodyKind.PLANET, new BodyStyle(BLUE, PLANET_MINIMUM));
+            BodyKind.STAR, new BodyStyle(YELLOW, STAR_MINIMUM, false),
+            BodyKind.PLANET, new BodyStyle(BLUE, PLANET_MINIMUM, false),
+            BodyKind.DEBRIS, new BodyStyle(BLUE, DEBRIS_MINIMUM, false));
+    private static final Set<BodyKind> UNNAMED = Set.of(BodyKind.DEBRIS);
+    private static final Body FRAGMENT = new Body(new BodyName("Theia fragment 1"), BodyKind.DEBRIS, new Mass(1e-8),
+            new Radius(0.0625), new Vector3(1.0, 0.0, 0.0), AT_REST);
+    private static final double FRAGMENT_DIAMETER = 0.125;
 
     private final LabelsView view = mock();
     private final Projection projection = mock();
     private final Observable<List<Body>> simulation = mock();
     private final Projection movedCamera = mock();
     private final Observable<Projection> cameraRig = mock();
-    private final LabelsPresenter SUT = new LabelsPresenter(view, projection, STYLES);
+    private final LabelsPresenter SUT = new LabelsPresenter(view, projection, STYLES, UNNAMED);
 
     // Four pixels to the right of the edge of the disc: half its diameter plus four from its centre
     @Test
@@ -69,6 +76,17 @@ class LabelsPresenterTest {
 
         verify(view).show(List.of(new Label(new ImagePoint(112.0, 50.0), "Sun"),
                 new Label(new ImagePoint(158.0, 50.0), "Earth")));
+    }
+
+    // Debris comes in dozens of fragments, whose names would cover each other
+    @Test
+    void bodiesOfAnUnnamedKindHaveNoLabel() {
+        givenTheCameraSees(SUN, SUN_DIAMETER, SUN_IN_CLIP_SPACE, LESS_THAN_A_PIXEL, SUN_IN_THE_IMAGE);
+        givenTheCameraSees(FRAGMENT, FRAGMENT_DIAMETER, EARTH_IN_CLIP_SPACE, LESS_THAN_A_PIXEL, EARTH_IN_THE_IMAGE);
+
+        SUT.update(simulation, List.of(SUN, FRAGMENT));
+
+        verify(view).show(List.of(new Label(new ImagePoint(112.0, 50.0), "Sun")));
     }
 
     @Test

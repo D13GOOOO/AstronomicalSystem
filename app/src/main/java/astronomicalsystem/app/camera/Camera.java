@@ -63,4 +63,20 @@ public final class Camera implements Projection {
         return new ImagePoint((1.0 + deviceX) * aspectRatio * pixelsPerDeviceUnit,
                 (1.0 - deviceY) * pixelsPerDeviceUnit);
     }
+
+    @Override
+    public @NotNull Vector3 rightward() {
+        return right;
+    }
+
+    @Override
+    public @NotNull Vector3 forward() {
+        return forward;
+    }
+
+    @Override
+    public @NotNull Vector3 inTheImage(@NotNull Vector3 direction) {
+        // The components along the basis; the viewer is behind the eye, against the line of sight
+        return new Vector3(direction.dot(right), direction.dot(imageUp), -direction.dot(forward));
+    }
 }

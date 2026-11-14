@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
  * Camera that orbits a target, with the ecliptic north up in the image: its position, its
  * lens and the size of the image it fills.
  */
-public class CameraRig implements CameraModel, CameraTarget {
+public class CameraRig implements CameraModel, CameraTarget, CurrentCamera {
 
     private static final Vector3 ECLIPTIC_NORTH = new Vector3(0.0, 0.0, 1.0);
 
@@ -18,6 +18,8 @@ public class CameraRig implements CameraModel, CameraTarget {
     // Rebuilt only when the target, the orbit or the viewport changes: the same object means the same
     // picture
     private Projection camera;
+    // How near the camera may come to its target, besides the limits of the orbit
+    private double clearance;
 
     public CameraRig(@NotNull Vector3 target, @NotNull Orbit orbit, @NotNull Lens lens, @NotNull Viewport viewport) {
         this.target = target;
@@ -27,9 +29,7 @@ public class CameraRig implements CameraModel, CameraTarget {
         this.camera = cameraOf(target, orbit, viewport);
     }
 
-    /**
-     * @return the current camera, the same object until the rig changes
-     */
+    @Override
     public @NotNull Projection camera() {
         return camera;
     }
@@ -41,7 +41,7 @@ public class CameraRig implements CameraModel, CameraTarget {
 
     @Override
     public void zoomBy(double factor) {
-        change(target, orbit.zoomed(factor), viewport);
+        change(target, clear(orbit.zoomed(factor)), viewport);
     }
 
     @Override
@@ -50,8 +50,14 @@ public class CameraRig implements CameraModel, CameraTarget {
     }
 
     @Override
-    public void lookAt(@NotNull Vector3 newTarget) {
-        change(newTarget, orbit, viewport);
+    public void lookAt(@NotNull Vector3 newTarget, double newClearance) {
+        clearance = newClearance;
+        change(newTarget, clear(orbit), viewport);
+    }
+
+    // The same orbit, backed off along the line of sight if it is nearer than the clearance
+    private @NotNull Orbit clear(@NotNull Orbit someOrbit) {
+        return new Orbit(Math.max(someOrbit.distance(), clearance), someOrbit.azimuth(), someOrbit.elevation());
     }
 
     private void change(@NotNull Vector3 newTarget, @NotNull Orbit newOrbit, @NotNull Viewport newViewport) {
@@ -66,6 +72,7 @@ public class CameraRig implements CameraModel, CameraTarget {
 
     private @NotNull Projection cameraOf(@NotNull Vector3 someTarget, @NotNull Orbit someOrbit,
                                          @NotNull Viewport someViewport) {
-        return new Camera(someOrbit.eye(someTarget), someTarget, ECLIPTIC_NORTH, lens, someViewport);
+        return new Camera(someOrbit.eye(someTarget), someTarget, ECLIPTIC_NORTH, lens.closeUpTo(someOrbit.distance()),
+                someViewport);
     }
 }

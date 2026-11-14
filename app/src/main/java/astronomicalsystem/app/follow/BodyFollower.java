@@ -13,10 +13,14 @@ import java.util.List;
 /**
  * Keeps the camera on what the user chose to follow, every time the bodies move.
  */
-public class BodyFollower implements Observer<List<Body>>, FollowControls {
+public class BodyFollower implements Observer<List<Body>>, FollowControls, Following {
 
     // The frame of the simulation is centred on the barycentre of the solar system
     private static final Vector3 BARYCENTRE = Vector3.ZERO;
+    // Near the barycentre the camera stops where the Sun nearly fills the image
+    private static final double BARYCENTRE_CLEARANCE = 0.02;
+    // The camera comes as near as one radius above the surface of the followed body
+    private static final double CLEARANCE_IN_RADII = 2.0;
 
     private final CameraTarget camera;
     // The latest bodies, among which the next or previous one is chosen
@@ -27,6 +31,7 @@ public class BodyFollower implements Observer<List<Body>>, FollowControls {
         this.camera = camera;
     }
 
+    @Override
     public @NotNull Focus focus() {
         return focus;
     }
@@ -65,14 +70,17 @@ public class BodyFollower implements Observer<List<Body>>, FollowControls {
     }
 
     private void aim() {
-        camera.lookAt(switch (focus) {
-            case Focus.Barycentre barycentre -> BARYCENTRE;
-            case Focus.OnBody(BodyName name) -> positionOf(name);
-        });
+        switch (focus) {
+            case Focus.Barycentre barycentre -> camera.lookAt(BARYCENTRE, BARYCENTRE_CLEARANCE);
+            case Focus.OnBody(BodyName name) -> {
+                Body followed = bodyNamed(name);
+                camera.lookAt(followed.position(), CLEARANCE_IN_RADII * followed.radius().astronomicalUnits());
+            }
+        }
     }
 
     // The followed body is always among the latest bodies
-    private @NotNull Vector3 positionOf(@NotNull BodyName name) {
-        return bodies.stream().filter(body -> body.name().equals(name)).findFirst().orElseThrow().position();
+    private @NotNull Body bodyNamed(@NotNull BodyName name) {
+        return bodies.stream().filter(body -> body.name().equals(name)).findFirst().orElseThrow();
     }
 }

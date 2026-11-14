@@ -13,6 +13,7 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 class CameraRigTest {
 
@@ -31,6 +32,11 @@ class CameraRigTest {
     private static final double SAME_DISTANCE = 1.0;
     private static final Orbit AS_FAR_AS_POSSIBLE = new Orbit(100.0, 0.0, 0.0);
     private static final double TWICE_AS_FAR = 2.0;
+    private static final double THREE_AU = 3.0;
+    private static final double A_THOUSANDTH = 1e-3;
+    // Nearer than any orbit
+    private static final double NO_CLEARANCE = 1e-9;
+    private static final double ONE_AND_A_HALF_AU = 1.5;
     // 2 AU away on the ecliptic, looking along the positive y-axis
     private static final Orbit ON_THE_ECLIPTIC = new Orbit(2.0, 0.0, 0.0);
     // Focal factor 1, depth from 1 to 3 AU: the target, 2 AU away, has z = w / 2
@@ -82,12 +88,40 @@ class CameraRigTest {
     // the image and the old one, 1 AU to its left, is half the image width from the middle
     @Test
     void lookingAtANewTargetMovesTheCameraWithIt() {
-        SUT.lookAt(EAST_OF_THE_TARGET);
+        SUT.lookAt(EAST_OF_THE_TARGET, NO_CLEARANCE);
 
         assertThat(SUT.camera().clipPoint(EAST_OF_THE_TARGET)).usingRecursiveComparison(CLOSE_ENOUGH)
                 .isEqualTo(new ClipPoint(0.0, 0.0, 1.0, 2.0));
         assertThat(SUT.camera().clipPoint(TARGET)).usingRecursiveComparison(CLOSE_ENOUGH)
                 .isEqualTo(new ClipPoint(-0.5, 0.0, 1.0, 2.0));
+    }
+
+    // 2 AU away as before would be too close: the camera backs off to 3 AU along its line of sight
+    @Test
+    void theCameraKeepsClearOfItsTarget() {
+        SUT.lookAt(EAST_OF_THE_TARGET, THREE_AU);
+
+        assertThat(SUT.camera().clipPoint(EAST_OF_THE_TARGET).w()).isCloseTo(3.0, within(TOLERANCE));
+    }
+
+    // Halfway from 2 AU would be 1 AU, nearer than the clearance of 1.5 AU
+    @Test
+    void zoomingStopsAtTheClearanceOfTheTarget() {
+        SUT.lookAt(TARGET, ONE_AND_A_HALF_AU);
+
+        SUT.zoomBy(HALF_THE_DISTANCE);
+
+        assertThat(SUT.camera().clipPoint(TARGET).w()).isCloseTo(1.5, within(TOLERANCE));
+    }
+
+    // 2 mAU away the target would be far nearer than the near plane of the lens, 1 AU: the near
+    // plane comes closer with the camera, and the target is between it and the far plane
+    @Test
+    void aCameraCloseToItsTargetStillSeesIt() {
+        SUT.zoomBy(A_THOUSANDTH);
+
+        ClipPoint target = SUT.camera().clipPoint(TARGET);
+        assertThat(target.z()).isBetween(-target.w(), target.w());
     }
 
     // Nothing turns, nothing moves closer or farther, the image keeps its size, the target stays
@@ -96,7 +130,7 @@ class CameraRigTest {
                 Arguments.of(Named.of("no rotation", (Consumer<CameraRig>) rig -> rig.orbitBy(0.0, 0.0))),
                 Arguments.of(Named.of("no zoom", (Consumer<CameraRig>) rig -> rig.zoomBy(SAME_DISTANCE))),
                 Arguments.of(Named.of("same viewport", (Consumer<CameraRig>) rig -> rig.resize(TWO_BY_ONE))),
-                Arguments.of(Named.of("same target", (Consumer<CameraRig>) rig -> rig.lookAt(TARGET))));
+                Arguments.of(Named.of("same target", (Consumer<CameraRig>) rig -> rig.lookAt(TARGET, NO_CLEARANCE))));
     }
 
     @ParameterizedTest

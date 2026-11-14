@@ -5,8 +5,7 @@ import astronomicalsystem.app.view.ClipPoint;
 import astronomicalsystem.app.view.ImagePoint;
 import astronomicalsystem.core.body.Body;
 import astronomicalsystem.core.body.BodyKind;
-import astronomicalsystem.core.observer.Observable;
-import astronomicalsystem.core.observer.Observer;
+import astronomicalsystem.core.math.Vector3;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -19,35 +18,16 @@ import java.util.Map;
  *
  * @param <M> the mark of a body
  */
-public abstract class ProjectedBodiesPresenter<M> implements Observer<List<Body>> {
+public abstract class ProjectedBodiesPresenter<M> extends ProjectingPresenter<Body> {
 
     private final Map<BodyKind, BodyStyle> styles;
-    // The latest camera and the latest bodies: a change of either shows the marks again
-    private Projection projection;
-    private List<Body> bodies = List.of();
 
     /**
      * @param styles precondition: a style for every kind of body the simulation contains
      */
     protected ProjectedBodiesPresenter(@NotNull Projection projection, @NotNull Map<BodyKind, BodyStyle> styles) {
-        this.projection = projection;
+        super(projection);
         this.styles = Map.copyOf(styles);
-    }
-
-    @Override
-    public final void update(@NotNull Observable<List<Body>> subject, @NotNull List<Body> state) {
-        bodies = List.copyOf(state);
-        redraw();
-    }
-
-    /**
-     * @return the observer that shows the marks from the point of view of every new camera
-     */
-    public final @NotNull Observer<Projection> cameraObserver() {
-        return (subject, camera) -> {
-            projection = camera;
-            redraw();
-        };
     }
 
     /**
@@ -61,18 +41,45 @@ public abstract class ProjectedBodiesPresenter<M> implements Observer<List<Body>
     protected abstract void show(@NotNull List<M> marks);
 
     /**
+     * @return whether the body gets a mark when it is in front of the camera; every body, unless a
+     *         subclass leaves some out
+     */
+    protected boolean isMarked(@NotNull Body body) {
+        return true;
+    }
+
+    /**
      * @param point precondition: in front of the camera
      */
     protected final @NotNull ImagePoint imagePointOf(@NotNull ClipPoint point) {
-        return projection.imagePoint(point);
+        return projection().imagePoint(point);
     }
 
-    private void redraw() {
+    /**
+     * @return the direction in the frame of the image of the latest camera
+     */
+    protected final @NotNull Vector3 inTheImage(@NotNull Vector3 direction) {
+        return projection().inTheImage(direction);
+    }
+
+    /**
+     * @return the latest bodies, all of them, also those not in front of the camera
+     */
+    protected final @NotNull List<Body> bodies() {
+        return latest();
+    }
+
+    protected final @NotNull BodyStyle styleOf(@NotNull Body body) {
+        return styles.get(body.kind());
+    }
+
+    @Override
+    protected final void redraw() {
         List<M> marks = new ArrayList<>();
-        for (Body body : bodies) {
-            ClipPoint centre = projection.clipPoint(body.position());
-            if (centre.isInFrontOfTheCamera()) {
-                BodyStyle style = styles.get(body.kind());
+        for (Body body : latest()) {
+            ClipPoint centre = projection().clipPoint(body.position());
+            if (isMarked(body) && centre.isInFrontOfTheCamera()) {
+                BodyStyle style = styleOf(body);
                 marks.add(markOf(body, style, centre, diameterOf(body, style, centre)));
             }
         }
@@ -82,7 +89,7 @@ public abstract class ProjectedBodiesPresenter<M> implements Observer<List<Body>
     // At least the minimum of the style, since at the scale of the solar system bodies are smaller
     // than a pixel
     private double diameterOf(@NotNull Body body, @NotNull BodyStyle style, @NotNull ClipPoint centre) {
-        double apparentDiameter = projection.apparentSizeInPixels(2.0 * body.radius().astronomicalUnits(), centre);
+        double apparentDiameter = projection().apparentSizeInPixels(2.0 * body.radius().astronomicalUnits(), centre);
         return Math.max(style.minimumDiameter(), apparentDiameter);
     }
 }

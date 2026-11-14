@@ -7,7 +7,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -29,10 +33,13 @@ class FixedStepTimelineTest {
     private static final double HALF_A_SECOND = 0.5;
     private static final int ONE_STEP = 1;
     private static final int TWO_STEPS = 2;
+    private static final int FOUR_STEPS = 4;
+    // One step a second at least: at the warps of these tests the step is always the longest
+    private static final int ONE_STEP_PER_SECOND = 1;
 
     private final Advanceable simulation = mock();
     private final FixedStepTimeline SUT = new FixedStepTimeline(simulation, START_OF_2026, QUARTER_OF_A_DAY,
-            TWO_DAYS_PER_SECOND);
+            TWO_DAYS_PER_SECOND, ONE_STEP_PER_SECOND);
 
     @Test
     void theTimeFlowStartsFromTheFirstDateAtTheFirstWarp() {
@@ -47,6 +54,18 @@ class FixedStepTimelineTest {
         SUT.elapse(HALF_A_SECOND);
 
         assertThat(SUT.timeFlow().date()).isEqualTo(A_DAY_LATER);
+    }
+
+    // Whoever the simulation tells while it advances, and who asks the date, gets the end of the frame
+    @Test
+    void whileTheSimulationAdvancesTheDateIsAlreadyTheEndOfTheFrame() {
+        List<JulianDate> datesDuringTheAdvance = new ArrayList<>();
+        doAnswer(advance -> datesDuringTheAdvance.add(SUT.timeFlow().date()))
+                .when(simulation).advance(QUARTER_OF_A_DAY, FOUR_STEPS);
+
+        SUT.elapse(HALF_A_SECOND);
+
+        assertThat(datesDuringTheAdvance).containsExactly(A_DAY_LATER);
     }
 
     @Test

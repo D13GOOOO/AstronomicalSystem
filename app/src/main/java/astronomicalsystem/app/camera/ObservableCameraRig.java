@@ -42,9 +42,9 @@ public class ObservableCameraRig extends CameraRig implements Observable<Project
     }
 
     @Override
-    public void lookAt(@NotNull Vector3 newTarget) {
+    public void lookAt(@NotNull Vector3 newTarget, double clearance) {
         Projection before = camera();
-        super.lookAt(newTarget);
+        super.lookAt(newTarget, clearance);
         notifyObserversIfChangedFrom(before);
     }
 

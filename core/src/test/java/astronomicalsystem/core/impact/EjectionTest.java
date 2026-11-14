@@ -1,0 +1,152 @@
+package astronomicalsystem.core.impact;
+
+import astronomicalsystem.core.body.Body;
+import astronomicalsystem.core.body.BodyKind;
+import astronomicalsystem.core.body.BodyName;
+import astronomicalsystem.core.body.Mass;
+import astronomicalsystem.core.body.Radius;
+import astronomicalsystem.core.math.Tolerances;
+import astronomicalsystem.core.math.Vector3;
+import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.stream.IntStream;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
+import static org.assertj.core.api.Assertions.withinPercentage;
+
+class EjectionTest {
+
+    // The Earth and a protoplanet a tenth of its mass, merged
+    private static final Body MERGED = new Body(new BodyName("Earth"), BodyKind.PLANET, new Mass(3.3e-6),
+            new Radius(4.6e-5), new Vector3(1.0, 0.0, 0.0), new Vector3(0.0, 0.0172, 0.0));
+    private static final Mass REMNANT = new Mass(3.2e-6);
+    private static final List<Mass> FRAGMENTS = List.of(new Mass(6e-8), new Mass(4e-8));
+    private static final Cone UPWARDS = new Cone(new Vector3(0.0, 0.0, 1.0), Math.PI / 4.0);
+    private static final BodyName PROTOPLANET = new BodyName("Protoplanet 1");
+
+    private static final double PRECISION_PERCENT = 1e-9;
+    private static final RecursiveComparisonConfiguration CLOSE_ENOUGH = Tolerances.closeEnough(1e-14);
+    private static final double G = 2.959122082855911e-4;
+
+    private final Ejection SUT = new Ejection(MERGED, REMNANT, FRAGMENTS, UPWARDS, PROTOPLANET);
+
+    @Test
+    void theLargestRemnantKeepsTheNameOfTheLargerBodyAndTheFragmentsAreDebris() {
+        List<Body> bodies = SUT.bodies();
+
+        assertThat(bodies).extracting(Body::name, Body::kind, Body::mass).containsExactly(
+                tuple(MERGED.name(), BodyKind.PLANET, REMNANT),
+                tuple(new BodyName("Protoplanet 1 fragment 1"), BodyKind.DEBRIS, FRAGMENTS.get(0)),
+                tuple(new BodyName("Protoplanet 1 fragment 2"), BodyKind.DEBRIS, FRAGMENTS.get(1)));
+    }
+
+    // Mass over the cube of the radius, proportional to the density
+    @Test
+    void theRemnantAndTheFragmentsKeepTheDensityOfTheBodies() {
+        List<Body> bodies = SUT.bodies();
+
+        assertThat(bodies).allSatisfy(body -> assertThat(densityOf(body))
+                .isCloseTo(densityOf(MERGED), withinPercentage(PRECISION_PERCENT)));
+    }
+
+    // Seen from the remnant, every fragment lies inside the cone, and no two bodies overlap
+    @Test
+    void theFragmentsStartInsideTheConeClearOfEachOtherAndOfTheRemnant() {
+        List<Body> bodies = SUT.bodies();
+
+        Vector3 remnant = bodies.getFirst().position();
+        assertThat(bodies.subList(1, bodies.size())).allSatisfy(fragment -> {
+            Vector3 offset = fragment.position().minus(remnant);
+            assertThat(offset.normalized().dot(UPWARDS.axis())).isGreaterThanOrEqualTo(Math.cos(UPWARDS.halfAngle()));
+        });
+        assertThat(smallestGapBetween(bodies)).isPositive();
+    }
+
+    // A few minutes after the impact the debris is ten radii of the remnant out: nearer, the pull of
+    // the remnant changes faster than steps of an hour can follow
+    @Test
+    void theFragmentsStartTenRadiiOfTheRemnantAway() {
+        List<Body> bodies = SUT.bodies();
+
+        Body remnant = bodies.getFirst();
+        assertThat(bodies.subList(1, bodies.size())).allSatisfy(fragment ->
+                assertThat(fragment.position().minus(remnant.position()).length())
+                        .isCloseTo(10.0 * remnant.radius().astronomicalUnits(), withinPercentage(PRECISION_PERCENT)));
+    }
+
+    // Moving outwards with v² > 2 G M_lr / r, the energy that frees them from the remnant
+    @Test
+    void theFragmentsFlyAwayFasterThanTheyCanEscapeTheRemnant() {
+        List<Body> bodies = SUT.bodies();
+
+        Body remnant = bodies.getFirst();
+        assertThat(bodies.subList(1, bodies.size())).allSatisfy(fragment -> {
+            Vector3 offset = fragment.position().minus(remnant.position());
+            Vector3 relativeVelocity = fragment.velocity().minus(remnant.velocity());
+            assertThat(relativeVelocity.dot(offset)).isPositive();
+            assertThat(relativeVelocity.lengthSquared())
+                    .isGreaterThan(2.0 * G * remnant.mass().solarMasses() / offset.length());
+        });
+    }
+
+    // Ejecta speeds grow as m^(-1/6): the second fragment is the lighter one
+    @Test
+    void smallerFragmentsFlyFaster() {
+        List<Body> bodies = SUT.bodies();
+
+        Vector3 remnantVelocity = bodies.getFirst().velocity();
+        assertThat(bodies.get(2).velocity().minus(remnantVelocity).length())
+                .isGreaterThan(bodies.get(1).velocity().minus(remnantVelocity).length());
+    }
+
+    // No external force acts in the impact: the bodies move on as a whole
+    @Test
+    void theCentreOfMassStaysWhereTheBodiesWere() {
+        List<Body> bodies = SUT.bodies();
+
+        assertThat(totalMassOf(bodies)).isCloseTo(MERGED.mass().solarMasses(), withinPercentage(PRECISION_PERCENT));
+        assertThat(centreOfMassOf(bodies)).usingRecursiveComparison(CLOSE_ENOUGH).isEqualTo(MERGED.position());
+    }
+
+    @Test
+    void theMomentumOfTheBodiesIsKept() {
+        List<Body> bodies = SUT.bodies();
+
+        assertThat(momentumOf(bodies)).usingRecursiveComparison(CLOSE_ENOUGH)
+                .isEqualTo(MERGED.velocity().times(MERGED.mass().solarMasses()));
+    }
+
+    private static Vector3 momentumOf(List<Body> bodies) {
+        return bodies.stream().map(body -> body.velocity().times(body.mass().solarMasses()))
+                .reduce(Vector3.ZERO, Vector3::plus);
+    }
+
+    private static double totalMassOf(List<Body> bodies) {
+        return bodies.stream().mapToDouble(body -> body.mass().solarMasses()).sum();
+    }
+
+    private static Vector3 centreOfMassOf(List<Body> bodies) {
+        return bodies.stream().map(body -> body.position().times(body.mass().solarMasses()))
+                .reduce(Vector3.ZERO, Vector3::plus).times(1.0 / totalMassOf(bodies));
+    }
+
+    // The least distance between the surfaces of two of the bodies
+    private static double smallestGapBetween(List<Body> bodies) {
+        return IntStream.range(0, bodies.size()).boxed()
+                .flatMap(i -> IntStream.range(i + 1, bodies.size()).mapToObj(j -> gap(bodies.get(i), bodies.get(j))))
+                .min(Double::compare).orElseThrow();
+    }
+
+    private static double gap(Body first, Body second) {
+        return second.position().minus(first.position()).length() - first.radius().astronomicalUnits()
+                - second.radius().astronomicalUnits();
+    }
+
+    private static double densityOf(Body body) {
+        double radius = body.radius().astronomicalUnits();
+        return body.mass().solarMasses() / (radius * radius * radius);
+    }
+}

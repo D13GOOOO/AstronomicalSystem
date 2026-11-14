@@ -35,14 +35,6 @@ public record Body(@NotNull BodyName name,
     }
 
     /**
-     * @return whether the spheres of the two bodies intersect; bodies that only touch do not
-     */
-    public boolean overlaps(@NotNull Body other) {
-        double reach = radius.astronomicalUnits() + other.radius.astronomicalUnits();
-        return other.position.minus(position).lengthSquared() < reach * reach;
-    }
-
-    /**
      * @return the body formed by a perfectly inelastic collision of this body with {@code other}
      */
     public @NotNull Body mergedWith(@NotNull Body other) {

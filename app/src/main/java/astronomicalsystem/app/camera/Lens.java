@@ -1,6 +1,7 @@
 package astronomicalsystem.app.camera;
 
 import astronomicalsystem.core.math.Quantities;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Optics of a perspective camera.
@@ -11,6 +12,9 @@ import astronomicalsystem.core.math.Quantities;
  */
 public record Lens(double verticalFieldOfView, double near, double far) {
 
+    // The near plane of a camera close to what it looks at, as a fraction of the distance to it
+    private static final double CLOSE_UP_NEAR = 1e-3;
+
     public Lens {
         // Written so that NaN fails the comparisons
         if (!(verticalFieldOfView > 0.0 && verticalFieldOfView < Math.PI)) {
@@ -20,6 +24,15 @@ public record Lens(double verticalFieldOfView, double near, double far) {
         if (!(far > near && Double.isFinite(far))) {
             throw new IllegalArgumentException("Far plane must be finite and beyond the near plane");
         }
+    }
+
+    /**
+     * @param distance from the camera to what it looks at, in AU; precondition: positive and finite
+     * @return this lens while what the camera looks at is beyond its near plane; nearer, the same
+     *         lens with the near plane at a thousandth of the distance, so that it stays in sight
+     */
+    @NotNull Lens closeUpTo(double distance) {
+        return near <= distance ? this : new Lens(verticalFieldOfView, CLOSE_UP_NEAR * distance, far);
     }
 
     /**

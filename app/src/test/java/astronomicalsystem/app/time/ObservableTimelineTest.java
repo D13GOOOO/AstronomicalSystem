@@ -16,6 +16,7 @@ import java.util.stream.Stream;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 class ObservableTimelineTest {
 
@@ -25,11 +26,13 @@ class ObservableTimelineTest {
     // At two days per second, one step of a quarter of a day
     private static final double ONE_STEP_IN_REAL_SECONDS = 0.125;
     private static final double HALF_A_STEP_IN_REAL_SECONDS = 0.0625;
+    // One step a second at least: at two days per second the step is always the longest
+    private static final int ONE_STEP_PER_SECOND = 1;
 
     private final Advanceable simulation = mock();
     private final Observer<TimeFlow> observer = mock();
     private final ObservableTimeline SUT = new ObservableTimeline(simulation, START_OF_2026, QUARTER_OF_A_DAY,
-            TWO_DAYS_PER_SECOND);
+            TWO_DAYS_PER_SECOND, ONE_STEP_PER_SECOND);
 
     static Stream<Arguments> changes() {
         return Stream.of(
@@ -38,6 +41,17 @@ class ObservableTimelineTest {
                 Arguments.of(Named.of("speed up", (Consumer<ObservableTimeline>) ObservableTimeline::speedUp)),
                 Arguments.of(Named.of("slow down", (Consumer<ObservableTimeline>) ObservableTimeline::slowDown)),
                 Arguments.of(Named.of("pause", (Consumer<ObservableTimeline>) ObservableTimeline::togglePause)));
+    }
+
+    // Twelve halvings at once are a single change
+    @Test
+    void goingToTheSlowestWarpNotifiesTheObserversOnce() {
+        SUT.addObserver(observer);
+
+        SUT.slowest();
+
+        verify(observer).update(SUT, SUT.getState());
+        verifyNoMoreInteractions(observer);
     }
 
     @ParameterizedTest

@@ -1,8 +1,10 @@
 package astronomicalsystem.app.presenter;
 
 import astronomicalsystem.app.follow.FollowControls;
+import astronomicalsystem.app.impact.LaunchControls;
 import astronomicalsystem.app.time.TimeControls;
 import astronomicalsystem.app.view.KeyboardView;
+import astronomicalsystem.core.impact.Impactor;
 import org.junit.jupiter.api.Named;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -22,7 +24,8 @@ class KeyboardPresenterTest {
     private final KeyboardView view = mock();
     private final TimeControls time = mock();
     private final FollowControls follow = mock();
-    private final KeyboardPresenter SUT = new KeyboardPresenter(view, time, follow);
+    private final LaunchControls launch = mock();
+    private final KeyboardPresenter SUT = new KeyboardPresenter(view, time, follow, launch);
 
     @Test
     void thePresenterHandlesTheKeyboardOfItsView() {
@@ -63,13 +66,30 @@ class KeyboardPresenterTest {
         verifyNoInteractions(time);
     }
 
+    // Growing sizes on the row of digits
+    static Stream<Arguments> launches() {
+        return Stream.of(
+                Arguments.of(character('1'), Impactor.ASTEROID),
+                Arguments.of(character('2'), Impactor.PLANETESIMAL),
+                Arguments.of(character('3'), Impactor.PROTOPLANET));
+    }
+
+    @ParameterizedTest
+    @MethodSource("launches")
+    void theFirstDigitsLaunchImpactors(int codePoint, Impactor impactor) {
+        SUT.characterTyped(codePoint);
+
+        verify(launch).launch(impactor);
+        verifyNoInteractions(time, follow);
+    }
+
     @ParameterizedTest
     // Also a letter outside ASCII: e with an acute accent
     @ValueSource(ints = {'a', '0', '_', 'é'})
     void anyOtherCharacterLeavesTimeAndCameraAlone(int codePoint) {
         SUT.characterTyped(codePoint);
 
-        verifyNoInteractions(time, follow);
+        verifyNoInteractions(time, follow, launch);
     }
 
     private static Named<Integer> character(char typed) {

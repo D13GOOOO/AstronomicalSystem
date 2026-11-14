@@ -6,10 +6,14 @@ import astronomicalsystem.app.camera.Orbit;
 import astronomicalsystem.app.camera.Viewport;
 import astronomicalsystem.app.follow.ObservableBodyFollower;
 import astronomicalsystem.app.forecast.Forecast;
+import astronomicalsystem.app.impact.Blasts;
+import astronomicalsystem.app.impact.Launcher;
+import astronomicalsystem.app.impact.SlowMotion;
 import astronomicalsystem.app.presenter.BodiesPresenter;
 import astronomicalsystem.app.presenter.BodyStyle;
 import astronomicalsystem.app.presenter.CameraControlsPresenter;
 import astronomicalsystem.app.presenter.ControlsHelpPresenter;
+import astronomicalsystem.app.presenter.FlaresPresenter;
 import astronomicalsystem.app.presenter.FocusPresenter;
 import astronomicalsystem.app.presenter.LabelsPresenter;
 import astronomicalsystem.app.presenter.ProvenancePresenter;
@@ -23,15 +27,18 @@ import astronomicalsystem.app.view.Colour;
 import astronomicalsystem.app.view.Corner;
 import astronomicalsystem.app.view.GlDiscs;
 import astronomicalsystem.app.view.GlFont;
+import astronomicalsystem.app.view.GlGlows;
 import astronomicalsystem.app.view.GlLabels;
 import astronomicalsystem.app.view.GlPaths;
 import astronomicalsystem.app.view.GlText;
 import astronomicalsystem.app.view.GlfwWindow;
 import astronomicalsystem.app.view.Layers;
 import astronomicalsystem.core.body.BodyKind;
+import astronomicalsystem.core.body.Mass;
+import astronomicalsystem.core.impact.FragmentSizes;
 import astronomicalsystem.core.math.Vector3;
 import astronomicalsystem.core.orbit.GravitationalParameter;
-import astronomicalsystem.core.physics.MergingCollisions;
+import astronomicalsystem.core.physics.FragmentingCollisions;
 import astronomicalsystem.core.physics.NewtonianGravity;
 import astronomicalsystem.core.physics.TimeStep;
 import astronomicalsystem.core.physics.VelocityVerlet;
@@ -50,6 +57,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Creates the solar system as it is now, the simulation and the window, and connects them.
@@ -60,13 +68,18 @@ public final class Main {
     private static final int WIDTH = 1280;
     private static final int HEIGHT = 720;
     private static final Duration HORIZONS_TIMEOUT = Duration.ofSeconds(10);
-    // Exact Newtonian attraction: bodies never get closer than the sum of their radii, since they merge
+    // Exact Newtonian attraction: bodies never get closer than the sum of their radii, since they collide
     private static final double NO_SOFTENING = 0.0;
+    // Impacts break off at most 24 fragments, none lighter than 2e18 kg, a body some 100 km across:
+    // enough to see the debris fly, few enough to keep every body in the gravity of the others
+    private static final FragmentSizes FRAGMENT_SIZES = new FragmentSizes(new Mass(1e-12), 24);
     // About 2100 steps along the orbit of Mercury, the fastest planet
     private static final TimeStep ONE_HOUR = new TimeStep(1.0 / 24.0);
     // Mercury goes round the Sun in about nine seconds, the Earth in about thirty-seven; the user
     // doubles or halves it with + and -, and pauses it with the space bar
     private static final TimeWarp TEN_DAYS_PER_SECOND = new TimeWarp(10.0);
+    // At slow warps the steps are shorter than an hour, so that every frame shows the bodies moving
+    private static final int A_STEP_PER_FRAME = 60;
 
     // The camera turns around the barycentre; it starts 8 AU away and 35 degrees above the ecliptic,
     // where the orbit of Jupiter fills the image
@@ -74,17 +87,21 @@ public final class Main {
     private static final Orbit FIRST_VIEW = new Orbit(8.0, 0.0, Math.toRadians(35.0));
     private static final Lens LENS = new Lens(Math.toRadians(45.0), 0.01, 1000.0);
     private static final Map<BodyKind, BodyStyle> STYLES = Map.of(
-            BodyKind.STAR, new BodyStyle(new Colour(1.0, 0.85, 0.45), 16.0),
-            BodyKind.PLANET, new BodyStyle(new Colour(0.55, 0.75, 1.0), 7.0),
-            BodyKind.MOON, new BodyStyle(new Colour(0.75, 0.75, 0.75), 4.0),
-            BodyKind.COMET, new BodyStyle(new Colour(0.6, 1.0, 0.95), 4.0),
-            BodyKind.DEBRIS, new BodyStyle(new Colour(0.6, 0.5, 0.4), 3.0));
+            BodyKind.STAR, new BodyStyle(new Colour(1.0, 0.85, 0.45), 16.0, true),
+            BodyKind.PLANET, new BodyStyle(new Colour(0.55, 0.75, 1.0), 7.0, false),
+            BodyKind.MOON, new BodyStyle(new Colour(0.75, 0.75, 0.75), 4.0, false),
+            BodyKind.COMET, new BodyStyle(new Colour(0.6, 1.0, 0.95), 4.0, false),
+            BodyKind.ASTEROID, new BodyStyle(new Colour(0.85, 0.7, 0.55), 4.0, false),
+            BodyKind.DEBRIS, new BodyStyle(new Colour(0.6, 0.5, 0.4), 3.0, false));
+    // Debris comes in dozens of fragments, whose names would cover each other
+    private static final Set<BodyKind> UNNAMED = Set.of(BodyKind.DEBRIS);
     // The colours of the bodies at half their brightness: the paths stay behind the discs
     private static final Map<BodyKind, Colour> PATH_COLOURS = Map.of(
             BodyKind.STAR, new Colour(0.5, 0.425, 0.225),
             BodyKind.PLANET, new Colour(0.275, 0.375, 0.5),
             BodyKind.MOON, new Colour(0.375, 0.375, 0.375),
             BodyKind.COMET, new Colour(0.3, 0.5, 0.475),
+            BodyKind.ASTEROID, new Colour(0.425, 0.35, 0.275),
             BodyKind.DEBRIS, new Colour(0.3, 0.25, 0.2));
     // The paths look a year ahead, a point a day. The prediction takes steps of a day, not of an
     // hour like the simulation: 365 steps instead of 8766, and the paths differ by less than a pixel
@@ -104,15 +121,17 @@ public final class Main {
         Ephemeris initialState = solarSystem.ephemerisAt(now);
         VelocityVerlet gravity = new VelocityVerlet(
                 new NewtonianGravity(GravitationalParameter.GRAVITATIONAL_CONSTANT, NO_SOFTENING));
-        ObservableSimulation simulation = new ObservableSimulation(gravity, new MergingCollisions(),
-                initialState.bodies());
+        // Without state of their own, the gravity and the collisions serve the prediction too
+        FragmentingCollisions collisions = new FragmentingCollisions(FRAGMENT_SIZES);
+        ObservableSimulation simulation = new ObservableSimulation(gravity, collisions, initialState.bodies());
         Forecast forecast = new Forecast(
-                new TrajectoryPredictor(gravity, new MergingCollisions(), ONE_DAY, A_YEAR_DAY_BY_DAY),
+                new TrajectoryPredictor(gravity, collisions, ONE_DAY, A_YEAR_DAY_BY_DAY),
                 FRAMES_PER_PREDICTION);
-        ObservableTimeline timeline = new ObservableTimeline(simulation, now, ONE_HOUR, TEN_DAYS_PER_SECOND);
+        ObservableTimeline timeline = new ObservableTimeline(simulation, now, ONE_HOUR, TEN_DAYS_PER_SECOND,
+                A_STEP_PER_FRAME);
         // The scene, the paths and the font need the OpenGL context of the window
         try (GlfwWindow window = GlfwWindow.open(TITLE, WIDTH, HEIGHT); GlDiscs scene = GlDiscs.create();
-             GlPaths paths = GlPaths.create(); GlFont font = GlFont.create()) {
+             GlPaths paths = GlPaths.create(); GlGlows glows = GlGlows.create(); GlFont font = GlFont.create()) {
             GlText headUpDisplay = new GlText(font, Corner.TOP_LEFT);
             GlText controlsHelp = new GlText(font, Corner.BOTTOM_LEFT);
             GlText provenance = new GlText(font, Corner.BOTTOM_RIGHT);
@@ -123,7 +142,7 @@ public final class Main {
             BodiesPresenter bodies = new BodiesPresenter(scene, camera.camera(), STYLES);
             simulation.addObserver(bodies);
             camera.addObserver(bodies.cameraObserver());
-            LabelsPresenter labels = new LabelsPresenter(names, camera.camera(), STYLES);
+            LabelsPresenter labels = new LabelsPresenter(names, camera.camera(), STYLES, UNNAMED);
             simulation.addObserver(labels);
             camera.addObserver(labels.cameraObserver());
             TrajectoriesPresenter trajectories = new TrajectoriesPresenter(paths, camera.camera(), PATH_COLOURS);
@@ -134,15 +153,26 @@ public final class Main {
             ObservableBodyFollower follower = new ObservableBodyFollower(camera);
             simulation.addObserver(follower);
             follower.addObserver(new FocusPresenter(focus));
+            // What glows of the impacts, on the bodies that survived them, as time goes by
+            Blasts blasts = new Blasts();
+            simulation.addObserver(blasts.bodiesObserver());
+            simulation.collisionNews().addObserver(blasts);
+            timeline.addObserver(blasts.timeObserver());
+            FlaresPresenter flares = new FlaresPresenter(glows, camera.camera());
+            blasts.addObserver(flares);
+            camera.addObserver(flares.cameraObserver());
+            // After the follower: it knows whether the body hit is the one the user watches
+            simulation.collisionNews().addObserver(new SlowMotion(follower, timeline));
             new CameraControlsPresenter(window, camera);
             timeline.addObserver(new TimeFlowPresenter(headUpDisplay));
-            new KeyboardPresenter(window, timeline, follower);
+            new KeyboardPresenter(window, timeline, follower, new Launcher(simulation, follower, camera));
             new ControlsHelpPresenter(controlsHelp);
             new ProvenancePresenter(provenance, initialState.provenance());
             simulation.notifyObservers();
             timeline.notifyObservers();
             follower.notifyObservers();
-            Layers picture = new Layers(List.of(paths, scene, names, headUpDisplay, focus, controlsHelp, provenance));
+            Layers picture = new Layers(List.of(paths, scene, glows, names, headUpDisplay, focus, controlsHelp,
+                    provenance));
             new MainLoop(window, new SystemClock(), timeline, picture).run();
         }
     }
