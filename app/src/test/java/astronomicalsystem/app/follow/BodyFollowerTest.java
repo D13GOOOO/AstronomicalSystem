@@ -32,6 +32,10 @@ class BodyFollowerTest {
     private static final Body EARTH = new Body(new BodyName("Earth"), BodyKind.PLANET, new Mass(3e-6),
             new Radius(4.26e-5), new Vector3(1.0, 0.0, 0.0), AT_REST);
     private static final Body SUN_LATER = SUN.withMotion(new Vector3(0.003, 0.001, 0.0), AT_REST);
+    // Near the barycentre the camera stops where the Sun nearly fills the image
+    private static final double BARYCENTRE_CLEARANCE = 0.02;
+    // Two radii from the centre of the Sun: one radius above its surface
+    private static final double SUN_CLEARANCE = 9.3e-3;
 
     private final CameraTarget camera = mock();
     private final Observable<List<Body>> simulation = mock();
@@ -42,7 +46,7 @@ class BodyFollowerTest {
         SUT.update(simulation, List.of(SUN, EARTH));
 
         assertThat(SUT.focus()).isEqualTo(Focus.BARYCENTRE);
-        verify(camera).lookAt(ORIGIN);
+        verify(camera).lookAt(ORIGIN, BARYCENTRE_CLEARANCE);
     }
 
     // At once, without waiting for the bodies to move
@@ -53,7 +57,7 @@ class BodyFollowerTest {
         SUT.followNext();
 
         assertThat(SUT.focus()).isEqualTo(new Focus.OnBody(SUN.name()));
-        verify(camera).lookAt(SUN.position());
+        verify(camera).lookAt(SUN.position(), SUN_CLEARANCE);
     }
 
     @Test
@@ -63,7 +67,7 @@ class BodyFollowerTest {
 
         SUT.update(simulation, List.of(SUN_LATER, EARTH));
 
-        verify(camera).lookAt(SUN_LATER.position());
+        verify(camera).lookAt(SUN_LATER.position(), SUN_CLEARANCE);
     }
 
     // Merged into a heavier body, whose name the merged body keeps
@@ -75,7 +79,7 @@ class BodyFollowerTest {
         SUT.update(simulation, List.of(SUN));
 
         assertThat(SUT.focus()).isEqualTo(Focus.BARYCENTRE);
-        verify(camera, times(2)).lookAt(ORIGIN);
+        verify(camera, times(2)).lookAt(ORIGIN, BARYCENTRE_CLEARANCE);
     }
 
     // The barycentre, the Sun, the Earth and the barycentre again, in either direction
