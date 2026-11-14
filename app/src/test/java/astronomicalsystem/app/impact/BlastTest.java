@@ -50,6 +50,17 @@ class BlastTest {
         assertThat(fireball.radius()).isCloseTo(halfARadius, withinPercentage(PRECISION_PERCENT));
     }
 
+    // Halfway through its growth: half its size, and as hot as it gets
+    @Test
+    void theFireballIsAsHotAsItGetsWhileItGrows() {
+        Blast SUT = new Blast(new Collision(EARTH, UP, UP, SPEED, BINDING_ENERGY / 8.0), START);
+        double riseTime = EARTH_RADIUS / 2.0 / SPEED;
+
+        Flare fireball = SUT.flaresAt(new JulianDate(START.days() + riseTime / 2.0), Vector3.ZERO).getFirst();
+
+        assertThat(fireball.heat()).isEqualTo(1.0);
+    }
+
     // Grown in a rise time t, it glows for twenty of them and cools as exp(-(age - t) / tau), with
     // tau a third of the time left, 19 t / 3: one tau after it has grown, its heat is 1 / e
     @Test
