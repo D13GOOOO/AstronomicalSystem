@@ -25,5 +25,6 @@ public class SlowMotion implements Observer<List<Collision>> {
 
     @Override
     public void update(@NotNull Observable<List<Collision>> subject, @NotNull List<Collision> state) {
+        time.slowest();
     }
 }
