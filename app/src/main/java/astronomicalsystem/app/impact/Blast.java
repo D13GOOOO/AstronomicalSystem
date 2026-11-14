@@ -1,6 +1,7 @@
 package astronomicalsystem.app.impact;
 
 import astronomicalsystem.core.math.Vector3;
+import astronomicalsystem.core.orbit.GravitationalParameter;
 import astronomicalsystem.core.physics.Collision;
 import astronomicalsystem.core.time.JulianDate;
 import org.jetbrains.annotations.NotNull;
@@ -16,11 +17,32 @@ import java.util.List;
  */
 public record Blast(@NotNull Collision collision, @NotNull JulianDate start) {
 
+    private static final double G = GravitationalParameter.GRAVITATIONAL_CONSTANT;
+    // A fireball the size of the body covers the face it was hit on
+    private static final double LARGEST_FIREBALL_IN_RADII = 1.0;
+
     /**
      * @param survivor where the body that was hit is now
-     * @return what glows at the date, in space
+     * @return what glows at the date, in space: the fireball first
      */
     public @NotNull List<Flare> flaresAt(@NotNull JulianDate now, @NotNull Vector3 survivor) {
-        return List.of();
+        double age = now.days() - start.days();
+        double radius = collision.survivor().radius().astronomicalUnits();
+        Vector3 site = survivor.plus(collision.site().times(radius));
+        return List.of(new Flare(site, fireballRadius() * Math.min(1.0, age / riseTime()), 1.0));
+    }
+
+    // The energy E of the impact over the binding energy U = (3/5) G M² / R that would scatter the
+    // body: the fireball grows as the cube root of the energy, like the volume of the hot gas
+    private double fireballRadius() {
+        double mass = collision.survivor().mass().solarMasses();
+        double radius = collision.survivor().radius().astronomicalUnits();
+        double bindingEnergy = 0.6 * G * mass * mass / radius;
+        return radius * Math.min(LARGEST_FIREBALL_IN_RADII, Math.cbrt(collision.energy() / bindingEnergy));
+    }
+
+    // The hot gas expands at about the speed of the impact
+    private double riseTime() {
+        return fireballRadius() / collision.speed();
     }
 }
