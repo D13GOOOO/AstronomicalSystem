@@ -14,6 +14,8 @@ import java.time.Duration;
  */
 public final class HttpMapFiles implements MapFiles {
 
+    private static final int HTTP_OK = 200;
+
     private final HttpClient client;
     private final Duration timeout;
 
@@ -27,7 +29,11 @@ public final class HttpMapFiles implements MapFiles {
 
     @Override
     public byte @NotNull [] fetch(@NotNull URI address) {
-        return send(HttpRequest.newBuilder(address).timeout(timeout).GET().build()).body();
+        HttpResponse<byte[]> response = send(HttpRequest.newBuilder(address).timeout(timeout).GET().build());
+        if (response.statusCode() != HTTP_OK) {
+            throw new MapUnavailableException("The map server answered with HTTP status " + response.statusCode());
+        }
+        return response.body();
     }
 
     private @NotNull HttpResponse<byte[]> send(@NotNull HttpRequest request) {
