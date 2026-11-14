@@ -42,7 +42,7 @@ public abstract class SweptCollisions implements CollisionResolver {
 
     private static @NotNull Collision collisionOf(@NotNull Contact contact, @NotNull Sweep survivor) {
         Impact impact = contact.impact();
-        return new Collision(survivor.end().name(), contact.normal(), contact.debrisAxis().normalized(),
+        return new Collision(survivor.end(), contact.normal(), contact.debrisAxis().normalized(),
                 impact.speed(), impact.energy());
     }
 

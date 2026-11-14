@@ -138,7 +138,7 @@ class MergingCollisionsTest {
 
         Vector3 towardsTheSecond = new Vector3(1.0, 0.0, 0.0);
         assertThat(collisions).usingRecursiveFieldByFieldElementComparator(CLOSE_ENOUGH).containsExactly(
-                new Collision(first.name(), towardsTheSecond, towardsTheSecond, 0.021759125287036375,
+                new Collision(first.mergedWith(secondAfter), towardsTheSecond, towardsTheSecond, 0.021759125287036375,
                         1.1836488331423645e-4));
     }
 

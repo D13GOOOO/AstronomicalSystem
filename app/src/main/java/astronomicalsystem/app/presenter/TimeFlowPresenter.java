@@ -25,6 +25,7 @@ public class TimeFlowPresenter implements Observer<TimeFlow> {
     // Up to two decimals, without trailing zeros
     private static final String SPEED_PATTERN = "0.##";
     private static final double HOURS_PER_DAY = 24.0;
+    private static final double MINUTES_PER_DAY = 1440.0;
     private static final String PAUSED = ", paused";
 
     private final TextView view;
@@ -56,6 +57,9 @@ public class TimeFlowPresenter implements Observer<TimeFlow> {
         if (daysPerSecond >= 1.0) {
             return speed.format(daysPerSecond) + " d/s";
         }
-        return speed.format(daysPerSecond * HOURS_PER_DAY) + " h/s";
+        if (daysPerSecond * HOURS_PER_DAY >= 1.0) {
+            return speed.format(daysPerSecond * HOURS_PER_DAY) + " h/s";
+        }
+        return speed.format(daysPerSecond * MINUTES_PER_DAY) + " min/s";
     }
 }
