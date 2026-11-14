@@ -33,6 +33,7 @@ class CameraRigTest {
     private static final Orbit AS_FAR_AS_POSSIBLE = new Orbit(100.0, 0.0, 0.0);
     private static final double TWICE_AS_FAR = 2.0;
     private static final double THREE_AU = 3.0;
+    private static final double ONE_AND_A_HALF_AU = 1.5;
     // 2 AU away on the ecliptic, looking along the positive y-axis
     private static final Orbit ON_THE_ECLIPTIC = new Orbit(2.0, 0.0, 0.0);
     // Focal factor 1, depth from 1 to 3 AU: the target, 2 AU away, has z = w / 2
@@ -98,6 +99,16 @@ class CameraRigTest {
         SUT.lookAt(EAST_OF_THE_TARGET, THREE_AU);
 
         assertThat(SUT.camera().clipPoint(EAST_OF_THE_TARGET).w()).isCloseTo(3.0, within(TOLERANCE));
+    }
+
+    // Halfway from 2 AU would be 1 AU, nearer than the clearance of 1.5 AU
+    @Test
+    void zoomingStopsAtTheClearanceOfTheTarget() {
+        SUT.lookAt(TARGET, ONE_AND_A_HALF_AU);
+
+        SUT.zoomBy(HALF_THE_DISTANCE);
+
+        assertThat(SUT.camera().clipPoint(TARGET).w()).isCloseTo(1.5, within(TOLERANCE));
     }
 
     // Nothing turns, nothing moves closer or farther, the image keeps its size, the target stays
