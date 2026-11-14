@@ -20,7 +20,7 @@ import static astronomicalsystem.core.simulation.SolarSystemFixtures.MOVED_EARTH
 import static astronomicalsystem.core.simulation.SolarSystemFixtures.SUN;
 import static astronomicalsystem.core.simulation.SolarSystemFixtures.TWO_DAYS;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.AdditionalAnswers.returnsFirstArg;
+import static org.mockito.AdditionalAnswers.returnsLastArg;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -39,7 +39,7 @@ class TrajectoryPredictorTest {
 
     @BeforeEach
     void noCollisionsByDefault() {
-        when(collisions.resolve(anyList())).thenAnswer(returnsFirstArg());
+        when(collisions.resolve(anyList(), anyList())).thenAnswer(returnsLastArg());
     }
 
     @Test
@@ -76,7 +76,7 @@ class TrajectoryPredictorTest {
         when(integrator.step(List.of(SUN, EARTH, JUPITER), TWO_DAYS))
                 .thenReturn(List.of(SUN, MOVED_EARTH, MOVED_JUPITER));
         Body sunWithTheEarth = SUN.mergedWith(MOVED_EARTH);
-        when(collisions.resolve(List.of(SUN, MOVED_EARTH, MOVED_JUPITER)))
+        when(collisions.resolve(List.of(SUN, EARTH, JUPITER), List.of(SUN, MOVED_EARTH, MOVED_JUPITER)))
                 .thenReturn(List.of(sunWithTheEarth, MOVED_JUPITER));
 
         List<Trajectory> trajectories = SUT.predict(List.of(SUN, EARTH, JUPITER));

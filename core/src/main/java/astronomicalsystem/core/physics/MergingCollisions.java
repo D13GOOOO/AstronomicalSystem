@@ -12,8 +12,8 @@ import java.util.List;
 public class MergingCollisions implements CollisionResolver {
 
     @Override
-    public @NotNull List<Body> resolve(@NotNull List<Body> bodies) {
-        List<Body> resolved = new ArrayList<>(bodies);
+    public @NotNull List<Body> resolve(@NotNull List<Body> before, @NotNull List<Body> after) {
+        List<Body> resolved = new ArrayList<>(after);
         boolean merging;
         do {
             merging = mergeFirstOverlap(resolved);

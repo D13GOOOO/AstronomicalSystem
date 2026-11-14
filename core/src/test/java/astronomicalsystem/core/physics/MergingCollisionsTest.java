@@ -24,7 +24,9 @@ class MergingCollisionsTest {
         Body first = sphereAt("First", 0.0);
         Body second = sphereAt("Second", 1.0);
 
-        List<Body> resolved = SUT.resolve(List.of(first, second));
+        List<Body> atRest = List.of(first, second);
+
+        List<Body> resolved = SUT.resolve(atRest, atRest);
 
         assertThat(resolved).containsExactly(first.mergedWith(second));
     }
@@ -35,7 +37,9 @@ class MergingCollisionsTest {
         Body second = sphereAt("Second", 3.0);
         Body third = sphereAt("Third", 6.0);
 
-        List<Body> resolved = SUT.resolve(List.of(first, second, third));
+        List<Body> atRest = List.of(first, second, third);
+
+        List<Body> resolved = SUT.resolve(atRest, atRest);
 
         assertThat(resolved).containsExactly(first, second, third);
     }
@@ -46,7 +50,9 @@ class MergingCollisionsTest {
         Body middle = sphereAt("Middle", 5.0);
         Body last = sphereAt("Last", 1.0);
 
-        List<Body> resolved = SUT.resolve(List.of(first, middle, last));
+        List<Body> atRest = List.of(first, middle, last);
+
+        List<Body> resolved = SUT.resolve(atRest, atRest);
 
         assertThat(resolved).containsExactly(first.mergedWith(last), middle);
     }
@@ -57,7 +63,9 @@ class MergingCollisionsTest {
         Body second = sphereAt("Second", 1.0);
         Body third = sphereAt("Third", 2.5);
 
-        List<Body> resolved = SUT.resolve(List.of(first, second, third));
+        List<Body> atRest = List.of(first, second, third);
+
+        List<Body> resolved = SUT.resolve(atRest, atRest);
 
         assertThat(resolved).containsExactly(first.mergedWith(second).mergedWith(third));
     }
