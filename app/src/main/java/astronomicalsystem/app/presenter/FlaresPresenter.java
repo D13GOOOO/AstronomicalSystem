@@ -40,10 +40,7 @@ public class FlaresPresenter implements Observer<List<Flare>> {
     @Override
     public void update(@NotNull Observable<List<Flare>> subject, @NotNull List<Flare> state) {
         flares = List.copyOf(state);
-        view.show(flares.stream()
-                .filter(flare -> projection.clipPoint(flare.position()).isInFrontOfTheCamera())
-                .map(this::glowOf)
-                .toList());
+        redraw();
     }
 
     /**
@@ -51,7 +48,16 @@ public class FlaresPresenter implements Observer<List<Flare>> {
      */
     public @NotNull Observer<Projection> cameraObserver() {
         return (subject, camera) -> {
+            projection = camera;
+            redraw();
         };
+    }
+
+    private void redraw() {
+        view.show(flares.stream()
+                .filter(flare -> projection.clipPoint(flare.position()).isInFrontOfTheCamera())
+                .map(this::glowOf)
+                .toList());
     }
 
     /**
