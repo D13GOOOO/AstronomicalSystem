@@ -18,8 +18,9 @@ import static org.lwjgl.opengl.GL20.glVertexAttribPointer;
 final class Squares {
 
     // Two triangles cover the square from (-1, -1) to (1, 1)
-    static final float[][] CORNERS = {{-1.0f, -1.0f}, {1.0f, -1.0f}, {1.0f, 1.0f},
+    private static final float[][] CORNERS = {{-1.0f, -1.0f}, {1.0f, -1.0f}, {1.0f, 1.0f},
             {-1.0f, -1.0f}, {1.0f, 1.0f}, {-1.0f, 1.0f}};
+    static final int VERTICES_PER_SQUARE = CORNERS.length;
 
     private Squares() {
     }
@@ -34,7 +35,8 @@ final class Squares {
         int index = 0;
         for (T shape : shapes) {
             for (float[] corner : CORNERS) {
-                System.arraycopy(vertexOf.apply(shape, corner), 0, vertices, index, floatsPerVertex);
+                // A copy: the corners are not for the caller to change
+                System.arraycopy(vertexOf.apply(shape, corner.clone()), 0, vertices, index, floatsPerVertex);
                 index += floatsPerVertex;
             }
         }

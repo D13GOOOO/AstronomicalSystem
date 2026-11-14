@@ -101,7 +101,7 @@ public final class GlDiscs implements SceneView, Drawable, AutoCloseable {
         glBindBuffer(GL_ARRAY_BUFFER, buffer);
         glBufferData(GL_ARRAY_BUFFER, Squares.vertices(discs, FLOATS_PER_VERTEX, GlDiscs::vertexOf),
                 GL_STREAM_DRAW);
-        glDrawArrays(GL_TRIANGLES, 0, discs.size() * Squares.CORNERS.length);
+        glDrawArrays(GL_TRIANGLES, 0, discs.size() * Squares.VERTICES_PER_SQUARE);
         glBindVertexArray(0);
     }
 

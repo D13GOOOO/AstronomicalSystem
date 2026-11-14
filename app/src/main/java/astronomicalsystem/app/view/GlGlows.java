@@ -102,7 +102,7 @@ public final class GlGlows implements GlowsView, Drawable, AutoCloseable {
         glBindBuffer(GL_ARRAY_BUFFER, buffer);
         glBufferData(GL_ARRAY_BUFFER, Squares.vertices(glows, FLOATS_PER_VERTEX, GlGlows::vertexOf),
                 GL_STREAM_DRAW);
-        glDrawArrays(GL_TRIANGLES, 0, glows.size() * Squares.CORNERS.length);
+        glDrawArrays(GL_TRIANGLES, 0, glows.size() * Squares.VERTICES_PER_SQUARE);
         glBindVertexArray(0);
         // The other layers expect depth to be written and nothing blended
         glDisable(GL_BLEND);
