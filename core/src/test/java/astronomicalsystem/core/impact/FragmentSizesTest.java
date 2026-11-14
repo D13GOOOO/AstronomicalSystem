@@ -49,6 +49,16 @@ class FragmentSizesTest {
                 new Mass(5.56577781491278), new Mass(2.683194689509864), new Mass(1.7510274955773557)));
     }
 
+    // Two fragments would leave the smaller at 0.163, below 0.3
+    @Test
+    void debrisThatCannotBreakIntoTwoStaysInOnePiece() {
+        FragmentSizes SUT = new FragmentSizes(new Mass(0.3), TEN);
+
+        List<Mass> fragments = SUT.split(0.5);
+
+        assertThat(fragments).containsExactly(new Mass(0.5));
+    }
+
     // Three fragments would leave the smallest at 0.268, below 0.3
     @Test
     void thereAreOnlyAsManyFragmentsAsCanBeAtLeastTheSmallest() {
