@@ -9,6 +9,7 @@ import astronomicalsystem.core.time.JulianDate;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -39,9 +40,7 @@ public class Blasts implements Observer<List<Collision>>, Observable<List<Flare>
             untold.forEach(collision -> blasts.add(new Blast(collision, now)));
             untold.clear();
             List<Flare> before = flares;
-            // A blast that no longer shows anything is over
-            blasts.removeIf(blast -> flaresOf(blast, now).isEmpty());
-            flares = blasts.stream().flatMap(blast -> flaresOf(blast, now).stream()).toList();
+            flares = flaresAt(now);
             // Nothing to tell while nothing glows, before or now
             if (!before.isEmpty() || !flares.isEmpty()) {
                 notifyObservers();
@@ -71,6 +70,20 @@ public class Blasts implements Observer<List<Collision>>, Observable<List<Flare>
     @Override
     public @NotNull List<Flare> getState() {
         return flares;
+    }
+
+    // A blast that no longer shows anything is over, and forgotten
+    private @NotNull List<Flare> flaresAt(@NotNull JulianDate now) {
+        List<Flare> glowing = new ArrayList<>();
+        Iterator<Blast> unfolding = blasts.iterator();
+        while (unfolding.hasNext()) {
+            List<Flare> ofTheBlast = flaresOf(unfolding.next(), now);
+            if (ofTheBlast.isEmpty()) {
+                unfolding.remove();
+            }
+            glowing.addAll(ofTheBlast);
+        }
+        return List.copyOf(glowing);
     }
 
     // Where the body that survived the blast is now
