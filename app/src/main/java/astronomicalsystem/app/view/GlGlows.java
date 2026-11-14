@@ -6,7 +6,6 @@ import java.util.List;
 
 import static org.lwjgl.opengl.GL11.GL_BLEND;
 import static org.lwjgl.opengl.GL11.GL_DEPTH_TEST;
-import static org.lwjgl.opengl.GL11.GL_FLOAT;
 import static org.lwjgl.opengl.GL11.GL_ONE;
 import static org.lwjgl.opengl.GL11.GL_TRIANGLES;
 import static org.lwjgl.opengl.GL11.GL_VIEWPORT;
@@ -23,11 +22,9 @@ import static org.lwjgl.opengl.GL15.glBufferData;
 import static org.lwjgl.opengl.GL15.glDeleteBuffers;
 import static org.lwjgl.opengl.GL15.glGenBuffers;
 import static org.lwjgl.opengl.GL20.glDeleteProgram;
-import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
 import static org.lwjgl.opengl.GL20.glGetUniformLocation;
 import static org.lwjgl.opengl.GL20.glUniform2f;
 import static org.lwjgl.opengl.GL20.glUseProgram;
-import static org.lwjgl.opengl.GL20.glVertexAttribPointer;
 import static org.lwjgl.opengl.GL30.glBindVertexArray;
 import static org.lwjgl.opengl.GL30.glDeleteVertexArrays;
 import static org.lwjgl.opengl.GL30.glGenVertexArrays;
@@ -53,10 +50,6 @@ public final class GlGlows implements GlowsView, Drawable, AutoCloseable {
     private static final int DIAMETER_SIZE = 1;
     private static final int COLOUR_SIZE = 3;
     private static final int FLOATS_PER_VERTEX = POSITION_SIZE + CORNER_SIZE + DIAMETER_SIZE + COLOUR_SIZE;
-    private static final int STRIDE = FLOATS_PER_VERTEX * Float.BYTES;
-    // Two triangles cover the square from (-1, -1) to (1, 1)
-    private static final float[][] CORNERS = {{-1.0f, -1.0f}, {1.0f, -1.0f}, {1.0f, 1.0f},
-            {-1.0f, -1.0f}, {1.0f, 1.0f}, {-1.0f, 1.0f}};
 
     private final int program;
     private final int imageSize;
@@ -81,10 +74,10 @@ public final class GlGlows implements GlowsView, Drawable, AutoCloseable {
         int buffer = glGenBuffers();
         glBindVertexArray(vertexArray);
         glBindBuffer(GL_ARRAY_BUFFER, buffer);
-        attribute(POSITION, POSITION_SIZE, 0);
-        attribute(CORNER, CORNER_SIZE, POSITION_SIZE);
-        attribute(DIAMETER, DIAMETER_SIZE, POSITION_SIZE + CORNER_SIZE);
-        attribute(COLOUR, COLOUR_SIZE, POSITION_SIZE + CORNER_SIZE + DIAMETER_SIZE);
+        Squares.attribute(POSITION, POSITION_SIZE, 0, FLOATS_PER_VERTEX);
+        Squares.attribute(CORNER, CORNER_SIZE, POSITION_SIZE, FLOATS_PER_VERTEX);
+        Squares.attribute(DIAMETER, DIAMETER_SIZE, POSITION_SIZE + CORNER_SIZE, FLOATS_PER_VERTEX);
+        Squares.attribute(COLOUR, COLOUR_SIZE, POSITION_SIZE + CORNER_SIZE + DIAMETER_SIZE, FLOATS_PER_VERTEX);
         glBindVertexArray(0);
         return new GlGlows(program, vertexArray, buffer);
     }
@@ -107,8 +100,9 @@ public final class GlGlows implements GlowsView, Drawable, AutoCloseable {
         glUniform2f(imageSize, viewport[2], viewport[3]);
         glBindVertexArray(vertexArray);
         glBindBuffer(GL_ARRAY_BUFFER, buffer);
-        glBufferData(GL_ARRAY_BUFFER, vertices(), GL_STREAM_DRAW);
-        glDrawArrays(GL_TRIANGLES, 0, glows.size() * CORNERS.length);
+        glBufferData(GL_ARRAY_BUFFER, Squares.vertices(glows, FLOATS_PER_VERTEX, GlGlows::vertexOf),
+                GL_STREAM_DRAW);
+        glDrawArrays(GL_TRIANGLES, 0, glows.size() * Squares.CORNERS.length);
         glBindVertexArray(0);
         // The other layers expect depth to be written and nothing blended
         glDisable(GL_BLEND);
@@ -122,22 +116,7 @@ public final class GlGlows implements GlowsView, Drawable, AutoCloseable {
         glDeleteProgram(program);
     }
 
-    private static void attribute(int location, int size, int offsetInFloats) {
-        glVertexAttribPointer(location, size, GL_FLOAT, false, STRIDE, (long) offsetInFloats * Float.BYTES);
-        glEnableVertexAttribArray(location);
-    }
 
-    private float @NotNull [] vertices() {
-        float[] vertices = new float[glows.size() * CORNERS.length * FLOATS_PER_VERTEX];
-        int index = 0;
-        for (Glow glow : glows) {
-            for (float[] corner : CORNERS) {
-                System.arraycopy(vertexOf(glow, corner), 0, vertices, index, FLOATS_PER_VERTEX);
-                index += FLOATS_PER_VERTEX;
-            }
-        }
-        return vertices;
-    }
 
     private static float @NotNull [] vertexOf(@NotNull Glow glow, float @NotNull [] corner) {
         ClipPoint centre = glow.centre();
