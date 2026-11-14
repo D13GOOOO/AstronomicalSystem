@@ -24,6 +24,9 @@ public record Blast(@NotNull Collision collision, @NotNull JulianDate start) {
     // the time left: about 5% of its heat is left at the end
     private static final double FIREBALL_LIFE_IN_RISE_TIMES = 20.0;
     private static final double COOLING_TIMES = 3.0;
+    // Ten minutes at least, twenty seconds when time is slowed down the most: small fireballs grow
+    // in a fraction of a second
+    private static final double SHORTEST_FIREBALL_LIFE = 10.0 / 1440.0;
 
     /**
      * @param survivor where the body that was hit is now
@@ -40,7 +43,7 @@ public record Blast(@NotNull Collision collision, @NotNull JulianDate start) {
     }
 
     private double fireballLife() {
-        return FIREBALL_LIFE_IN_RISE_TIMES * riseTime();
+        return Math.max(FIREBALL_LIFE_IN_RISE_TIMES * riseTime(), SHORTEST_FIREBALL_LIFE);
     }
 
     // As hot as it gets while it grows, then exp(-(age - t) / tau)
