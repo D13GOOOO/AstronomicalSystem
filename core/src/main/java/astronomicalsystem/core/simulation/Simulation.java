@@ -19,7 +19,7 @@ import java.util.stream.Stream;
 public class Simulation implements Advanceable, Joinable {
 
     private final Integrator integrator;
-    private final CollisionResolver collisions;
+    private final CollisionResolver resolver;
     // A list rather than a map by name: the integrator and the gravity model work on lists aligned
     // by index, and no operation looks a body up by name yet. Always an unmodifiable copy, so that
     // it can be exposed without copying it again.
@@ -29,8 +29,8 @@ public class Simulation implements Advanceable, Joinable {
     public Simulation(@NotNull Integrator integrator, @NotNull CollisionResolver collisions,
                       @NotNull List<Body> initialBodies) {
         this.integrator = integrator;
-        this.collisions = collisions;
-        this.bodies = List.copyOf(collisions.resolve(initialBodies, initialBodies).bodies());
+        this.resolver = collisions;
+        this.bodies = List.copyOf(resolver.resolve(initialBodies, initialBodies).bodies());
     }
 
     @Override
@@ -56,7 +56,7 @@ public class Simulation implements Advanceable, Joinable {
             throw new IllegalArgumentException("A body named " + body.name().value() + " is already in the simulation");
         }
         List<Body> joined = Stream.concat(bodies.stream(), Stream.of(body)).toList();
-        bodies = List.copyOf(collisions.resolve(joined, joined).bodies());
+        bodies = List.copyOf(resolver.resolve(joined, joined).bodies());
     }
 
     /**
@@ -75,7 +75,7 @@ public class Simulation implements Advanceable, Joinable {
     // Not overridable, unlike the advances: a subclass that acts after an advance acts once however
     // many steps it takes
     private void step(@NotNull TimeStep timeStep) {
-        Resolution resolution = collisions.resolve(bodies, integrator.step(bodies, timeStep));
+        Resolution resolution = resolver.resolve(bodies, integrator.step(bodies, timeStep));
         bodies = resolution.bodies();
         latestCollisions = Stream.concat(latestCollisions.stream(), resolution.collisions().stream()).toList();
     }
