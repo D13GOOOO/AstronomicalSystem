@@ -113,6 +113,17 @@ class ObservableSimulationTest {
     }
 
     @Test
+    void anAdvanceWithoutCollisionsTellsTheirObserversNothing() {
+        Observer<List<Collision>> collisionObserver = mock();
+        when(integrator.step(INITIAL_BODIES, TWO_DAYS)).thenReturn(INTEGRATED_BODIES);
+        SUT.collisionNews().addObserver(collisionObserver);
+
+        SUT.advance(TWO_DAYS, ONE_STEP);
+
+        verifyNoInteractions(collisionObserver);
+    }
+
+    @Test
     void aFailedAdvanceNotifiesNobody() {
         when(integrator.step(INITIAL_BODIES, TWO_DAYS)).thenThrow(new IllegalStateException("Integration failed"));
         SUT.addObserver(observer);
