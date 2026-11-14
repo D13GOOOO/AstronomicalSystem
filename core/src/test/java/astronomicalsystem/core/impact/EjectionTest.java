@@ -12,6 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
+import static org.assertj.core.api.Assertions.withinPercentage;
 
 class EjectionTest {
 
@@ -23,6 +24,8 @@ class EjectionTest {
     private static final Cone UPWARDS = new Cone(new Vector3(0.0, 0.0, 1.0), Math.PI / 4.0);
     private static final BodyName PROTOPLANET = new BodyName("Protoplanet 1");
 
+    private static final double PRECISION_PERCENT = 1e-9;
+
     private final Ejection SUT = new Ejection(MERGED, REMNANT, FRAGMENTS, UPWARDS, PROTOPLANET);
 
     @Test
@@ -33,5 +36,19 @@ class EjectionTest {
                 tuple(MERGED.name(), BodyKind.PLANET, REMNANT),
                 tuple(new BodyName("Protoplanet 1 fragment 1"), BodyKind.DEBRIS, FRAGMENTS.get(0)),
                 tuple(new BodyName("Protoplanet 1 fragment 2"), BodyKind.DEBRIS, FRAGMENTS.get(1)));
+    }
+
+    // Mass over the cube of the radius, proportional to the density
+    @Test
+    void theRemnantAndTheFragmentsKeepTheDensityOfTheBodies() {
+        List<Body> bodies = SUT.bodies();
+
+        assertThat(bodies).allSatisfy(body -> assertThat(densityOf(body))
+                .isCloseTo(densityOf(MERGED), withinPercentage(PRECISION_PERCENT)));
+    }
+
+    private static double densityOf(Body body) {
+        double radius = body.radius().astronomicalUnits();
+        return body.mass().solarMasses() / (radius * radius * radius);
     }
 }
