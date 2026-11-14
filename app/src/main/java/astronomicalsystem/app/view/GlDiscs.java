@@ -32,14 +32,17 @@ import static org.lwjgl.opengl.GL32.GL_PROGRAM_POINT_SIZE;
  */
 public final class GlDiscs implements SceneView, Drawable, AutoCloseable {
 
-    // Interleaved vertex attributes: clip position (4 floats), diameter (1), colour (3)
+    // Interleaved vertex attributes: clip position (4 floats), diameter (1), colour (3), light (4: the
+    // direction towards it, then 1 if the disc is lit, 0 if it has its own light)
     private static final int POSITION = 0;
     private static final int DIAMETER = 1;
     private static final int COLOUR = 2;
+    private static final int LIGHT = 3;
     private static final int POSITION_SIZE = 4;
     private static final int DIAMETER_SIZE = 1;
     private static final int COLOUR_SIZE = 3;
-    private static final int FLOATS_PER_DISC = POSITION_SIZE + DIAMETER_SIZE + COLOUR_SIZE;
+    private static final int LIGHT_SIZE = 4;
+    private static final int FLOATS_PER_DISC = POSITION_SIZE + DIAMETER_SIZE + COLOUR_SIZE + LIGHT_SIZE;
     private static final int STRIDE = FLOATS_PER_DISC * Float.BYTES;
 
     private final int program;
@@ -66,6 +69,7 @@ public final class GlDiscs implements SceneView, Drawable, AutoCloseable {
         attribute(POSITION, POSITION_SIZE, 0);
         attribute(DIAMETER, DIAMETER_SIZE, POSITION_SIZE);
         attribute(COLOUR, COLOUR_SIZE, POSITION_SIZE + DIAMETER_SIZE);
+        attribute(LIGHT, LIGHT_SIZE, POSITION_SIZE + DIAMETER_SIZE + COLOUR_SIZE);
         glBindVertexArray(0);
         // Lets the vertex shader set the size of each point
         glEnable(GL_PROGRAM_POINT_SIZE);
@@ -102,14 +106,23 @@ public final class GlDiscs implements SceneView, Drawable, AutoCloseable {
         glEnableVertexAttribArray(location);
     }
 
+    private static float @NotNull [] lightOf(@NotNull Lighting lighting) {
+        return switch (lighting) {
+            case Lighting.OwnLight ownLight -> new float[]{0.0f, 0.0f, 0.0f, 0.0f};
+            case Lighting.LitFrom(double x, double y, double z) -> new float[]{(float) x, (float) y, (float) z, 1.0f};
+        };
+    }
+
     private float @NotNull [] vertices() {
         float[] vertices = new float[discs.size() * FLOATS_PER_DISC];
         int index = 0;
         for (Disc disc : discs) {
             ClipPoint centre = disc.centre();
             Colour colour = disc.colour();
+            float[] light = lightOf(disc.lighting());
             float[] values = {(float) centre.x(), (float) centre.y(), (float) centre.z(), (float) centre.w(),
-                    (float) disc.diameter(), (float) colour.red(), (float) colour.green(), (float) colour.blue()};
+                    (float) disc.diameter(), (float) colour.red(), (float) colour.green(), (float) colour.blue(),
+                    light[0], light[1], light[2], light[3]};
             System.arraycopy(values, 0, vertices, index, FLOATS_PER_DISC);
             index += FLOATS_PER_DISC;
         }
