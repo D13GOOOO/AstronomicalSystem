@@ -89,6 +89,19 @@ class EjectionTest {
         assertThat(centreOfMassOf(bodies)).usingRecursiveComparison(CLOSE_ENOUGH).isEqualTo(MERGED.position());
     }
 
+    @Test
+    void theMomentumOfTheBodiesIsKept() {
+        List<Body> bodies = SUT.bodies();
+
+        assertThat(momentumOf(bodies)).usingRecursiveComparison(CLOSE_ENOUGH)
+                .isEqualTo(MERGED.velocity().times(MERGED.mass().solarMasses()));
+    }
+
+    private static Vector3 momentumOf(List<Body> bodies) {
+        return bodies.stream().map(body -> body.velocity().times(body.mass().solarMasses()))
+                .reduce(Vector3.ZERO, Vector3::plus);
+    }
+
     private static double totalMassOf(List<Body> bodies) {
         return bodies.stream().mapToDouble(body -> body.mass().solarMasses()).sum();
     }
