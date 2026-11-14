@@ -86,6 +86,15 @@ class ObservableSimulationTest {
     }
 
     @Test
+    void aBodyRefusedNotifiesNobody() {
+        SUT.addObserver(observer);
+
+        assertThatThrownBy(() -> SUT.add(EARTH)).isInstanceOf(IllegalArgumentException.class);
+
+        verifyNoInteractions(observer);
+    }
+
+    @Test
     void aFailedAdvanceNotifiesNobody() {
         when(integrator.step(INITIAL_BODIES, TWO_DAYS)).thenThrow(new IllegalStateException("Integration failed"));
         SUT.addObserver(observer);
