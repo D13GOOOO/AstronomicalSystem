@@ -39,6 +39,13 @@ class SkinsTest {
         assertThat(skin).contains(OF_A_PLANET);
     }
 
+    @Test
+    void aBodyOfAKindWithoutASkinHasNone() {
+        Optional<Skin> skin = SUT.of(body("Halley", BodyKind.COMET));
+
+        assertThat(skin).isEmpty();
+    }
+
     private static Body body(String name, BodyKind kind) {
         return new Body(new BodyName(name), kind, new Mass(1e-7), new Radius(1e-5), Vector3.ZERO, Vector3.ZERO);
     }
