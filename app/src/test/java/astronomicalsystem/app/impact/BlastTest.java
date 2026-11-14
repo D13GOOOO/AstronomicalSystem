@@ -29,6 +29,7 @@ class BlastTest {
     private static final double SPEED = 0.01;
     private static final JulianDate START = new JulianDate(2461041.5);
     private static final double PRECISION_PERCENT = 1e-9;
+    private static final double NINE_MINUTES = 9.0 / 1440.0;
     // The age is known to some 40 microseconds out of minutes
     private static final double HEAT_PRECISION_PERCENT = 1e-4;
 
@@ -57,6 +58,17 @@ class BlastTest {
                 .getFirst();
 
         assertThat(fireball.heat()).isCloseTo(Math.exp(-1.0), withinPercentage(HEAT_PRECISION_PERCENT));
+    }
+
+    // A small asteroid makes a fireball of a few metres, grown in a fraction of a second: it glows
+    // for ten minutes at least, so that it can be seen when time is slowed down
+    @Test
+    void theFireballOfASmallImpactGlowsForTenMinutesAtLeast() {
+        Blast SUT = new Blast(new Collision(EARTH, UP, UP, SPEED, BINDING_ENERGY * 1e-24), START);
+
+        List<Flare> flares = SUT.flaresAt(new JulianDate(START.days() + NINE_MINUTES), Vector3.ZERO);
+
+        assertThat(flares.getFirst().heat()).isPositive();
     }
 
     @Test
