@@ -58,6 +58,17 @@ class FragmentingCollisionsTest {
                 .isCloseTo(EARTH.mass().solarMasses() + after.mass().solarMasses(), withinPercentage(PRECISION_PERCENT));
     }
 
+    // The projectile first in the system: the target is the larger body, wherever it is
+    @Test
+    void theFragmentsAreNamedAfterTheSmallerBody() {
+        Body before = protoplanet(new Vector3(3.0 * CONTACT, 0.0, 0.0), new Vector3(-FAST, 0.0, 0.0));
+        Body after = protoplanet(new Vector3(-3.0 * CONTACT, 0.0, 0.0), new Vector3(-FAST, 0.0, 0.0));
+
+        List<Body> resolved = SUT.resolve(List.of(before, EARTH), List.of(after, EARTH));
+
+        assertThat(resolved).extracting(Body::name).startsWith(EARTH.name(), new BodyName("Protoplanet 1 fragment 1"));
+    }
+
     // An asteroid a millionth of the mass of the Earth at the same speed throws out less than the
     // smallest fragment: the dust falls back, and the bodies merge
     @Test
