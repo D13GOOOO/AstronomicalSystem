@@ -13,24 +13,21 @@ import java.util.List;
 
 /**
  * The impacts still unfolding, and what glows of them in space: a blast for every collision, from
- * the date it was told, on the body that survived it wherever it moves.
+ * the first date told after it, on the body that survived it wherever it moves.
  */
 public class Blasts implements Observer<List<Collision>>, Observable<List<Flare>> {
 
-    // Until the timeline tells the date, which it does before the first collision
-    private static final JulianDate BEFORE_THE_TIMELINE = new JulianDate(0.0);
-
     private final List<Observer<List<Flare>>> observers = new ArrayList<>();
     private final List<Blast> blasts = new ArrayList<>();
-    private JulianDate now = BEFORE_THE_TIMELINE;
+    // Told while the timeline advances the simulation, before the date of the frame: they start
+    // from that date, which may be hours after the steps of the frame that went before
+    private final List<Collision> untold = new ArrayList<>();
     private List<Body> bodies = List.of();
     private List<Flare> flares = List.of();
 
     @Override
     public void update(@NotNull Observable<List<Collision>> subject, @NotNull List<Collision> state) {
-        for (Collision collision : state) {
-            blasts.add(new Blast(collision, now));
-        }
+        untold.addAll(state);
     }
 
     /**
@@ -38,11 +35,13 @@ public class Blasts implements Observer<List<Collision>>, Observable<List<Flare>
      */
     public @NotNull Observer<TimeFlow> timeObserver() {
         return (subject, flow) -> {
-            now = flow.date();
+            JulianDate now = flow.date();
+            untold.forEach(collision -> blasts.add(new Blast(collision, now)));
+            untold.clear();
             List<Flare> before = flares;
             // A blast that no longer shows anything is over
-            blasts.removeIf(blast -> flaresOf(blast).isEmpty());
-            flares = blasts.stream().flatMap(blast -> flaresOf(blast).stream()).toList();
+            blasts.removeIf(blast -> flaresOf(blast, now).isEmpty());
+            flares = blasts.stream().flatMap(blast -> flaresOf(blast, now).stream()).toList();
             // Nothing to tell while nothing glows, before or now
             if (!before.isEmpty() || !flares.isEmpty()) {
                 notifyObservers();
@@ -75,7 +74,7 @@ public class Blasts implements Observer<List<Collision>>, Observable<List<Flare>
     }
 
     // Where the body that survived the blast is now
-    private @NotNull List<Flare> flaresOf(@NotNull Blast blast) {
+    private @NotNull List<Flare> flaresOf(@NotNull Blast blast, @NotNull JulianDate now) {
         return bodies.stream()
                 .filter(body -> body.name().equals(blast.collision().survivor().name()))
                 .findFirst()
