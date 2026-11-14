@@ -7,8 +7,10 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Lets simulated time flow with real time, sped up by a time warp that can be changed or paused,
- * always in steps of the same length: a symplectic integrator keeps its energy only with a constant
- * step.
+ * in steps of the same length while the warp stays the same: a symplectic integrator keeps its
+ * energy only with a constant step. The step is the longest one, unless the warp is so slow that a
+ * real second would take fewer steps than it should: then it is shorter, so that time flows
+ * smoothly.
  * A frame longer than a second (the application was blocked) counts as one second: catching up
  * with the whole pause would take a burst of steps that blocks the application again.
  */
@@ -26,6 +28,7 @@ public class FixedStepTimeline implements Timeline, TimeControls {
     private final Advanceable simulation;
     private final JulianDate start;
     private final TimeStep step;
+    private final int leastStepsPerSecond;
     private TimeWarp warp;
     private boolean paused;
     // Simulated time already elapsed but shorter than a step, in days: it is spent in a later frame
@@ -45,6 +48,7 @@ public class FixedStepTimeline implements Timeline, TimeControls {
         this.simulation = simulation;
         this.start = start;
         this.step = step;
+        this.leastStepsPerSecond = leastStepsPerSecond;
         this.warp = warp;
     }
 
@@ -54,14 +58,15 @@ public class FixedStepTimeline implements Timeline, TimeControls {
             return;
         }
         pendingDays += Math.min(realSeconds, LONGEST_FRAME_SECONDS) * warp.daysPerSecond();
+        TimeStep current = new TimeStep(Math.min(step.days(), warp.daysPerSecond() / leastStepsPerSecond));
         int steps = 0;
-        while (pendingDays >= step.days()) {
-            pendingDays -= step.days();
+        while (pendingDays >= current.days()) {
+            pendingDays -= current.days();
             steps++;
         }
         // All at once, so that the observers of the simulation hear from it once per frame
         if (steps > 0) {
-            simulation.advance(step, steps);
+            simulation.advance(current, steps);
             stepsTaken += steps;
         }
     }
