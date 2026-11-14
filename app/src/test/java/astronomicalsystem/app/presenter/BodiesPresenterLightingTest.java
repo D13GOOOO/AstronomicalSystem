@@ -6,6 +6,7 @@ import astronomicalsystem.app.view.Colour;
 import astronomicalsystem.app.view.Disc;
 import astronomicalsystem.app.view.Lighting;
 import astronomicalsystem.app.view.SceneView;
+import astronomicalsystem.app.view.Surface;
 import astronomicalsystem.core.body.Body;
 import astronomicalsystem.core.body.BodyKind;
 import astronomicalsystem.core.body.BodyName;
@@ -71,16 +72,17 @@ class BodiesPresenterLightingTest {
 
         SUT.update(simulation, List.of(DWARF, EARTH, SUN));
 
-        verify(view).show(List.of(new Disc(DWARF_IN_CLIP_SPACE, FORTY_PIXELS, YELLOW, Lighting.OWN_LIGHT),
-                new Disc(EARTH_IN_CLIP_SPACE, FORTY_PIXELS, BLUE, new Lighting.LitFrom(0.6, 0.8, 0.0)),
-                new Disc(SUN_IN_CLIP_SPACE, FORTY_PIXELS, YELLOW, Lighting.OWN_LIGHT)));
+        verify(view).show(List.of(new Disc(DWARF_IN_CLIP_SPACE, FORTY_PIXELS, YELLOW, Lighting.OWN_LIGHT,
+                Surface.PLAIN),
+                new Disc(EARTH_IN_CLIP_SPACE, FORTY_PIXELS, BLUE, new Lighting.LitFrom(0.6, 0.8, 0.0), Surface.PLAIN),
+                new Disc(SUN_IN_CLIP_SPACE, FORTY_PIXELS, YELLOW, Lighting.OWN_LIGHT, Surface.PLAIN)));
     }
 
     @Test
     void theStarShinesAndLightsTheOtherBodies() {
         SUT.update(simulation, List.of(SUN, EARTH));
 
-        verify(view).show(List.of(new Disc(SUN_IN_CLIP_SPACE, FORTY_PIXELS, YELLOW, Lighting.OWN_LIGHT),
-                new Disc(EARTH_IN_CLIP_SPACE, FORTY_PIXELS, BLUE, new Lighting.LitFrom(0.6, 0.8, 0.0))));
+        verify(view).show(List.of(new Disc(SUN_IN_CLIP_SPACE, FORTY_PIXELS, YELLOW, Lighting.OWN_LIGHT, Surface.PLAIN),
+                new Disc(EARTH_IN_CLIP_SPACE, FORTY_PIXELS, BLUE, new Lighting.LitFrom(0.6, 0.8, 0.0), Surface.PLAIN)));
     }
 }

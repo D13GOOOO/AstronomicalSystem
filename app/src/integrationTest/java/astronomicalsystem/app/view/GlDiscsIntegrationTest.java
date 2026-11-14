@@ -70,7 +70,8 @@ class GlDiscsIntegrationTest {
 
     @Test
     void aDiscIsDrawnAsARoundSpotOfItsColour() {
-        SUT.show(List.of(new Disc(MIDDLE_OF_THE_IMAGE, TWENTY_PIXELS, new Colour(1.0, 0.0, 0.0), Lighting.OWN_LIGHT)));
+        SUT.show(List.of(new Disc(MIDDLE_OF_THE_IMAGE, TWENTY_PIXELS, new Colour(1.0, 0.0, 0.0), Lighting.OWN_LIGHT,
+                Surface.PLAIN)));
         clearToBlack();
 
         SUT.draw();
@@ -84,8 +85,8 @@ class GlDiscsIntegrationTest {
 
     @Test
     void aNearerDiscHidesAFartherOneDrawnAfterIt() {
-        SUT.show(List.of(new Disc(NEARER, TWENTY_PIXELS, new Colour(1.0, 0.0, 0.0), Lighting.OWN_LIGHT),
-                new Disc(FARTHER, TWENTY_PIXELS, new Colour(0.0, 0.0, 1.0), Lighting.OWN_LIGHT)));
+        SUT.show(List.of(new Disc(NEARER, TWENTY_PIXELS, new Colour(1.0, 0.0, 0.0), Lighting.OWN_LIGHT, Surface.PLAIN),
+                new Disc(FARTHER, TWENTY_PIXELS, new Colour(0.0, 0.0, 1.0), Lighting.OWN_LIGHT, Surface.PLAIN)));
         clearToBlack();
 
         SUT.draw();
@@ -98,7 +99,7 @@ class GlDiscsIntegrationTest {
     // 15 px left it faces away from it, and only the faint light of the sky reaches it
     @Test
     void aLitDiscIsBrightOnTheSideOfTheLightAndDarkOnTheOther() {
-        SUT.show(List.of(new Disc(MIDDLE_OF_THE_IMAGE, FORTY_PIXELS, WHITE, FROM_THE_RIGHT)));
+        SUT.show(List.of(new Disc(MIDDLE_OF_THE_IMAGE, FORTY_PIXELS, WHITE, FROM_THE_RIGHT, Surface.PLAIN)));
         clearToBlack();
 
         SUT.draw();
@@ -113,7 +114,7 @@ class GlDiscsIntegrationTest {
     @Test
     void aDiscWhoseCentreIsOutsideTheImageStillShowsThePartInside() {
         SUT.show(List.of(new Disc(BEYOND_THE_RIGHT_EDGE, A_HUNDRED_AND_TWENTY_PIXELS, new Colour(1.0, 0.0, 0.0),
-                Lighting.OWN_LIGHT)));
+                Lighting.OWN_LIGHT, Surface.PLAIN)));
         clearToBlack();
 
         SUT.draw();
@@ -127,7 +128,7 @@ class GlDiscsIntegrationTest {
     @Test
     void aDiscLargerThanTheLargestPointIsDrawnWhole() {
         SUT.show(List.of(new Disc(MIDDLE_OF_THE_IMAGE, FOUR_HUNDRED_PIXELS, new Colour(1.0, 0.0, 0.0),
-                Lighting.OWN_LIGHT)));
+                Lighting.OWN_LIGHT, Surface.PLAIN)));
         clearToBlack();
 
         SUT.draw();
@@ -141,7 +142,7 @@ class GlDiscsIntegrationTest {
     // the centre of a disc of radius 20, mu = 0.44 and I = 0.66
     @Test
     void aDiscWithItsOwnLightIsDarkerAtTheEdge() {
-        SUT.show(List.of(new Disc(MIDDLE_OF_THE_IMAGE, FORTY_PIXELS, WHITE, Lighting.OWN_LIGHT)));
+        SUT.show(List.of(new Disc(MIDDLE_OF_THE_IMAGE, FORTY_PIXELS, WHITE, Lighting.OWN_LIGHT, Surface.PLAIN)));
         clearToBlack();
 
         SUT.draw();

@@ -7,5 +7,6 @@ import org.jetbrains.annotations.NotNull;
  *
  * @param diameter in pixels
  */
-public record Disc(@NotNull ClipPoint centre, double diameter, @NotNull Colour colour, @NotNull Lighting lighting) {
+public record Disc(@NotNull ClipPoint centre, double diameter, @NotNull Colour colour, @NotNull Lighting lighting,
+                   @NotNull Surface surface) {
 }

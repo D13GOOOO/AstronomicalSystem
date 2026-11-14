@@ -6,6 +6,7 @@ import astronomicalsystem.app.view.Colour;
 import astronomicalsystem.app.view.Disc;
 import astronomicalsystem.app.view.Lighting;
 import astronomicalsystem.app.view.SceneView;
+import astronomicalsystem.app.view.Surface;
 import astronomicalsystem.core.body.Body;
 import astronomicalsystem.core.body.BodyKind;
 import astronomicalsystem.core.body.BodyName;
@@ -65,8 +66,8 @@ class BodiesPresenterTest {
 
         SUT.update(simulation, List.of(SUN, EARTH));
 
-        verify(view).show(List.of(new Disc(SUN_IN_CLIP_SPACE, STAR_MINIMUM, YELLOW, Lighting.OWN_LIGHT),
-                new Disc(EARTH_IN_CLIP_SPACE, PLANET_MINIMUM, BLUE, Lighting.OWN_LIGHT)));
+        verify(view).show(List.of(new Disc(SUN_IN_CLIP_SPACE, STAR_MINIMUM, YELLOW, Lighting.OWN_LIGHT, Surface.PLAIN),
+                new Disc(EARTH_IN_CLIP_SPACE, PLANET_MINIMUM, BLUE, Lighting.OWN_LIGHT, Surface.PLAIN)));
     }
 
     @Test
@@ -75,7 +76,8 @@ class BodiesPresenterTest {
 
         SUT.update(simulation, List.of(SUN));
 
-        verify(view).show(List.of(new Disc(SUN_IN_CLIP_SPACE, FORTY_PIXELS, YELLOW, Lighting.OWN_LIGHT)));
+        verify(view).show(List.of(new Disc(SUN_IN_CLIP_SPACE, FORTY_PIXELS, YELLOW, Lighting.OWN_LIGHT,
+                Surface.PLAIN)));
     }
 
     // On the plane of the eye or behind it: no perspective division is possible
@@ -88,7 +90,8 @@ class BodiesPresenterTest {
 
         SUT.update(simulation, List.of(SUN, EARTH));
 
-        verify(view).show(List.of(new Disc(EARTH_IN_CLIP_SPACE, PLANET_MINIMUM, BLUE, Lighting.OWN_LIGHT)));
+        verify(view).show(List.of(new Disc(EARTH_IN_CLIP_SPACE, PLANET_MINIMUM, BLUE, Lighting.OWN_LIGHT,
+                Surface.PLAIN)));
         verify(projection, never()).apparentSizeInPixels(anyDouble(), eq(behind));
     }
 
@@ -106,6 +109,7 @@ class BodiesPresenterTest {
 
         SUT.cameraObserver().update(cameraRig, movedCamera);
 
-        verify(view).show(List.of(new Disc(SUN_SEEN_FROM_ELSEWHERE, STAR_MINIMUM, YELLOW, Lighting.OWN_LIGHT)));
+        verify(view).show(List.of(new Disc(SUN_SEEN_FROM_ELSEWHERE, STAR_MINIMUM, YELLOW, Lighting.OWN_LIGHT,
+                Surface.PLAIN)));
     }
 }

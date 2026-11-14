@@ -5,6 +5,7 @@ import astronomicalsystem.app.view.ClipPoint;
 import astronomicalsystem.app.view.Disc;
 import astronomicalsystem.app.view.Lighting;
 import astronomicalsystem.app.view.SceneView;
+import astronomicalsystem.app.view.Surface;
 import astronomicalsystem.core.body.Body;
 import astronomicalsystem.core.body.BodyKind;
 import astronomicalsystem.core.math.Vector3;
@@ -34,7 +35,8 @@ public class BodiesPresenter extends ProjectedBodiesPresenter<Disc> {
     @Override
     protected @NotNull Disc markOf(@NotNull Body body, @NotNull BodyStyle style, @NotNull ClipPoint centre,
                                    double diameter) {
-        return new Disc(centre, diameter, style.colour(), style.shines() ? Lighting.OWN_LIGHT : lightingOf(body));
+        return new Disc(centre, diameter, style.colour(), style.shines() ? Lighting.OWN_LIGHT : lightingOf(body),
+                Surface.PLAIN);
     }
 
     // Lit by the most massive body that shines, the brightest star; by its own light if none does
