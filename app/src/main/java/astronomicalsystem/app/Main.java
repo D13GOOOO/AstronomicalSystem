@@ -6,6 +6,7 @@ import astronomicalsystem.app.camera.Orbit;
 import astronomicalsystem.app.camera.Viewport;
 import astronomicalsystem.app.follow.ObservableBodyFollower;
 import astronomicalsystem.app.forecast.Forecast;
+import astronomicalsystem.app.impact.Launcher;
 import astronomicalsystem.app.presenter.BodiesPresenter;
 import astronomicalsystem.app.presenter.BodyStyle;
 import astronomicalsystem.app.presenter.CameraControlsPresenter;
@@ -136,7 +137,7 @@ public final class Main {
             follower.addObserver(new FocusPresenter(focus));
             new CameraControlsPresenter(window, camera);
             timeline.addObserver(new TimeFlowPresenter(headUpDisplay));
-            new KeyboardPresenter(window, timeline, follower);
+            new KeyboardPresenter(window, timeline, follower, new Launcher(simulation, follower, camera));
             new ControlsHelpPresenter(controlsHelp);
             new ProvenancePresenter(provenance, initialState.provenance());
             simulation.notifyObservers();
