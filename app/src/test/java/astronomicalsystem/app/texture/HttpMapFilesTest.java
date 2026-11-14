@@ -12,11 +12,13 @@ import java.net.URI;
 import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class HttpMapFilesTest {
 
     private static final String PATH = "/tiles/0/0/0.jpg";
     private static final int OK = 200;
+    private static final int NOT_FOUND = 404;
     // Bytes that are not text: a file must arrive as it is
     private static final byte[] TILE = {(byte) 0xFF, (byte) 0xD8, 0, (byte) 0x80, 127};
     private static final Duration TIMEOUT = Duration.ofSeconds(5);
@@ -47,6 +49,16 @@ class HttpMapFilesTest {
         byte[] file = SUT.fetch(address());
 
         assertThat(file).isEqualTo(TILE);
+    }
+
+    // The map servers answer 404 with a page of text for a tile that does not exist
+    @Test
+    void anAnswerThatIsNotASuccessIsNotAFile() {
+        respondWith(NOT_FOUND, TILE);
+
+        assertThatThrownBy(() -> SUT.fetch(address()))
+                .isInstanceOf(MapUnavailableException.class)
+                .hasMessage("The map server answered with HTTP status 404");
     }
 
     private void respondWith(int status, byte[] body) {
