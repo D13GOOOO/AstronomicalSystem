@@ -15,6 +15,8 @@ import astronomicalsystem.core.math.Vector3;
 import astronomicalsystem.core.simulation.Joinable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.util.List;
 
@@ -60,6 +62,20 @@ class LauncherTest {
 
         verify(system).add(Impactor.ASTEROID.launchedAt(EARTH, FROM_THE_LEFT_TOWARDS_THE_EYE,
                 new BodyName("Asteroid 1")));
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @CsvSource(textBlock = """
+            ASTEROID,     Asteroid 1
+            PLANETESIMAL, Planetesimal 1
+            PROTOPLANET,  Protoplanet 1
+            """)
+    void anImpactorIsNamedAfterItsSize(Impactor impactor, String name) {
+        when(following.focus()).thenReturn(new Focus.OnBody(EARTH.name()));
+
+        SUT.launch(impactor);
+
+        verify(system).add(impactor.launchedAt(EARTH, FROM_THE_LEFT_TOWARDS_THE_EYE, new BodyName(name)));
     }
 
     // Named after its size, with a number that counts the launches
