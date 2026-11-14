@@ -46,6 +46,17 @@ class FixedStepTimelineLimitsTest {
         assertThat(SUT.timeFlow().warp()).isEqualTo(nextToALimit);
     }
 
+    // 2 d/s halved twelve times: 1/2048 d/s, 42 s per second; once more would be below the limit
+    @Test
+    void theWarpCanGoToTheSlowestAtOnce() {
+        FixedStepTimeline SUT = new FixedStepTimeline(simulation, START_OF_2026, ONE_SIXTY_FOURTH_OF_A_DAY,
+                new TimeWarp(2.0), ONE_STEP_PER_SECOND);
+
+        SUT.slowest();
+
+        assertThat(SUT.timeFlow().warp()).isEqualTo(new TimeWarp(1.0 / 2048.0));
+    }
+
     // Halving 1/16 d/s, an hour and a half per second, goes below an hour per second: impacts are
     // watched in minutes
     @Test

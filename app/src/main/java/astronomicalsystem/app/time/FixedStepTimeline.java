@@ -93,6 +93,10 @@ public class FixedStepTimeline implements Timeline, TimeControls {
     }
 
     @Override
+    public void slowest() {
+    }
+
+    @Override
     public void togglePause() {
         paused = !paused;
     }
