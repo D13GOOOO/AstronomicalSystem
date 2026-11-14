@@ -25,6 +25,7 @@ class ObservableCameraRigTest {
     private static final Viewport SQUARE = new Viewport(100, 100);
     private static final double SAME_DISTANCE = 1.0;
     private static final Vector3 ELSEWHERE = new Vector3(1.0, 0.0, 0.0);
+    private static final double BEYOND_THE_CAMERA = 3.0;
 
     private final Observer<Projection> observer = mock();
     private final ObservableCameraRig SUT = new ObservableCameraRig(TARGET, ON_THE_ECLIPTIC, RIGHT_ANGLE_LENS,
@@ -35,7 +36,9 @@ class ObservableCameraRigTest {
                 Arguments.of(Named.of("rotation", (Consumer<CameraRig>) rig -> rig.orbitBy(QUARTER_TURN, 0.0))),
                 Arguments.of(Named.of("zoom", (Consumer<CameraRig>) rig -> rig.zoomBy(HALF_THE_DISTANCE))),
                 Arguments.of(Named.of("new viewport", (Consumer<CameraRig>) rig -> rig.resize(SQUARE))),
-                Arguments.of(Named.of("new target", (Consumer<CameraRig>) rig -> rig.lookAt(ELSEWHERE))));
+                Arguments.of(Named.of("new target", (Consumer<CameraRig>) rig -> rig.lookAt(ELSEWHERE))),
+                Arguments.of(Named.of("larger clearance",
+                        (Consumer<CameraRig>) rig -> rig.lookAt(TARGET, BEYOND_THE_CAMERA))));
     }
 
     @ParameterizedTest
