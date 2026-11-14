@@ -1,6 +1,7 @@
 package astronomicalsystem.app.presenter;
 
 import astronomicalsystem.app.camera.Projection;
+import astronomicalsystem.app.time.TimeFlow;
 import astronomicalsystem.app.view.ClipPoint;
 import astronomicalsystem.app.view.Disc;
 import astronomicalsystem.app.view.Lighting;
@@ -10,6 +11,7 @@ import astronomicalsystem.core.body.Body;
 import astronomicalsystem.core.body.BodyKind;
 import astronomicalsystem.core.body.BodyName;
 import astronomicalsystem.core.math.Vector3;
+import astronomicalsystem.core.observer.Observer;
 import astronomicalsystem.core.rotation.Axes;
 import astronomicalsystem.core.time.JulianDate;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +44,14 @@ public class BodiesPresenter extends ProjectedBodiesPresenter<Disc> {
         this.view = view;
         this.skins = Map.copyOf(skins);
         this.date = start;
+    }
+
+    /**
+     * @return the observer that turns the maps of the bodies as simulated time goes by
+     */
+    public @NotNull Observer<TimeFlow> timeObserver() {
+        return (subject, flow) -> {
+        };
     }
 
     @Override
