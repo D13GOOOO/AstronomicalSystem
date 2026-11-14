@@ -4,6 +4,7 @@ import astronomicalsystem.core.body.Body;
 import astronomicalsystem.core.body.BodyKind;
 import astronomicalsystem.core.body.BodyName;
 import astronomicalsystem.core.body.Mass;
+import astronomicalsystem.core.body.Radius;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -30,7 +31,9 @@ public enum Impactor {
      * @return the impactor on its way towards the target
      */
     public @NotNull Body launchedAt(@NotNull Body target, @NotNull Approach approach, @NotNull BodyName name) {
-        return new Body(name, kind, new Mass(massRatio * target.mass().solarMasses()), target.radius(),
-                target.position(), target.velocity());
+        // The same density: the volume, and so the cube of the radius, scales as the mass
+        Radius radius = new Radius(target.radius().astronomicalUnits() * Math.cbrt(massRatio));
+        return new Body(name, kind, new Mass(massRatio * target.mass().solarMasses()), radius, target.position(),
+                target.velocity());
     }
 }
