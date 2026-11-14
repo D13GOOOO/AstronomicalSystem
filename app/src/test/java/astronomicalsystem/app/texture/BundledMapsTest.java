@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -24,5 +25,12 @@ class BundledMapsTest {
 
         verify(view).load(eq("jupiter"), image.capture());
         assertThat(image.getValue()).startsWith(START_OF_A_JPEG);
+    }
+
+    @Test
+    void aMapThatDoesNotComeWithTheApplicationIsRefused() {
+        assertThatThrownBy(() -> SUT.load("pandora"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("No map named pandora comes with the application");
     }
 }
