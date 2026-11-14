@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.net.URI;
 import java.util.List;
+import java.util.stream.IntStream;
 
 /**
  * A map and the files it is made of.
@@ -14,6 +15,9 @@ import java.util.List;
  *                precondition: whole rows, at least one
  */
 public record MapSource(@NotNull String name, int columns, @NotNull List<URI> tiles) {
+
+    // The version of the service, the default style and the set of tile matrices of every layer
+    private static final String TREK_TILES = "/1.0.0/default/default028mm/";
 
     public MapSource {
         tiles = List.copyOf(tiles);
@@ -28,6 +32,12 @@ public record MapSource(@NotNull String name, int columns, @NotNull List<URI> ti
      * @param zoom  precondition: from 0 to the deepest level of the layer
      */
     public static @NotNull MapSource ofTrek(@NotNull String name, @NotNull String layer, int zoom) {
-        return new MapSource(name, 1, List.of());
+        int rows = 1 << zoom;
+        int columns = 2 * rows;
+        List<URI> tiles = IntStream.range(0, rows * columns)
+                .mapToObj(index -> URI.create(layer + TREK_TILES + zoom + "/" + index / columns + "/" + index % columns
+                        + ".jpg"))
+                .toList();
+        return new MapSource(name, columns, tiles);
     }
 }
