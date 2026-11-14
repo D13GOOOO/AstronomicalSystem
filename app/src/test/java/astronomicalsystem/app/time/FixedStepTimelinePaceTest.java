@@ -5,6 +5,7 @@ import astronomicalsystem.core.simulation.Advanceable;
 import astronomicalsystem.core.time.JulianDate;
 import org.junit.jupiter.api.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -31,5 +32,13 @@ class FixedStepTimelinePaceTest {
         SUT.elapse(HALF_A_SECOND);
 
         verify(simulation).advance(A_SIXTY_FOURTH_OF_A_DAY, THIRTY_STEPS);
+    }
+
+    // Thirty sixty-fourths of a day
+    @Test
+    void theDateMovesOnByTheShorterSteps() {
+        SUT.elapse(HALF_A_SECOND);
+
+        assertThat(SUT.timeFlow().date()).isEqualTo(new JulianDate(2461041.5 + 30.0 / 64.0));
     }
 }
