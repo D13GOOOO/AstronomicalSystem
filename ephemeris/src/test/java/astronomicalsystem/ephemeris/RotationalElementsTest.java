@@ -24,6 +24,9 @@ class RotationalElementsTest {
     private static final double GREENWICH_SIDEREAL_ANGLE = 280.19;
     // The report and the sidereal time define their frames slightly differently
     private static final double A_TENTH_OF_A_DEGREE = 0.1;
+    // 23 h 56 min 4.09 s: the time the Earth takes to turn once with respect to the stars
+    private static final double SIDEREAL_DAY = 86_164.09 / 86_400.0;
+    private static final double NEARLY_OPPOSITE = 1e-5;
 
     // Seen from the ecliptic, the celestial pole leans by the obliquity towards the y-axis, the
     // direction of the summer solstice of the north
@@ -35,6 +38,15 @@ class RotationalElementsTest {
         assertThat(pole.x()).isCloseTo(0.0, within(TOLERANCE));
         assertThat(pole.y()).isCloseTo(SIN_OBLIQUITY, within(TOLERANCE));
         assertThat(pole.z()).isCloseTo(COS_OBLIQUITY, within(TOLERANCE));
+    }
+
+    @Test
+    void afterHalfASiderealDayThePrimeMeridianOfTheEarthPointsTheOppositeWay() {
+        Spin spin = EARTH.spin();
+
+        Vector3 later = spin.axesAt(new JulianDate(J2000.days() + SIDEREAL_DAY / 2.0)).x();
+
+        assertThat(later.plus(spin.axesAt(J2000).x()).length()).isLessThan(NEARLY_OPPOSITE);
     }
 
     // Back in the equatorial frame, the right ascension of the meridian of Greenwich is the
