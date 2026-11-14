@@ -10,12 +10,14 @@ import astronomicalsystem.core.body.Body;
 import astronomicalsystem.core.body.BodyKind;
 import astronomicalsystem.core.body.BodyName;
 import astronomicalsystem.core.math.Vector3;
+import astronomicalsystem.core.rotation.Axes;
 import astronomicalsystem.core.time.JulianDate;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Shows the bodies of the simulation as discs, lit by the brightest star, every time they or the
@@ -46,7 +48,17 @@ public class BodiesPresenter extends ProjectedBodiesPresenter<Disc> {
     protected @NotNull Disc markOf(@NotNull Body body, @NotNull BodyStyle style, @NotNull ClipPoint centre,
                                    double diameter) {
         return new Disc(centre, diameter, style.colour(), style.shines() ? Lighting.OWN_LIGHT : lightingOf(body),
-                Surface.PLAIN);
+                surfaceOf(body));
+    }
+
+    // The map of the body turned as the body is now, if it has one
+    private @NotNull Surface surfaceOf(@NotNull Body body) {
+        return Optional.ofNullable(skins.get(body.name())).map(this::mapped).orElse(Surface.PLAIN);
+    }
+
+    private @NotNull Surface mapped(@NotNull Skin skin) {
+        Axes axes = skin.spin().axesAt(date);
+        return new Surface.Mapped(skin.texture(), inTheImage(axes.x()), inTheImage(axes.y()), inTheImage(axes.z()));
     }
 
     // Lit by the most massive body that shines, the brightest star; by its own light if none does
