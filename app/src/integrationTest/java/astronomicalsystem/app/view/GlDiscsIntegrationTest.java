@@ -53,18 +53,21 @@ class GlDiscsIntegrationTest {
 
     // Gives the OpenGL context
     private GlfwWindow window;
+    private GlTextures textures;
     private GlDiscs SUT;
 
     @BeforeEach
     void openAWindow() {
         window = GlfwWindow.open(TITLE, WIDTH, HEIGHT);
-        SUT = GlDiscs.create();
+        textures = GlTextures.create();
+        SUT = GlDiscs.create(textures);
     }
 
     // The buffers are deleted while the context still exists
     @AfterEach
     void closeTheWindow() {
         SUT.close();
+        textures.close();
         window.close();
     }
 

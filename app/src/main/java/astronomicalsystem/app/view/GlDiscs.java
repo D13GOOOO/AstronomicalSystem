@@ -54,10 +54,12 @@ public final class GlDiscs implements SceneView, Drawable, AutoCloseable {
     private final int imageSize;
     private final int vertexArray;
     private final int buffer;
+    private final GlTextures textures;
     // The discs of the last update, drawn again in every frame until the next one
     private List<Disc> discs = List.of();
 
-    private GlDiscs(int program, int vertexArray, int buffer) {
+    private GlDiscs(int program, int vertexArray, int buffer, @NotNull GlTextures textures) {
+        this.textures = textures;
         this.program = program;
         this.imageSize = glGetUniformLocation(program, "imageSize");
         this.vertexArray = vertexArray;
@@ -65,9 +67,10 @@ public final class GlDiscs implements SceneView, Drawable, AutoCloseable {
     }
 
     /**
+     * @param textures where the maps of the mapped discs are looked for; it must outlive the discs
      * @throws IllegalStateException if the shaders cannot be built
      */
-    public static @NotNull GlDiscs create() {
+    public static @NotNull GlDiscs create(@NotNull GlTextures textures) {
         int program = ShaderProgram.link("/shaders/disc.vert", "/shaders/disc.frag");
         int vertexArray = glGenVertexArrays();
         int buffer = glGenBuffers();
@@ -80,7 +83,7 @@ public final class GlDiscs implements SceneView, Drawable, AutoCloseable {
         Squares.attribute(LIGHT, LIGHT_SIZE, POSITION_SIZE + CORNER_SIZE + DIAMETER_SIZE + COLOUR_SIZE,
                 FLOATS_PER_VERTEX);
         glBindVertexArray(0);
-        return new GlDiscs(program, vertexArray, buffer);
+        return new GlDiscs(program, vertexArray, buffer, textures);
     }
 
     @Override

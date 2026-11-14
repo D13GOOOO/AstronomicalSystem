@@ -31,6 +31,7 @@ import astronomicalsystem.app.view.GlGlows;
 import astronomicalsystem.app.view.GlLabels;
 import astronomicalsystem.app.view.GlPaths;
 import astronomicalsystem.app.view.GlText;
+import astronomicalsystem.app.view.GlTextures;
 import astronomicalsystem.app.view.GlfwWindow;
 import astronomicalsystem.app.view.Layers;
 import astronomicalsystem.core.body.BodyKind;
@@ -130,7 +131,8 @@ public final class Main {
         ObservableTimeline timeline = new ObservableTimeline(simulation, now, ONE_HOUR, TEN_DAYS_PER_SECOND,
                 A_STEP_PER_FRAME);
         // The scene, the paths and the font need the OpenGL context of the window
-        try (GlfwWindow window = GlfwWindow.open(TITLE, WIDTH, HEIGHT); GlDiscs scene = GlDiscs.create();
+        try (GlfwWindow window = GlfwWindow.open(TITLE, WIDTH, HEIGHT); GlTextures textures = GlTextures.create();
+             GlDiscs scene = GlDiscs.create(textures);
              GlPaths paths = GlPaths.create(); GlGlows glows = GlGlows.create(); GlFont font = GlFont.create()) {
             GlText headUpDisplay = new GlText(font, Corner.TOP_LEFT);
             GlText controlsHelp = new GlText(font, Corner.BOTTOM_LEFT);
