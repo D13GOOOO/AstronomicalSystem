@@ -74,6 +74,8 @@ public final class Main {
     // Mercury goes round the Sun in about nine seconds, the Earth in about thirty-seven; the user
     // doubles or halves it with + and -, and pauses it with the space bar
     private static final TimeWarp TEN_DAYS_PER_SECOND = new TimeWarp(10.0);
+    // At slow warps the steps are shorter than an hour, so that every frame shows the bodies moving
+    private static final int A_STEP_PER_FRAME = 60;
 
     // The camera turns around the barycentre; it starts 8 AU away and 35 degrees above the ecliptic,
     // where the orbit of Jupiter fills the image
@@ -121,7 +123,8 @@ public final class Main {
         Forecast forecast = new Forecast(
                 new TrajectoryPredictor(gravity, collisions, ONE_DAY, A_YEAR_DAY_BY_DAY),
                 FRAMES_PER_PREDICTION);
-        ObservableTimeline timeline = new ObservableTimeline(simulation, now, ONE_HOUR, TEN_DAYS_PER_SECOND);
+        ObservableTimeline timeline = new ObservableTimeline(simulation, now, ONE_HOUR, TEN_DAYS_PER_SECOND,
+                A_STEP_PER_FRAME);
         // The scene, the paths and the font need the OpenGL context of the window
         try (GlfwWindow window = GlfwWindow.open(TITLE, WIDTH, HEIGHT); GlDiscs scene = GlDiscs.create();
              GlPaths paths = GlPaths.create(); GlFont font = GlFont.create()) {

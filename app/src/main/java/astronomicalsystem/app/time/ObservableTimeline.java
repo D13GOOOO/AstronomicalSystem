@@ -17,9 +17,12 @@ public class ObservableTimeline extends FixedStepTimeline implements Observable<
 
     private final List<Observer<TimeFlow>> observers = new ArrayList<>();
 
+    /**
+     * @param leastStepsPerSecond precondition: positive
+     */
     public ObservableTimeline(@NotNull Advanceable simulation, @NotNull JulianDate start, @NotNull TimeStep step,
-                              @NotNull TimeWarp warp) {
-        super(simulation, start, step, warp);
+                              @NotNull TimeWarp warp, int leastStepsPerSecond) {
+        super(simulation, start, step, warp, leastStepsPerSecond);
     }
 
     @Override

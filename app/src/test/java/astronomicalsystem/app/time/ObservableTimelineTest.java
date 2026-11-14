@@ -25,11 +25,13 @@ class ObservableTimelineTest {
     // At two days per second, one step of a quarter of a day
     private static final double ONE_STEP_IN_REAL_SECONDS = 0.125;
     private static final double HALF_A_STEP_IN_REAL_SECONDS = 0.0625;
+    // One step a second at least: at two days per second the step is always the longest
+    private static final int ONE_STEP_PER_SECOND = 1;
 
     private final Advanceable simulation = mock();
     private final Observer<TimeFlow> observer = mock();
     private final ObservableTimeline SUT = new ObservableTimeline(simulation, START_OF_2026, QUARTER_OF_A_DAY,
-            TWO_DAYS_PER_SECOND);
+            TWO_DAYS_PER_SECOND, ONE_STEP_PER_SECOND);
 
     static Stream<Arguments> changes() {
         return Stream.of(

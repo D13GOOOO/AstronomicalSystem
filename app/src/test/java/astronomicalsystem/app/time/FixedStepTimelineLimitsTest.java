@@ -20,6 +20,8 @@ class FixedStepTimelineLimitsTest {
     private static final JulianDate START_OF_2026 = new JulianDate(2461041.5);
     private static final TimeStep ONE_SIXTY_FOURTH_OF_A_DAY = new TimeStep(1.0 / 64.0);
     private static final int ONE_STEP = 1;
+    // One step a second at least: at the warps of these tests the step is always the longest
+    private static final int ONE_STEP_PER_SECOND = 1;
 
     private final Advanceable simulation = mock();
 
@@ -38,7 +40,7 @@ class FixedStepTimelineLimitsTest {
     void theWarpStaysWhereAChangeWouldTakeItBeyondItsLimits(TimeWarp nextToALimit, Consumer<TimeControls> change,
                                                              double oneStepInRealSeconds) {
         FixedStepTimeline SUT = new FixedStepTimeline(simulation, START_OF_2026, ONE_SIXTY_FOURTH_OF_A_DAY,
-                nextToALimit);
+                nextToALimit, ONE_STEP_PER_SECOND);
 
         change.accept(SUT);
         SUT.elapse(oneStepInRealSeconds);

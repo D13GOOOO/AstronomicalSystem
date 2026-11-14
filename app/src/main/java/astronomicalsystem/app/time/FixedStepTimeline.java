@@ -35,10 +35,13 @@ public class FixedStepTimeline implements Timeline, TimeControls {
     private long stepsTaken;
 
     /**
-     * @param start date of the simulation when the timeline begins
+     * @param start               date of the simulation when the timeline begins
+     * @param step                the longest step
+     * @param leastStepsPerSecond how many steps a real second takes at least, however slow the warp:
+     *                            the step is shorter when the warp is slow; precondition: positive
      */
     public FixedStepTimeline(@NotNull Advanceable simulation, @NotNull JulianDate start, @NotNull TimeStep step,
-                             @NotNull TimeWarp warp) {
+                             @NotNull TimeWarp warp, int leastStepsPerSecond) {
         this.simulation = simulation;
         this.start = start;
         this.step = step;

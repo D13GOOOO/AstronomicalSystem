@@ -29,10 +29,12 @@ class FixedStepTimelineTest {
     private static final double HALF_A_SECOND = 0.5;
     private static final int ONE_STEP = 1;
     private static final int TWO_STEPS = 2;
+    // One step a second at least: at the warps of these tests the step is always the longest
+    private static final int ONE_STEP_PER_SECOND = 1;
 
     private final Advanceable simulation = mock();
     private final FixedStepTimeline SUT = new FixedStepTimeline(simulation, START_OF_2026, QUARTER_OF_A_DAY,
-            TWO_DAYS_PER_SECOND);
+            TWO_DAYS_PER_SECOND, ONE_STEP_PER_SECOND);
 
     @Test
     void theTimeFlowStartsFromTheFirstDateAtTheFirstWarp() {
