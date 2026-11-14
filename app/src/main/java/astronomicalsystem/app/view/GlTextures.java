@@ -7,6 +7,7 @@ import org.lwjgl.system.MemoryUtil;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.lwjgl.opengl.GL11.GL_LINEAR;
@@ -71,6 +72,10 @@ public final class GlTextures implements TexturesView, AutoCloseable {
         } finally {
             MemoryUtil.memFree(encoded);
         }
+    }
+
+    @Override
+    public void loadMosaic(@NotNull String name, int columns, @NotNull List<byte[]> tiles) {
     }
 
     /**
