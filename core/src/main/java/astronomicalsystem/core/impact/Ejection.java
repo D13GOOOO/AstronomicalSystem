@@ -1,11 +1,14 @@
 package astronomicalsystem.core.impact;
 
 import astronomicalsystem.core.body.Body;
+import astronomicalsystem.core.body.BodyKind;
 import astronomicalsystem.core.body.BodyName;
 import astronomicalsystem.core.body.Mass;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  * The fragments an impact throws out, and the largest remnant of the two bodies.
@@ -29,6 +32,14 @@ public record Ejection(@NotNull Body merged, @NotNull Mass remnant, @NotNull Lis
      * @return the largest remnant, then the fragments from the largest
      */
     public @NotNull List<Body> bodies() {
-        return List.of(merged);
+        Body largest = new Body(merged.name(), merged.kind(), remnant, merged.radius(), merged.position(),
+                merged.velocity());
+        return Stream.concat(Stream.of(largest), IntStream.range(0, fragments.size()).mapToObj(this::fragment)).toList();
+    }
+
+    private @NotNull Body fragment(int index) {
+        BodyName name = new BodyName(source.value() + " fragment " + (index + 1));
+        return new Body(name, BodyKind.DEBRIS, fragments.get(index), merged.radius(), merged.position(),
+                merged.velocity());
     }
 }
