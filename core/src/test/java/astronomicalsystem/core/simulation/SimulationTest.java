@@ -103,6 +103,17 @@ class SimulationTest {
         assertThat(SUT.bodies()).containsExactly(SUN, EARTH, ASTEROID);
     }
 
+    // Bodies are told apart by their names, for example by the paths and the camera
+    @Test
+    void aBodyCannotJoinWithTheNameOfAnotherOne() {
+        Simulation SUT = new Simulation(integrator, collisions, INITIAL_BODIES);
+        Body secondEarth = EARTH.withMotion(new Vector3(0.0, 3.0, 0.0), EARTH.velocity());
+
+        assertThatThrownBy(() -> SUT.add(secondEarth))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("A body named Earth is already in the simulation");
+    }
+
     @Test
     void changingTheInitialListLaterDoesNotChangeTheSimulation() {
         List<Body> initialBodies = new ArrayList<>(INITIAL_BODIES);
