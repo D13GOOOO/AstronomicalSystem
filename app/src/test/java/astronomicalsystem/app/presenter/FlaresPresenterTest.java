@@ -31,6 +31,7 @@ class FlaresPresenterTest {
     private static final Colour ORANGE = new Colour(1.0, 0.6, 0.2);
     private static final double FOUR_PIXELS = 4.0;
     private static final double LESS_THAN_A_PIXEL = 0.0;
+    private static final ClipPoint ON_THE_PLANE_OF_THE_EYE = new ClipPoint(0.0, 0.0, 0.0, 0.0);
 
     private final GlowsView view = mock();
     private final Projection projection = mock();
@@ -46,6 +47,16 @@ class FlaresPresenterTest {
         SUT.update(blasts, List.of(new Flare(SITE, FIREBALL_RADIUS, AS_HOT_AS_IT_GETS)));
 
         verify(view).show(List.of(new Glow(SITE_IN_CLIP_SPACE, SIXTEEN_PIXELS, WHITE_HOT)));
+    }
+
+    // On the plane of the eye: no perspective division is possible
+    @Test
+    void aFlareBehindTheCameraIsNotShown() {
+        when(projection.clipPoint(SITE)).thenReturn(ON_THE_PLANE_OF_THE_EYE);
+
+        SUT.update(blasts, List.of(new Flare(SITE, FIREBALL_RADIUS, AS_HOT_AS_IT_GETS)));
+
+        verify(view).show(List.of());
     }
 
     // An ember has no size: a spark four pixels across
