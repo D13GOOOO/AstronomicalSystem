@@ -72,6 +72,7 @@ public class CameraRig implements CameraModel, CameraTarget, CurrentCamera {
 
     private @NotNull Projection cameraOf(@NotNull Vector3 someTarget, @NotNull Orbit someOrbit,
                                          @NotNull Viewport someViewport) {
-        return new Camera(someOrbit.eye(someTarget), someTarget, ECLIPTIC_NORTH, lens, someViewport);
+        return new Camera(someOrbit.eye(someTarget), someTarget, ECLIPTIC_NORTH, lens.closeUpTo(someOrbit.distance()),
+                someViewport);
     }
 }
