@@ -32,6 +32,7 @@ class BlastTest {
     private static final double NINE_MINUTES = 9.0 / 1440.0;
     private static final double TEN_MINUTES = 10.0 / 1440.0;
     private static final int EMBERS = 240;
+    private static final double ONE_DAY = 1.0;
     // The age is known to some 40 microseconds out of minutes
     private static final double HEAT_PRECISION_PERCENT = 1e-4;
 
@@ -82,6 +83,16 @@ class BlastTest {
 
         assertThat(flares.subList(1, flares.size())).hasSize(EMBERS)
                 .allSatisfy(ember -> assertThat(ember.position().length()).isGreaterThan(EARTH_RADIUS));
+    }
+
+    // Thrown up at most two radii of the Earth, every ember is back on the ground within hours
+    @Test
+    void theEmbersFallBackOntoTheBody() {
+        Blast SUT = new Blast(new Collision(EARTH, UP, UP, SPEED, BINDING_ENERGY / 8.0), START);
+
+        List<Flare> flares = SUT.flaresAt(new JulianDate(START.days() + ONE_DAY), Vector3.ZERO);
+
+        assertThat(flares).isEmpty();
     }
 
     // Embers may still be flying: the fireball is the only flare with a size
