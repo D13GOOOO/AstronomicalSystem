@@ -16,6 +16,7 @@ import astronomicalsystem.core.physics.TimeStep;
 import astronomicalsystem.core.physics.VelocityVerlet;
 import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 import java.util.List;
 
@@ -33,13 +34,17 @@ class FragmentationAcceptanceTest {
     // The step of the application
     private static final TimeStep ONE_HOUR = new TimeStep(1.0 / 24.0);
     private static final int A_DAY_IN_HOURS = 24;
+    // The step of the prediction of the paths
+    private static final TimeStep ONE_DAY = new TimeStep(1.0);
+    private static final int A_MONTH_IN_DAYS = 30;
+    private static final int MOST_FRAGMENTS = 24;
     private static final Body SUN = new Body(new BodyName("Sun"), BodyKind.STAR, new Mass(1.0), new Radius(4.65e-3),
             Vector3.ZERO, Vector3.ZERO);
     private static final Body EARTH = new Body(new BodyName("Earth"), BodyKind.PLANET, new Mass(3.003e-6),
             new Radius(4.259e-5), new Vector3(1.0, 0.0, 0.0), new Vector3(0.0, 0.0172, 0.0));
     private static final Approach FROM_ABOVE_AIMING_ALONG_X = new Approach(new Vector3(0.0, 0.0, 1.0),
             new Vector3(1.0, 0.0, 0.0));
-    private static final FragmentSizes SIZES = new FragmentSizes(new Mass(1e-12), 24);
+    private static final FragmentSizes SIZES = new FragmentSizes(new Mass(1e-12), MOST_FRAGMENTS);
     private static final double PRECISION_PERCENT = 1e-9;
     private static final RecursiveComparisonConfiguration CLOSE_ENOUGH = Tolerances.closeEnough(1e-15);
 
@@ -56,6 +61,20 @@ class FragmentationAcceptanceTest {
         assertThat(SUT.bodies()).extracting(Body::kind).contains(BodyKind.DEBRIS);
         assertThat(totalMassOf(SUT.bodies())).isCloseTo(totalMassOf(initial), withinPercentage(PRECISION_PERCENT));
         assertThat(momentumOf(SUT.bodies())).usingRecursiveComparison(CLOSE_ENOUGH).isEqualTo(momentumOf(initial));
+    }
+
+    // Steps much longer than the time it takes debris to fall back must not throw it back into the
+    // remnant, where every new impact would break off more fragments
+    @Test
+    @Timeout(value = 10, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
+    void theDebrisOfAGiantImpactFollowedDayByDayDoesNotBreedMoreDebris() {
+        Body protoplanet = Impactor.PROTOPLANET.launchedAt(EARTH, FROM_ABOVE_AIMING_ALONG_X, new BodyName("Theia"));
+        Simulation SUT = new Simulation(new VelocityVerlet(new NewtonianGravity(G, NO_SOFTENING)),
+                new FragmentingCollisions(SIZES), List.of(SUN, EARTH, protoplanet));
+
+        SUT.advance(ONE_DAY, A_MONTH_IN_DAYS);
+
+        assertThat(SUT.bodies()).hasSizeLessThanOrEqualTo(2 + MOST_FRAGMENTS);
     }
 
     private static double totalMassOf(List<Body> bodies) {
