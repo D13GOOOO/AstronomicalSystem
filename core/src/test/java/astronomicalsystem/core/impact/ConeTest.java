@@ -20,12 +20,14 @@ class ConeTest {
     // about the square of their distance from the nearest one; a good spread keeps most of it
     private static final double SPREAD = 0.8;
 
-    // Along the z-axis, and along a slanting axis
+    // Along the z-axis, along a slanting axis, and along the x-axis, which needs another vector to
+    // build a basis across it
     @ParameterizedTest(name = "{3} directions around ({0}, {1}, {2})")
     @CsvSource(textBlock = """
             0.0, 0.0, 1.0,  1
             0.0, 0.0, 1.0, 24
             1.0, 1.0, 0.0, 24
+            1.0, 0.0, 0.0, 24
             """)
     void everyDirectionIsAUnitVectorInsideTheCone(double axisX, double axisY, double axisZ, int count) {
         Vector3 axis = new Vector3(axisX, axisY, axisZ);
