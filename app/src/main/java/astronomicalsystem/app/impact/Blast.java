@@ -31,9 +31,16 @@ public record Blast(@NotNull Collision collision, @NotNull JulianDate start) {
      */
     public @NotNull List<Flare> flaresAt(@NotNull JulianDate now, @NotNull Vector3 survivor) {
         double age = now.days() - start.days();
+        if (age > fireballLife()) {
+            return List.of();
+        }
         double radius = collision.survivor().radius().astronomicalUnits();
         Vector3 site = survivor.plus(collision.site().times(radius));
         return List.of(new Flare(site, fireballRadius() * Math.min(1.0, age / riseTime()), heatAt(age)));
+    }
+
+    private double fireballLife() {
+        return FIREBALL_LIFE_IN_RISE_TIMES * riseTime();
     }
 
     // As hot as it gets while it grows, then exp(-(age - t) / tau)
@@ -42,7 +49,7 @@ public record Blast(@NotNull Collision collision, @NotNull JulianDate start) {
         if (age <= riseTime) {
             return 1.0;
         }
-        double coolingTime = (FIREBALL_LIFE_IN_RISE_TIMES - 1.0) * riseTime / COOLING_TIMES;
+        double coolingTime = (fireballLife() - riseTime) / COOLING_TIMES;
         return Math.exp(-(age - riseTime) / coolingTime);
     }
 
