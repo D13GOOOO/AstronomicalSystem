@@ -34,6 +34,12 @@ class GlDiscsIntegrationTest {
     private static final ClipPoint NEARER = new ClipPoint(0.0, 0.0, -0.5, 1.0);
     private static final ClipPoint FARTHER = new ClipPoint(0.0, 0.0, 0.5, 1.0);
     private static final double TWENTY_PIXELS = 20.0;
+    private static final double FORTY_PIXELS = 40.0;
+    private static final int FIFTEEN_PIXELS = 15;
+    private static final Colour WHITE = new Colour(1.0, 1.0, 1.0);
+    private static final Lighting FROM_THE_RIGHT = new Lighting.LitFrom(1.0, 0.0, 0.0);
+    private static final float BRIGHT = 0.7f;
+    private static final float DARK = 0.1f;
     // From the centre of the disc, 8.5 px right and 8.5 px up: 12 px away, outside the circle of
     // radius 10 but inside the square that encloses it
     private static final int DIAGONAL_OFFSET = 8;
@@ -79,6 +85,20 @@ class GlDiscsIntegrationTest {
 
         int[] centre = centreOfTheImage();
         assertThat(pixelAt(centre[0], centre[1])).containsExactly(RED, withPrecision(ONE_LEVEL));
+    }
+
+    // Lit from the right: 15 px right of the centre the surface faces the light at about 41 degrees,
+    // 15 px left it faces away from it, and only the faint light of the sky reaches it
+    @Test
+    void aLitDiscIsBrightOnTheSideOfTheLightAndDarkOnTheOther() {
+        SUT.show(List.of(new Disc(MIDDLE_OF_THE_IMAGE, FORTY_PIXELS, WHITE, FROM_THE_RIGHT)));
+        clearToBlack();
+
+        SUT.draw();
+
+        int[] centre = centreOfTheImage();
+        assertThat(pixelAt(centre[0] + FIFTEEN_PIXELS, centre[1])[0]).isGreaterThan(BRIGHT);
+        assertThat(pixelAt(centre[0] - FIFTEEN_PIXELS, centre[1])[0]).isLessThan(DARK);
     }
 
     private static void clearToBlack() {
