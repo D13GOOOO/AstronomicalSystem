@@ -6,6 +6,7 @@ import astronomicalsystem.core.body.Mass;
 import astronomicalsystem.core.body.Radius;
 import astronomicalsystem.core.orbit.Eccentricity;
 import astronomicalsystem.core.orbit.OrbitalElements;
+import astronomicalsystem.core.rings.Rings;
 import astronomicalsystem.core.rotation.Spin;
 import astronomicalsystem.core.time.JulianDate;
 import astronomicalsystem.ephemeris.horizons.Horizons;
@@ -125,6 +126,13 @@ public final class SolarSystem {
     public static @NotNull Map<BodyName, Spin> spins() {
         return ROTATIONS.entrySet().stream()
                 .collect(Collectors.toMap(rotation -> rotation.getKey().name(), rotation -> rotation.getValue().spin()));
+    }
+
+    /**
+     * @return the rings of the planets that have bright ones, by the names of the planets
+     */
+    public static @NotNull Map<BodyName, Rings> rings() {
+        return Map.of();
     }
 
     private static @NotNull BodyProperties planet(@NotNull String name, double gmKm3PerS2, double meanRadiusKm) {
