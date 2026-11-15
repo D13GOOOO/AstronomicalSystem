@@ -13,4 +13,8 @@ import java.util.List;
  * @param bands the bands the rings are made of, which do not overlap
  */
 public record Rings(@NotNull Vector3 pole, @NotNull List<RingBand> bands) {
+
+    public Rings {
+        bands = List.copyOf(bands);
+    }
 }
