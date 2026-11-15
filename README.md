@@ -6,9 +6,13 @@ positions of the planets today, taken from NASA JPL Horizons, integrates Newtoni
 symplectic scheme, and lets you throw asteroids and protoplanets at the planets to watch them merge
 or shatter according to published scaling laws for planetary collisions.
 
-![The solar system as it is today, with the paths of the next year](docs/images/system.png)
+![The Earth wrapped in NASA's Blue Marble, lit by the Sun and tilted on its axis](docs/images/earth.png)
+
+![Saturn and its rings, seen from their unlit side, with the shadow of the planet across them](docs/images/saturn.png)
 
 ![A giant impact on the Earth: fireball, plume of ejecta and slow motion](docs/images/impact.png)
+
+![The solar system as it is today, with the paths of the next year](docs/images/system.png)
 
 ## What it does
 
@@ -31,6 +35,17 @@ or shatter according to published scaling laws for planetary collisions.
 - **A camera that goes from 100 AU to the surface.** Orbit, zoom and follow any body down to two
   of its radii; bodies are spheres lit by the Sun, with a day side, a night side and a limb-darkened
   star.
+- **Real surfaces that really turn.** The planets are wrapped in maps made from spacecraft
+  imagery, downloaded from NASA on the first launch and cached on disk, and each one turns about
+  its true pole at its true rate, following the rotational elements of the IAU: the Earth shows the
+  right continent to the Sun at the right hour.
+- **Saturn's rings as a layer of particles.** The C ring, the B ring, the Cassini Division and the
+  A ring, each with its own optical depth: seen from the sunlit side they shine by reflected light,
+  from the other side by the light that filters through them, so the dense B ring turns from the
+  brightest to the darkest. The planet casts its shadow on them and hides them where they pass
+  behind it.
+- **A sky of stars** behind everything, generated from a fixed seed with the brightness
+  distribution of a uniform universe.
 
 ## Built at a low level
 
@@ -43,6 +58,9 @@ Everything below the window is written in this repository. The only runtime depe
 | Camera | No matrix library. The look-at basis and the perspective projection are computed on the CPU in double precision, and the GPU receives clip coordinates. At solar-system scale a planet is 10⁻⁵ AU wide one AU from the origin: single-precision world coordinates would make it jitter. |
 | Spheres | Impostors: each body is a camera-facing quad of two triangles; the fragment shader rebuilds the normal of the sphere, `(x, y, √(1 − x² − y²))`, and shades it with Lambert's law, or with linear limb darkening for a star. A planet costs six vertices at any zoom. |
 | Lines | Predicted paths are line strips clipped by OpenGL in homogeneous coordinates, before the perspective division, so a path that passes behind the eye is cut and never drawn mirrored. |
+| Surface maps | Equirectangular textures decoded with `stb_image` and sampled in the fragment shader from the normal of the impostor, turned into the frame of the body: no mesh, no texture coordinates. Explicit gradients (`textureGrad`) remove the seam where the longitude wraps. Large maps are assembled on the GPU from WMTS tiles. |
+| Rings | Another impostor: for every pixel the shader intersects the line of sight with the plane of the rings, finds the band at that radius, and tests the point against the sphere of the planet and against the cylinder of its shadow. Edges are anti-aliased with screen-space derivatives. |
+| Map downloads | Decorators around one interface: an HTTP client, retries, a disk cache. Downloads run on daemon threads and are handed to the OpenGL thread through a queue drained before each frame. |
 | Light effects | Additive blending with the depth test on and depth writes off: glows are hidden by nearer bodies and hide nothing. |
 | Text | A font atlas baked at start-up with `stb_truetype`; own layout for the head-up display and the labels that follow the bodies. |
 | Depth range | The near plane follows the camera, so that the same lens frames Neptune's orbit and a crater. |
@@ -63,6 +81,9 @@ Everything below the window is written in this repository. The only runtime depe
 | Fragments | Rank-size power law for the masses; ejection just above the escape speed, faster for smaller fragments (`v ∝ m^(−1/6)`); positions and velocities chosen so that mass, momentum and centre of mass are conserved exactly | [9] [10] [11] |
 | Directions of ejecta | A Fibonacci spiral on a spherical cap: equal-area rings turned by the golden angle | [12] |
 | Fireball and plume | Radius scaled as the cube root of the impact energy over the gravitational binding energy `(3/5) G M² / R`; embers integrated by leapfrog in the gravity of the body | — |
+| Rotation | IAU pole (right ascension, declination) and prime meridian `W = W₀ + Ẇ d`, turned from the equatorial to the ecliptic frame; the orientation at a date is a rotation of the prime meridian about the pole by Rodrigues' formula | [14] |
+| Rings | A plane-parallel layer of optical depth `τ`. Opacity along a ray: `1 − e^(−τ/μ)` (Beer–Lambert). Single isotropic scattering: reflected `μ₀/(μ+μ₀) · (1 − e^(−τ(1/μ+1/μ₀)))`, diffusely transmitted `μ₀/(μ−μ₀) · (e^(−τ/μ) − e^(−τ/μ₀))`, with `μ`, `μ₀` the cosines of the viewing and illumination angles | [15] [16] |
+| Star field | Directions uniform on the sphere by Archimedes' hat-box theorem (uniform height, uniform azimuth); fluxes drawn from `N(>S) ∝ S^(−3/2)`, the counts of equal stars filling Euclidean space uniformly, by inverse transform sampling | — |
 | Shading | Lambert's cosine law for reflected light; linear limb darkening `I(μ) = 1 − u(1 − μ)` with `u = 0.6` for the Sun | [13] |
 | Time scales | Julian dates in TDB; UTC obtained with the leap seconds in force since 2017 | — |
 
@@ -177,10 +198,23 @@ several courses to work together:
 12. Á. González, *Measurement of areas on a sphere using Fibonacci and latitude-longitude lattices*,
     Math. Geosci. 42, 49 (2010).
 13. A. N. Cox (ed.), *Allen's Astrophysical Quantities*, 4th ed., Springer (2000).
+14. B. A. Archinal et al., *Report of the IAU Working Group on Cartographic Coordinates and
+    Rotational Elements: 2009*, Celest. Mech. Dyn. Astron. 109, 101 (2011).
+15. S. Chandrasekhar, *Radiative Transfer*, Dover (1960).
+16. D. R. Williams, *Saturnian Rings Fact Sheet*, NASA Goddard Space Flight Center,
+    [nssdc.gsfc.nasa.gov/planetary/factsheet/satringfact.html](https://nssdc.gsfc.nasa.gov/planetary/factsheet/satringfact.html).
 
 ## Credits
 
 - Ephemerides: NASA/JPL-Caltech, Solar System Dynamics group (Horizons).
+- Map of the Earth: NASA Blue Marble (shaded relief and bathymetry), served by
+  [NASA GIBS](https://nasa-gibs.github.io/gibs-api-docs/).
+- Maps of Mercury (MESSENGER MDIS), Mars (Viking MDIM 2.1), the Moon (LRO WAC) and Vesta (Dawn FC):
+  [NASA Solar System Treks](https://trek.nasa.gov/), NASA/JPL-Caltech. These maps and the one of the
+  Earth are downloaded at the first launch and kept in `~/.astronomicalsystem/maps`.
+- Maps of the Sun, Venus, Jupiter, Saturn, Uranus and Neptune:
+  [Solar System Scope](https://www.solarsystemscope.com/textures/), CC BY 4.0, distributed with the
+  application unchanged (see `app/src/main/resources/textures/CREDITS.txt`).
 - [LWJGL 3](https://www.lwjgl.org/) (BSD 3-Clause), with GLFW, OpenGL and Sean Barrett's stb.
 - Font: [Share Tech Mono](https://fonts.google.com/specimen/Share+Tech+Mono) by Carrois Apostrophe,
   SIL Open Font License 1.1 (the licence is next to the font in `app/src/main/resources/fonts`).
