@@ -42,7 +42,7 @@ public class RingsPresenter extends ProjectedBodiesPresenter<RingSystem> {
                           @NotNull Colour colour) {
         super(projection, styles);
         this.view = view;
-        this.rings = rings;
+        this.rings = Map.copyOf(rings);
         this.colour = colour;
     }
 
