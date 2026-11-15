@@ -45,6 +45,7 @@ class GlRingsIntegrationTest {
     // 40 pixels to the left and 30 up: on the band, 50 pixels from the centre, and above the shadow
     private static final int LEFT_OF_THE_SPHERE = 40;
     private static final int ABOVE_THE_SHADOW = 30;
+    private static final Vector3 UP_IN_THE_IMAGE = new Vector3(0.0, 1.0, 0.0);
     // Two steps of an 8-bit colour channel
     private static final float TWO_LEVELS = 2.0f / 255.0f;
 
@@ -124,6 +125,22 @@ class GlRingsIntegrationTest {
                 within(TWO_LEVELS));
         assertThat(pixelAt(centre[0] - LEFT_OF_THE_SPHERE, centre[1] + ABOVE_THE_SHADOW))
                 .containsExactly(new float[]{0.6f, 0.3f, 0.15f}, within(TWO_LEVELS));
+    }
+
+    // Rings have no thickness to show: over white, nothing changes
+    @Test
+    void ringsSeenEdgeOnCannotBeSeen() {
+        SUT.show(List.of(new RingSystem(MIDDLE_OF_THE_IMAGE, FORTY_PIXELS, UP_IN_THE_IMAGE, TOWARDS_THE_VIEWER,
+                List.of(BAND))));
+        clearTo(1.0f);
+
+        SUT.draw();
+
+        int[] centre = centreOfTheImage();
+        assertThat(pixelAt(centre[0] + ON_THE_BAND, centre[1])).containsOnly(1.0f);
+        assertThat(pixelAt(centre[0] - ON_THE_BAND, centre[1])).containsOnly(1.0f);
+        assertThat(pixelAt(centre[0], centre[1] + ON_THE_BAND)).containsOnly(1.0f);
+        assertThat(pixelAt(centre[0] + ACROSS_THE_SPHERE, centre[1] - ACROSS_THE_SPHERE)).containsOnly(1.0f);
     }
 
     private static void clearTo(float grey) {
