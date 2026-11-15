@@ -8,6 +8,10 @@ layout(location = 2) in float diameter;
 layout(location = 3) in vec3 colour;
 // Towards the light in the frame of the image, and 1 for a lit disc, 0 for one with its own light
 layout(location = 4) in vec4 light;
+// The axes of the body in the frame of the image, for a disc wrapped in a map
+layout(location = 5) in vec3 bodyX;
+layout(location = 6) in vec3 bodyY;
+layout(location = 7) in vec3 bodyZ;
 
 // In pixels
 uniform vec2 imageSize;
@@ -15,6 +19,9 @@ uniform vec2 imageSize;
 out vec2 onTheDisc;
 out vec3 discColour;
 out vec4 discLight;
+out vec3 discX;
+out vec3 discY;
+out vec3 discZ;
 
 void main() {
     // Half the diameter in pixels is diameter / imageSize in normalised device coordinates, which go
@@ -23,4 +30,7 @@ void main() {
     onTheDisc = corner;
     discColour = colour;
     discLight = light;
+    discX = bodyX;
+    discY = bodyY;
+    discZ = bodyZ;
 }
