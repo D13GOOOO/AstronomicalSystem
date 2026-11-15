@@ -39,6 +39,12 @@ class GlRingsIntegrationTest {
     // its centre, in front of it below and behind it above
     private static final Vector3 NEARLY_ACROSS_THE_LINE_OF_SIGHT = new Vector3(0.0, Math.sqrt(0.9375), 0.25);
     private static final int ACROSS_THE_SPHERE = 12;
+    // Light from the right of the image: the shadow of the sphere, as wide as the sphere, falls on
+    // the rings to its left
+    private static final Vector3 TOWARDS_THE_RIGHT = new Vector3(1.0, 0.0, 0.0);
+    // 40 pixels to the left and 30 up: on the band, 50 pixels from the centre, and above the shadow
+    private static final int LEFT_OF_THE_SPHERE = 40;
+    private static final int ABOVE_THE_SHADOW = 30;
     // Two steps of an 8-bit colour channel
     private static final float TWO_LEVELS = 2.0f / 255.0f;
 
@@ -102,6 +108,22 @@ class GlRingsIntegrationTest {
         assertThat(pixelAt(centre[0], centre[1] - ACROSS_THE_SPHERE)).containsExactly(new float[]{0.6f, 0.3f, 0.15f},
                 within(TWO_LEVELS));
         assertThat(pixelAt(centre[0], centre[1] + ACROSS_THE_SPHERE)).containsOnly(0.0f);
+    }
+
+    @Test
+    void theRingsAreDarkInTheShadowOfTheSphere() {
+        SUT.show(List.of(new RingSystem(MIDDLE_OF_THE_IMAGE, FORTY_PIXELS, TOWARDS_THE_VIEWER, TOWARDS_THE_RIGHT,
+                List.of(BAND))));
+        clearTo(0.0f);
+
+        SUT.draw();
+
+        int[] centre = centreOfTheImage();
+        assertThat(pixelAt(centre[0] - ON_THE_BAND, centre[1])).containsOnly(0.0f);
+        assertThat(pixelAt(centre[0] + ON_THE_BAND, centre[1])).containsExactly(new float[]{0.6f, 0.3f, 0.15f},
+                within(TWO_LEVELS));
+        assertThat(pixelAt(centre[0] - LEFT_OF_THE_SPHERE, centre[1] + ABOVE_THE_SHADOW))
+                .containsExactly(new float[]{0.6f, 0.3f, 0.15f}, within(TWO_LEVELS));
     }
 
     private static void clearTo(float grey) {
