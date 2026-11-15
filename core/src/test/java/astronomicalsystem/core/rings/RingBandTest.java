@@ -3,6 +3,7 @@ package astronomicalsystem.core.rings;
 import astronomicalsystem.core.body.Radius;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
@@ -14,6 +15,8 @@ class RingBandTest {
     private static final Radius OUTER = new Radius(8e-4);
     // A band that lets through half of the light that crosses it perpendicularly: exp(-ln 2) = 1/2
     private static final double HALVING = Math.log(2.0);
+
+    private static final double ALONG_THE_BAND = 0.0;
 
     private final RingBand SUT = new RingBand(INNER, OUTER, HALVING);
 
@@ -40,5 +43,12 @@ class RingBandTest {
     void theLitSideIsBrighterSeenAslantAndDimmerLitAslant(double towardsViewer, double towardsLight,
                                                         double brightness) {
         assertThat(SUT.reflected(towardsViewer, towardsLight)).isCloseTo(brightness, within(TOLERANCE));
+    }
+
+    // Also seen along the band, where the two cosines are both 0
+    @ParameterizedTest
+    @ValueSource(doubles = {1.0, 0.5, 0.0})
+    void aBandLitAlongItselfSendsBackNoLight(double towardsViewer) {
+        assertThat(SUT.reflected(towardsViewer, ALONG_THE_BAND)).isZero();
     }
 }
