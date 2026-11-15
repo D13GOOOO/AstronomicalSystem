@@ -61,6 +61,14 @@ class RingsPresenterTest {
     // its full colour: three quarters of it
     private static final Colour THREE_QUARTERS_OF_SAND = new Colour(0.6, 0.3, 0.15);
 
+    // The planet is between the viewer and the Sun, which lights the side of the rings that the
+    // viewer does not see
+    private static final Body SATURN_BEFORE_THE_SUN = new Body(SATURN_NAME, BodyKind.PLANET, new Mass(3e-4),
+            new Radius(0.125), new Vector3(0.0, 0.0, 4.0), AT_REST);
+    private static final Vector3 AWAY_FROM_THE_VIEWER = new Vector3(0.0, 0.0, -1.0);
+    // Through the band, perpendicularly in and out, comes ln 2 / 2 of the most it can send back
+    private static final Colour SAND_SEEN_THROUGH = new Colour(0.8 * HALVING, 0.4 * HALVING, 0.2 * HALVING);
+
     private final RingsView view = mock();
     private final Projection projection = mock();
     private final Observable<List<Body>> simulation = mock();
@@ -83,6 +91,17 @@ class RingsPresenterTest {
         assertThat(ringsShown()).usingRecursiveComparison(CLOSE_ENOUGH).isEqualTo(List.of(
                 new RingSystem(SATURN_IN_CLIP_SPACE, FORTY_PIXELS, TOWARDS_THE_VIEWER, TOWARDS_THE_VIEWER,
                         List.of(new RingSystem.Band(TWO_RADII, THREE_RADII, THREE_QUARTERS_OF_SAND, HALF_HIDDEN)))));
+    }
+
+    @Test
+    void theRingsSeenFromTheSideAwayFromTheLightShowTheLightThatComesThrough() {
+        givenTheCameraSees(SATURN_BEFORE_THE_SUN);
+
+        SUT.update(simulation, List.of(SUN, SATURN_BEFORE_THE_SUN));
+
+        assertThat(ringsShown()).usingRecursiveComparison(CLOSE_ENOUGH).isEqualTo(List.of(
+                new RingSystem(SATURN_IN_CLIP_SPACE, FORTY_PIXELS, TOWARDS_THE_VIEWER, AWAY_FROM_THE_VIEWER,
+                        List.of(new RingSystem.Band(TWO_RADII, THREE_RADII, SAND_SEEN_THROUGH, HALF_HIDDEN)))));
     }
 
     private void givenTheCameraSees(Body saturn) {
