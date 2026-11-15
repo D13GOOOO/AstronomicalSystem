@@ -37,11 +37,21 @@ public class SkyPresenter implements Observer<Projection> {
 
     @Override
     public void update(@NotNull Observable<Projection> subject, @NotNull Projection camera) {
-        view.show(stars.stream().map(star -> glowOf(star, camera)).toList());
+        view.show(stars.stream()
+                .filter(star -> whereSeen(star, camera).isInFrontOfTheCamera())
+                .map(star -> glowOf(star, camera))
+                .toList());
     }
 
+    private static @NotNull ClipPoint whereSeen(@NotNull Star star, @NotNull Projection camera) {
+        return camera.clipPoint(star.direction().times(DISTANCE_OF_THE_STARS));
+    }
+
+    /**
+     * @param star precondition: in front of the camera
+     */
     private static @NotNull Glow glowOf(@NotNull Star star, @NotNull Projection camera) {
-        ClipPoint seen = camera.clipPoint(star.direction().times(DISTANCE_OF_THE_STARS));
+        ClipPoint seen = whereSeen(star, camera);
         double light = LIGHT_OF_THE_FAINTEST * star.flux();
         double shown = Math.min(FULL_LIGHT, light);
         // The light that a point cannot show is spread around it, as on a photograph: the light of
