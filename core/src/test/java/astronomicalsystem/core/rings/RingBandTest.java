@@ -45,6 +45,19 @@ class RingBandTest {
         assertThat(SUT.reflected(towardsViewer, towardsLight)).isCloseTo(brightness, within(TOLERANCE));
     }
 
+    // Light in along one slant and out, on the other side, along the other: mu0 / (mu - mu0) of the
+    // difference between what gets through along the two, 2^-(1/mu) - 2^-(1/mu0)
+    @ParameterizedTest
+    @CsvSource(textBlock = """
+            1.0,  0.5, 0.25
+            0.5,  1.0, 0.5
+            0.25, 0.5, 0.375
+            """)
+    void theUnlitSideShinesWithTheLightScatteredThroughTheBand(double towardsViewer, double towardsLight,
+                                                             double brightness) {
+        assertThat(SUT.transmitted(towardsViewer, towardsLight)).isCloseTo(brightness, within(TOLERANCE));
+    }
+
     // Also seen along the band, where the two cosines are both 0
     @ParameterizedTest
     @ValueSource(doubles = {1.0, 0.5, 0.0})

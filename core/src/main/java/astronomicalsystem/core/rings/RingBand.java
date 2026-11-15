@@ -45,4 +45,18 @@ public record RingBand(@NotNull Radius inner, @NotNull Radius outer, double opti
         double bothPaths = 1.0 / towardsViewer + 1.0 / towardsLight;
         return towardsLight / (towardsViewer + towardsLight) * (1.0 - Math.exp(-opticalDepth * bothPaths));
     }
+
+    /**
+     * How bright the band looks from the side opposite to the light, by the light that comes
+     * through it scattered once and evenly in all directions.
+     *
+     * @param towardsViewer cosine of the angle between the line of sight and the perpendicular to
+     *                      the band, from 0 to 1; precondition: within these
+     * @param towardsLight  cosine of the angle between the rays of light and the perpendicular to
+     *                      the band, from 0 to 1; precondition: within these
+     * @return the brightness, in the same units as that of the lit side
+     */
+    public double transmitted(double towardsViewer, double towardsLight) {
+        return 0.0;
+    }
 }
