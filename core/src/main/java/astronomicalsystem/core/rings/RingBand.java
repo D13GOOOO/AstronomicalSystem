@@ -36,6 +36,10 @@ public record RingBand(@NotNull Radius inner, @NotNull Radius outer, double opti
      * @return the brightness as a share, from 0 to 1, of the most that a band can send back
      */
     public double reflected(double towardsViewer, double towardsLight) {
+        // No light falls on the band; seen along the band too, the formula would divide 0 by 0
+        if (towardsLight == 0.0) {
+            return 0.0;
+        }
         // Light scattered at a depth t has crossed t / mu0 on the way in and crosses t / mu on the
         // way out: the integral of exp(-t (1 / mu + 1 / mu0)) / mu over the depths of the band
         double bothPaths = 1.0 / towardsViewer + 1.0 / towardsLight;
