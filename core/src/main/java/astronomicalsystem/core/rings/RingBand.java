@@ -59,6 +59,10 @@ public record RingBand(@NotNull Radius inner, @NotNull Radius outer, double opti
     public double transmitted(double towardsViewer, double towardsLight) {
         // Light scattered at a depth t has crossed t / mu0 on the way in and crosses the rest of
         // the band, (tau - t) / mu, on the way out: the integral over the depths of the band
+        if (towardsViewer == towardsLight) {
+            // The limit of the formula below, which here divides 0 by 0
+            return opticalDepth / towardsViewer * Math.exp(-opticalDepth / towardsViewer);
+        }
         double throughToViewer = Math.exp(-opticalDepth / towardsViewer);
         double throughFromLight = Math.exp(-opticalDepth / towardsLight);
         return towardsLight / (towardsViewer - towardsLight) * (throughToViewer - throughFromLight);
