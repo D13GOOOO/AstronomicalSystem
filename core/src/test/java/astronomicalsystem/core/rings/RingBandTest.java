@@ -29,6 +29,14 @@ class RingBandTest {
                 .hasMessage("The outer edge of a ring band must be beyond the inner one");
     }
 
+    @ParameterizedTest
+    @ValueSource(doubles = {0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY})
+    void aBandThatStopsNoLightOrIsNotANumberIsRejected(double opticalDepth) {
+        assertThatThrownBy(() -> new RingBand(INNER, OUTER, opticalDepth))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Optical depth must be positive and finite");
+    }
+
     // A slanted ray crosses 1 / cosine times as many particles: it is halved that many times
     @ParameterizedTest
     @CsvSource(textBlock = """
