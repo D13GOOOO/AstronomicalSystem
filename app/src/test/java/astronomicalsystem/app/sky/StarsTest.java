@@ -2,6 +2,8 @@ package astronomicalsystem.app.sky;
 
 import astronomicalsystem.core.math.Vector3;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 import java.util.random.RandomGenerator;
@@ -23,6 +25,8 @@ class StarsTest {
     private static final double BRIGHTER_THAN_SEVEN_IN_EIGHT = 0.875;
     private static final double FOUR_TIMES_THE_FAINTEST = 4.0;
 
+    private static final double ANY_DRAW = 0.5;
+
     private final RandomGenerator random = mock();
 
     @Test
@@ -35,5 +39,15 @@ class StarsTest {
             assertThat(star.direction().minus(HALF_WAY_UP_ON_THE_Y_SIDE).length()).isLessThan(TOLERANCE);
             assertThat(star.flux()).isCloseTo(FOUR_TIMES_THE_FAINTEST, within(TOLERANCE));
         });
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1, 3})
+    void asManyStarsAsAskedForAreDrawn(int count) {
+        when(random.nextDouble()).thenReturn(ANY_DRAW);
+
+        List<Star> stars = Stars.scattered(random, count);
+
+        assertThat(stars).hasSize(count);
     }
 }
