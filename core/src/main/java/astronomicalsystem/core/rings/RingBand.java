@@ -1,6 +1,7 @@
 package astronomicalsystem.core.rings;
 
 import astronomicalsystem.core.body.Radius;
+import astronomicalsystem.core.math.Quantities;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,6 +19,7 @@ public record RingBand(@NotNull Radius inner, @NotNull Radius outer, double opti
         if (outer.astronomicalUnits() <= inner.astronomicalUnits()) {
             throw new IllegalArgumentException("The outer edge of a ring band must be beyond the inner one");
         }
+        Quantities.requirePositiveFinite(opticalDepth, "Optical depth");
     }
 
     /**
