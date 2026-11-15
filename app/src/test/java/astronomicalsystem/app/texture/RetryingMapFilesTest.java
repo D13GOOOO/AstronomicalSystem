@@ -5,7 +5,10 @@ import org.junit.jupiter.api.Test;
 import java.net.URI;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class RetryingMapFilesTest {
@@ -25,5 +28,15 @@ class RetryingMapFilesTest {
         byte[] file = SUT.fetch(ADDRESS);
 
         assertThat(file).isEqualTo(MAP);
+    }
+
+    @Test
+    void aFileThatCannotBeHadIsGivenUpAfterTheAttempts() {
+        when(origin.fetch(ADDRESS)).thenThrow(new MapUnavailableException("The map server cannot be reached"));
+
+        assertThatThrownBy(() -> SUT.fetch(ADDRESS)).isInstanceOf(MapUnavailableException.class)
+                .hasMessage("The map server cannot be reached");
+
+        verify(origin, times(THREE_ATTEMPTS)).fetch(ADDRESS);
     }
 }
