@@ -34,6 +34,11 @@ class GlRingsIntegrationTest {
     private static final int ON_THE_BAND = 50;
     private static final int BEYOND_THE_BAND = 70;
     private static final Vector3 TOWARDS_THE_VIEWER = new Vector3(0.0, 0.0, 1.0);
+    // Rings seen nearly edge-on, their axis up in the image and a quarter towards the viewer: four
+    // times narrower up and down, the band crosses the sphere from 10 to 15 pixels above and below
+    // its centre, in front of it below and behind it above
+    private static final Vector3 NEARLY_ACROSS_THE_LINE_OF_SIGHT = new Vector3(0.0, Math.sqrt(0.9375), 0.25);
+    private static final int ACROSS_THE_SPHERE = 12;
     // Two steps of an 8-bit colour channel
     private static final float TWO_LEVELS = 2.0f / 255.0f;
 
@@ -83,6 +88,20 @@ class GlRingsIntegrationTest {
         assertThat(pixelAt(centre[0] + ON_THE_BAND, centre[1])).containsExactly(new float[]{1.0f, 0.8f, 0.65f},
                 within(TWO_LEVELS));
         assertThat(pixelAt(centre[0] + BEYOND_THE_BAND, centre[1])).containsOnly(1.0f);
+    }
+
+    @Test
+    void theSphereHidesTheRingsThatPassBehindIt() {
+        SUT.show(List.of(new RingSystem(MIDDLE_OF_THE_IMAGE, FORTY_PIXELS, NEARLY_ACROSS_THE_LINE_OF_SIGHT,
+                TOWARDS_THE_VIEWER, List.of(BAND))));
+        clearTo(0.0f);
+
+        SUT.draw();
+
+        int[] centre = centreOfTheImage();
+        assertThat(pixelAt(centre[0], centre[1] - ACROSS_THE_SPHERE)).containsExactly(new float[]{0.6f, 0.3f, 0.15f},
+                within(TWO_LEVELS));
+        assertThat(pixelAt(centre[0], centre[1] + ACROSS_THE_SPHERE)).containsOnly(0.0f);
     }
 
     private static void clearTo(float grey) {
