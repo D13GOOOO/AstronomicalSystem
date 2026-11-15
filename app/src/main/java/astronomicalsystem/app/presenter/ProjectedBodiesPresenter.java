@@ -9,8 +9,10 @@ import astronomicalsystem.core.math.Vector3;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Shows a mark for every body of the simulation in front of the camera, every time the bodies or
@@ -63,10 +65,15 @@ public abstract class ProjectedBodiesPresenter<M> extends ProjectingPresenter<Bo
     }
 
     /**
-     * @return the latest bodies, all of them, also those not in front of the camera
+     * @return the unit vector, in the frame of the image, from the body towards the most massive
+     *         body that shines, the brightest star; empty if no body shines
      */
-    protected final @NotNull List<Body> bodies() {
-        return latest();
+    protected final @NotNull Optional<Vector3> towardsTheLightOf(@NotNull Body body) {
+        // A unit vector in space stays one in the frame of the image, which only turns it
+        return latest().stream()
+                .filter(other -> styleOf(other).shines())
+                .max(Comparator.comparingDouble(other -> other.mass().solarMasses()))
+                .map(star -> inTheImage(star.position().minus(body.position()).normalized()));
     }
 
     protected final @NotNull BodyStyle styleOf(@NotNull Body body) {
