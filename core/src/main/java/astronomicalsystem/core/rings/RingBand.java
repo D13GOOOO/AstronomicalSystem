@@ -24,4 +24,18 @@ public record RingBand(@NotNull Radius inner, @NotNull Radius outer, double opti
         // band the division gives infinity, and nothing gets through
         return 1.0 - Math.exp(-opticalDepth / cosine);
     }
+
+    /**
+     * How bright the band looks from the side the light falls on, when each ray is scattered once
+     * and evenly in all directions.
+     *
+     * @param towardsViewer cosine of the angle between the line of sight and the perpendicular to
+     *                      the band, from 0 to 1; precondition: within these
+     * @param towardsLight  cosine of the angle between the rays of light and the perpendicular to
+     *                      the band, from 0 to 1; precondition: within these
+     * @return the brightness as a share, from 0 to 1, of the most that a band can send back
+     */
+    public double reflected(double towardsViewer, double towardsLight) {
+        return 0.0;
+    }
 }

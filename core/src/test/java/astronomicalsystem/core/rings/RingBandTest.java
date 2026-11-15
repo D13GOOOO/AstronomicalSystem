@@ -28,4 +28,17 @@ class RingBandTest {
     void aBandStopsMoreOfARayTheMoreTheRaySlants(double cosine, double stopped) {
         assertThat(SUT.opacity(cosine)).isCloseTo(stopped, within(TOLERANCE));
     }
+
+    // Light in along one slant and out along the other: the share mu0 / (mu + mu0) of what the band
+    // stops along the two paths together, 1 - 2^-(1/mu + 1/mu0)
+    @ParameterizedTest
+    @CsvSource(textBlock = """
+            1.0, 1.0, 0.375
+            0.5, 1.0, 0.583333333333333
+            1.0, 0.5, 0.291666666666667
+            """)
+    void theLitSideIsBrighterSeenAslantAndDimmerLitAslant(double towardsViewer, double towardsLight,
+                                                        double brightness) {
+        assertThat(SUT.reflected(towardsViewer, towardsLight)).isCloseTo(brightness, within(TOLERANCE));
+    }
 }
