@@ -19,6 +19,10 @@ import java.util.List;
 public record RingSystem(@NotNull ClipPoint centre, double diameter, @NotNull Vector3 axis,
                          @NotNull Vector3 towardsTheLight, @NotNull List<Band> bands) {
 
+    public RingSystem {
+        bands = List.copyOf(bands);
+    }
+
     /**
      * @param inner   radius of the inner edge, in radii of the sphere
      * @param outer   radius of the outer edge, in radii of the sphere
