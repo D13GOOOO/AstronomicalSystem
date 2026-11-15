@@ -11,4 +11,11 @@ import org.jetbrains.annotations.NotNull;
  * @param flux      light received from the star, in units of the light of the faintest star shown
  */
 public record Star(@NotNull Vector3 direction, double flux) {
+
+    /**
+     * @param direction towards the star, of any length
+     */
+    public Star {
+        direction = direction.normalized();
+    }
 }
