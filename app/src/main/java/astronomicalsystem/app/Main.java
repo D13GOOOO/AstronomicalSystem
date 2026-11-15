@@ -21,7 +21,9 @@ import astronomicalsystem.app.presenter.Skin;
 import astronomicalsystem.app.presenter.Skins;
 import astronomicalsystem.app.presenter.KeyboardPresenter;
 import astronomicalsystem.app.presenter.TimeFlowPresenter;
+import astronomicalsystem.app.presenter.SkyPresenter;
 import astronomicalsystem.app.presenter.TrajectoriesPresenter;
+import astronomicalsystem.app.sky.Stars;
 import astronomicalsystem.app.texture.BundledMaps;
 import astronomicalsystem.app.texture.CachedMapFiles;
 import astronomicalsystem.app.texture.HttpMapFiles;
@@ -71,6 +73,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -134,6 +137,9 @@ public final class Main {
             MapSource.ofTrek("moon", TREK + "Moon/EQ/LRO_WAC_Mosaic_Global_303ppd_v02", EIGHT_BY_FOUR_TILES),
             MapSource.ofTrek("vesta", TREK + "Vesta/EQ/Vesta_Dawn_FC_HAMO_Mosaic_Global_74ppd",
                     EIGHT_BY_FOUR_TILES));
+    // The sky is made up, the same at every run
+    private static final long SKY_SEED = 1610L;
+    private static final int STARS = 4000;
     private static final Duration MAP_TIMEOUT = Duration.ofSeconds(30);
     private static final int MAP_ATTEMPTS = 3;
     private static final int MAP_THREADS = 4;
@@ -199,7 +205,8 @@ public final class Main {
         // The scene, the paths and the font need the OpenGL context of the window
         try (GlfwWindow window = GlfwWindow.open(TITLE, WIDTH, HEIGHT); GlTextures textures = GlTextures.create();
              GlDiscs scene = GlDiscs.create(textures);
-             GlPaths paths = GlPaths.create(); GlGlows glows = GlGlows.create(); GlFont font = GlFont.create()) {
+             GlPaths paths = GlPaths.create(); GlGlows glows = GlGlows.create(); GlGlows sky = GlGlows.create();
+             GlFont font = GlFont.create()) {
             GlText headUpDisplay = new GlText(font, Corner.TOP_LEFT);
             GlText controlsHelp = new GlText(font, Corner.BOTTOM_LEFT);
             GlText provenance = new GlText(font, Corner.BOTTOM_RIGHT);
@@ -237,6 +244,7 @@ public final class Main {
             FlaresPresenter flares = new FlaresPresenter(glows, camera.camera());
             blasts.addObserver(flares);
             camera.addObserver(flares.cameraObserver());
+            camera.addObserver(new SkyPresenter(sky, Stars.scattered(new Random(SKY_SEED), STARS)));
             // After the follower: it knows whether the body hit is the one the user watches
             simulation.collisionNews().addObserver(new SlowMotion(follower, timeline));
             new CameraControlsPresenter(window, camera);
@@ -247,8 +255,9 @@ public final class Main {
             simulation.notifyObservers();
             timeline.notifyObservers();
             follower.notifyObservers();
+            camera.notifyObservers();
             // The maps that have arrived are handed over before anything is drawn
-            Layers picture = new Layers(List.of(deliveries, paths, scene, glows, names, headUpDisplay, focus,
+            Layers picture = new Layers(List.of(deliveries, sky, paths, scene, glows, names, headUpDisplay, focus,
                     controlsHelp, provenance));
             new MainLoop(window, new SystemClock(), timeline, picture).run();
         }
