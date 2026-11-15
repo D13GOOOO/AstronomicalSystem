@@ -28,6 +28,7 @@ import astronomicalsystem.app.texture.HttpMapFiles;
 import astronomicalsystem.app.texture.MapDeliveries;
 import astronomicalsystem.app.texture.MapDownloads;
 import astronomicalsystem.app.texture.MapSource;
+import astronomicalsystem.app.texture.RetryingMapFiles;
 import astronomicalsystem.app.time.ObservableTimeline;
 import astronomicalsystem.app.time.SystemClock;
 import astronomicalsystem.app.time.TimeWarp;
@@ -134,6 +135,7 @@ public final class Main {
             MapSource.ofTrek("vesta", TREK + "Vesta/EQ/Vesta_Dawn_FC_HAMO_Mosaic_Global_74ppd",
                     EIGHT_BY_FOUR_TILES));
     private static final Duration MAP_TIMEOUT = Duration.ofSeconds(30);
+    private static final int MAP_ATTEMPTS = 3;
     private static final int MAP_THREADS = 4;
     private static final Path MAP_CACHE = Path.of(System.getProperty("user.home"), ".astronomicalsystem", "maps");
     // Bodies not known by name look like a body of their kind: a protoplanet like the Moon, asteroids
@@ -208,7 +210,8 @@ public final class Main {
             BundledMaps maps = new BundledMaps(textures);
             BUNDLED_MAPS.forEach(maps::load);
             MapDeliveries deliveries = new MapDeliveries(textures);
-            MapDownloads downloads = new MapDownloads(new CachedMapFiles(new HttpMapFiles(MAP_TIMEOUT), MAP_CACHE),
+            MapDownloads downloads = new MapDownloads(
+                    new CachedMapFiles(new RetryingMapFiles(new HttpMapFiles(MAP_TIMEOUT), MAP_ATTEMPTS), MAP_CACHE),
                     deliveries, mapThreads());
             NASA_MAPS.forEach(downloads::request);
             BodiesPresenter bodies = new BodiesPresenter(scene, camera.camera(), STYLES, skins(), now);
