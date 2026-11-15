@@ -72,4 +72,10 @@ class RingBandTest {
     void aBandLitAlongItselfSendsBackNoLight(double towardsViewer) {
         assertThat(SUT.reflected(towardsViewer, ALONG_THE_BAND)).isZero();
     }
+
+    @ParameterizedTest
+    @ValueSource(doubles = {1.0, 0.5, 0.0})
+    void aBandLitAlongItselfLetsNoLightThrough(double towardsViewer) {
+        assertThat(SUT.transmitted(towardsViewer, ALONG_THE_BAND)).isZero();
+    }
 }
