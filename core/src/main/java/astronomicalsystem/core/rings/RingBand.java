@@ -20,6 +20,8 @@ public record RingBand(@NotNull Radius inner, @NotNull Radius outer, double opti
      * @return the share of the ray that the band stops, from 0 to 1
      */
     public double opacity(double cosine) {
-        return 0.0;
+        // Beer-Lambert: the path through the layer is 1 / cosine times its thickness; along the
+        // band the division gives infinity, and nothing gets through
+        return 1.0 - Math.exp(-opticalDepth / cosine);
     }
 }
