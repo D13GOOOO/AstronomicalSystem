@@ -11,20 +11,12 @@ import static org.lwjgl.opengl.GL11.GL_VIEWPORT;
 import static org.lwjgl.opengl.GL11.glDrawArrays;
 import static org.lwjgl.opengl.GL11.glEnable;
 import static org.lwjgl.opengl.GL11.glGetIntegerv;
-import static org.lwjgl.opengl.GL15.GL_ARRAY_BUFFER;
-import static org.lwjgl.opengl.GL15.GL_STREAM_DRAW;
-import static org.lwjgl.opengl.GL15.glBindBuffer;
-import static org.lwjgl.opengl.GL15.glBufferData;
-import static org.lwjgl.opengl.GL15.glDeleteBuffers;
-import static org.lwjgl.opengl.GL15.glGenBuffers;
 import static org.lwjgl.opengl.GL20.glDeleteProgram;
 import static org.lwjgl.opengl.GL20.glGetUniformLocation;
 import static org.lwjgl.opengl.GL20.glUniform1i;
 import static org.lwjgl.opengl.GL20.glUniform2f;
 import static org.lwjgl.opengl.GL20.glUseProgram;
 import static org.lwjgl.opengl.GL30.glBindVertexArray;
-import static org.lwjgl.opengl.GL30.glDeleteVertexArrays;
-import static org.lwjgl.opengl.GL30.glGenVertexArrays;
 
 /**
  * Draws discs with OpenGL as spheres seen from afar: a square of two triangles around each, where
@@ -36,43 +28,32 @@ import static org.lwjgl.opengl.GL30.glGenVertexArrays;
  */
 public final class GlDiscs implements SceneView, Drawable, AutoCloseable {
 
-    // Interleaved vertex attributes: clip position of the centre (4 floats), corner of the square
-    // (2), diameter (1), colour (3), light (4: the direction towards it, then 1 if the disc is lit,
-    // 0 if it has its own light), the three axes of the body (3 each; zero for a plain disc)
-    private static final int POSITION = 0;
-    private static final int CORNER = 1;
-    private static final int DIAMETER = 2;
-    private static final int COLOUR = 3;
-    private static final int LIGHT = 4;
-    private static final int BODY_X = 5;
-    private static final int BODY_Y = 6;
-    private static final int BODY_Z = 7;
+    // Interleaved vertex attributes, in the order of their locations in the shader: clip position
+    // of the centre (4 floats), corner of the square (2), diameter (1), colour (3), light (4: the
+    // direction towards it, then 1 if the disc is lit, 0 if it has its own light), the three axes
+    // of the body (3 each; zero for a plain disc)
     private static final int POSITION_SIZE = 4;
     private static final int CORNER_SIZE = 2;
     private static final int DIAMETER_SIZE = 1;
     private static final int COLOUR_SIZE = 3;
     private static final int LIGHT_SIZE = 4;
     private static final int AXIS_SIZE = 3;
-    private static final int AXES_OFFSET = POSITION_SIZE + CORNER_SIZE + DIAMETER_SIZE + COLOUR_SIZE + LIGHT_SIZE;
-    private static final int FLOATS_PER_VERTEX = AXES_OFFSET + 3 * AXIS_SIZE;
     private static final float[] NO_AXES = new float[3 * AXIS_SIZE];
 
     private final int program;
     private final int imageSize;
     private final int mapped;
-    private final int vertexArray;
-    private final int buffer;
+    private final Squares squares;
     private final GlTextures textures;
     // The discs of the last update, drawn again in every frame until the next one
     private List<Disc> discs = List.of();
 
-    private GlDiscs(int program, int vertexArray, int buffer, @NotNull GlTextures textures) {
+    private GlDiscs(int program, @NotNull Squares squares, @NotNull GlTextures textures) {
         this.textures = textures;
         this.program = program;
         this.imageSize = glGetUniformLocation(program, "imageSize");
         this.mapped = glGetUniformLocation(program, "mapped");
-        this.vertexArray = vertexArray;
-        this.buffer = buffer;
+        this.squares = squares;
     }
 
     /**
@@ -81,21 +62,9 @@ public final class GlDiscs implements SceneView, Drawable, AutoCloseable {
      */
     public static @NotNull GlDiscs create(@NotNull GlTextures textures) {
         int program = ShaderProgram.link("/shaders/disc.vert", "/shaders/disc.frag");
-        int vertexArray = glGenVertexArrays();
-        int buffer = glGenBuffers();
-        glBindVertexArray(vertexArray);
-        glBindBuffer(GL_ARRAY_BUFFER, buffer);
-        Squares.attribute(POSITION, POSITION_SIZE, 0, FLOATS_PER_VERTEX);
-        Squares.attribute(CORNER, CORNER_SIZE, POSITION_SIZE, FLOATS_PER_VERTEX);
-        Squares.attribute(DIAMETER, DIAMETER_SIZE, POSITION_SIZE + CORNER_SIZE, FLOATS_PER_VERTEX);
-        Squares.attribute(COLOUR, COLOUR_SIZE, POSITION_SIZE + CORNER_SIZE + DIAMETER_SIZE, FLOATS_PER_VERTEX);
-        Squares.attribute(LIGHT, LIGHT_SIZE, POSITION_SIZE + CORNER_SIZE + DIAMETER_SIZE + COLOUR_SIZE,
-                FLOATS_PER_VERTEX);
-        Squares.attribute(BODY_X, AXIS_SIZE, AXES_OFFSET, FLOATS_PER_VERTEX);
-        Squares.attribute(BODY_Y, AXIS_SIZE, AXES_OFFSET + AXIS_SIZE, FLOATS_PER_VERTEX);
-        Squares.attribute(BODY_Z, AXIS_SIZE, AXES_OFFSET + 2 * AXIS_SIZE, FLOATS_PER_VERTEX);
-        glBindVertexArray(0);
-        return new GlDiscs(program, vertexArray, buffer, textures);
+        Squares squares = Squares.ofAttributes(POSITION_SIZE, CORNER_SIZE, DIAMETER_SIZE, COLOUR_SIZE, LIGHT_SIZE,
+                AXIS_SIZE, AXIS_SIZE, AXIS_SIZE);
+        return new GlDiscs(program, squares, textures);
     }
 
     @Override
@@ -112,10 +81,7 @@ public final class GlDiscs implements SceneView, Drawable, AutoCloseable {
         glEnable(GL_DEPTH_TEST);
         glUseProgram(program);
         glUniform2f(imageSize, viewport[2], viewport[3]);
-        glBindVertexArray(vertexArray);
-        glBindBuffer(GL_ARRAY_BUFFER, buffer);
-        glBufferData(GL_ARRAY_BUFFER, Squares.vertices(discs, FLOATS_PER_VERTEX, GlDiscs::vertexOf),
-                GL_STREAM_DRAW);
+        squares.around(discs, GlDiscs::vertexOf);
         // One by one: each mapped disc samples its own texture
         for (int index = 0; index < discs.size(); index++) {
             glUniform1i(mapped, isMapped(discs.get(index).surface()) ? 1 : 0);
@@ -126,8 +92,7 @@ public final class GlDiscs implements SceneView, Drawable, AutoCloseable {
 
     @Override
     public void close() {
-        glDeleteBuffers(buffer);
-        glDeleteVertexArrays(vertexArray);
+        squares.close();
         glDeleteProgram(program);
     }
 

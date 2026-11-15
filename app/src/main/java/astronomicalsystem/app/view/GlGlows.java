@@ -15,19 +15,11 @@ import static org.lwjgl.opengl.GL11.glDisable;
 import static org.lwjgl.opengl.GL11.glDrawArrays;
 import static org.lwjgl.opengl.GL11.glEnable;
 import static org.lwjgl.opengl.GL11.glGetIntegerv;
-import static org.lwjgl.opengl.GL15.GL_ARRAY_BUFFER;
-import static org.lwjgl.opengl.GL15.GL_STREAM_DRAW;
-import static org.lwjgl.opengl.GL15.glBindBuffer;
-import static org.lwjgl.opengl.GL15.glBufferData;
-import static org.lwjgl.opengl.GL15.glDeleteBuffers;
-import static org.lwjgl.opengl.GL15.glGenBuffers;
 import static org.lwjgl.opengl.GL20.glDeleteProgram;
 import static org.lwjgl.opengl.GL20.glGetUniformLocation;
 import static org.lwjgl.opengl.GL20.glUniform2f;
 import static org.lwjgl.opengl.GL20.glUseProgram;
 import static org.lwjgl.opengl.GL30.glBindVertexArray;
-import static org.lwjgl.opengl.GL30.glDeleteVertexArrays;
-import static org.lwjgl.opengl.GL30.glGenVertexArrays;
 
 /**
  * Draws glows with OpenGL: a square of two triangles around each, where the shader fades the light
@@ -39,30 +31,23 @@ import static org.lwjgl.opengl.GL30.glGenVertexArrays;
  */
 public final class GlGlows implements GlowsView, Drawable, AutoCloseable {
 
-    // Interleaved vertex attributes: clip position of the centre (4 floats), corner of the square
-    // (2), diameter (1), colour (3)
-    private static final int POSITION = 0;
-    private static final int CORNER = 1;
-    private static final int DIAMETER = 2;
-    private static final int COLOUR = 3;
+    // Interleaved vertex attributes, in the order of their locations in the shader: clip position
+    // of the centre (4 floats), corner of the square (2), diameter (1), colour (3)
     private static final int POSITION_SIZE = 4;
     private static final int CORNER_SIZE = 2;
     private static final int DIAMETER_SIZE = 1;
     private static final int COLOUR_SIZE = 3;
-    private static final int FLOATS_PER_VERTEX = POSITION_SIZE + CORNER_SIZE + DIAMETER_SIZE + COLOUR_SIZE;
 
     private final int program;
     private final int imageSize;
-    private final int vertexArray;
-    private final int buffer;
+    private final Squares squares;
     // The glows of the last update, drawn again in every frame until the next one
     private List<Glow> glows = List.of();
 
-    private GlGlows(int program, int vertexArray, int buffer) {
+    private GlGlows(int program, @NotNull Squares squares) {
         this.program = program;
         this.imageSize = glGetUniformLocation(program, "imageSize");
-        this.vertexArray = vertexArray;
-        this.buffer = buffer;
+        this.squares = squares;
     }
 
     /**
@@ -70,16 +55,7 @@ public final class GlGlows implements GlowsView, Drawable, AutoCloseable {
      */
     public static @NotNull GlGlows create() {
         int program = ShaderProgram.link("/shaders/glow.vert", "/shaders/glow.frag");
-        int vertexArray = glGenVertexArrays();
-        int buffer = glGenBuffers();
-        glBindVertexArray(vertexArray);
-        glBindBuffer(GL_ARRAY_BUFFER, buffer);
-        Squares.attribute(POSITION, POSITION_SIZE, 0, FLOATS_PER_VERTEX);
-        Squares.attribute(CORNER, CORNER_SIZE, POSITION_SIZE, FLOATS_PER_VERTEX);
-        Squares.attribute(DIAMETER, DIAMETER_SIZE, POSITION_SIZE + CORNER_SIZE, FLOATS_PER_VERTEX);
-        Squares.attribute(COLOUR, COLOUR_SIZE, POSITION_SIZE + CORNER_SIZE + DIAMETER_SIZE, FLOATS_PER_VERTEX);
-        glBindVertexArray(0);
-        return new GlGlows(program, vertexArray, buffer);
+        return new GlGlows(program, Squares.ofAttributes(POSITION_SIZE, CORNER_SIZE, DIAMETER_SIZE, COLOUR_SIZE));
     }
 
     @Override
@@ -98,10 +74,7 @@ public final class GlGlows implements GlowsView, Drawable, AutoCloseable {
         glBlendFunc(GL_ONE, GL_ONE);
         glUseProgram(program);
         glUniform2f(imageSize, viewport[2], viewport[3]);
-        glBindVertexArray(vertexArray);
-        glBindBuffer(GL_ARRAY_BUFFER, buffer);
-        glBufferData(GL_ARRAY_BUFFER, Squares.vertices(glows, FLOATS_PER_VERTEX, GlGlows::vertexOf),
-                GL_STREAM_DRAW);
+        squares.around(glows, GlGlows::vertexOf);
         glDrawArrays(GL_TRIANGLES, 0, glows.size() * Squares.VERTICES_PER_SQUARE);
         glBindVertexArray(0);
         // The other layers expect depth to be written and nothing blended
@@ -111,8 +84,7 @@ public final class GlGlows implements GlowsView, Drawable, AutoCloseable {
 
     @Override
     public void close() {
-        glDeleteBuffers(buffer);
-        glDeleteVertexArrays(vertexArray);
+        squares.close();
         glDeleteProgram(program);
     }
 
