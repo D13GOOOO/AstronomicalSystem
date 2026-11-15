@@ -28,6 +28,10 @@ class SkyPresenterTest {
     // The faintest star is drawn at an eighth of the full light
     private static final double FOUR_TIMES_THE_FAINTEST = 4.0;
     private static final Colour HALF_LIGHT = new Colour(0.5, 0.5, 0.5);
+    // Four times the light a point can show: the same light per pixel over four times the area
+    private static final double THIRTY_TWO_TIMES_THE_FAINTEST = 32.0;
+    private static final Colour FULL_LIGHT = new Colour(1.0, 1.0, 1.0);
+    private static final double SIX_PIXELS = 6.0;
 
     private final GlowsView view = mock();
     private final Projection camera = mock();
@@ -41,5 +45,16 @@ class SkyPresenterTest {
         SUT.update(cameraRig, camera);
 
         verify(view).show(List.of(new Glow(STAR_IN_THE_BACKGROUND, THREE_PIXELS, HALF_LIGHT)));
+    }
+
+    @Test
+    void aStarTooBrightForAPointSpreadsItsLightWider() {
+        when(camera.clipPoint(WHERE_THE_STAR_IS)).thenReturn(STAR_IN_CLIP_SPACE);
+        SkyPresenter SUT = new SkyPresenter(view,
+                List.of(new Star(TOWARDS_THE_STAR, THIRTY_TWO_TIMES_THE_FAINTEST)));
+
+        SUT.update(cameraRig, camera);
+
+        verify(view).show(List.of(new Glow(STAR_IN_THE_BACKGROUND, SIX_PIXELS, FULL_LIGHT)));
     }
 }
