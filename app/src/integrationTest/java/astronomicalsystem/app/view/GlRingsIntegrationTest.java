@@ -70,6 +70,21 @@ class GlRingsIntegrationTest {
         assertThat(pixelAt(centre[0] + BEYOND_THE_BAND, centre[1])).containsOnly(0.0f);
     }
 
+    // Over white the band adds its light to the half of the white that it lets through
+    @Test
+    void aBandHidesAsMuchOfWhatIsBehindItAsItsOpacity() {
+        SUT.show(List.of(new RingSystem(MIDDLE_OF_THE_IMAGE, FORTY_PIXELS, TOWARDS_THE_VIEWER, TOWARDS_THE_VIEWER,
+                List.of(BAND))));
+        clearTo(1.0f);
+
+        SUT.draw();
+
+        int[] centre = centreOfTheImage();
+        assertThat(pixelAt(centre[0] + ON_THE_BAND, centre[1])).containsExactly(new float[]{1.0f, 0.8f, 0.65f},
+                within(TWO_LEVELS));
+        assertThat(pixelAt(centre[0] + BEYOND_THE_BAND, centre[1])).containsOnly(1.0f);
+    }
+
     private static void clearTo(float grey) {
         glClearColor(grey, grey, grey, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
