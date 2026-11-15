@@ -68,6 +68,7 @@ public final class GlRings implements RingsView, Drawable, AutoCloseable {
     private final int imageSize;
     private final int extent;
     private final int axis;
+    private final int towardsTheLight;
     private final int bandCount;
     private final int edges;
     private final int lights;
@@ -81,6 +82,7 @@ public final class GlRings implements RingsView, Drawable, AutoCloseable {
         this.imageSize = glGetUniformLocation(program, "imageSize");
         this.extent = glGetUniformLocation(program, "extent");
         this.axis = glGetUniformLocation(program, "axis");
+        this.towardsTheLight = glGetUniformLocation(program, "towardsTheLight");
         this.bandCount = glGetUniformLocation(program, "bandCount");
         this.edges = glGetUniformLocation(program, "edges");
         this.lights = glGetUniformLocation(program, "lights");
@@ -164,8 +166,10 @@ public final class GlRings implements RingsView, Drawable, AutoCloseable {
             outermost = Math.max(outermost, band.outer());
         }
         Vector3 perpendicular = system.axis();
+        Vector3 light = system.towardsTheLight();
         glUniform1f(extent, (float) outermost);
         glUniform3f(axis, (float) perpendicular.x(), (float) perpendicular.y(), (float) perpendicular.z());
+        glUniform3f(towardsTheLight, (float) light.x(), (float) light.y(), (float) light.z());
         glUniform1i(bandCount, bands.size());
         glUniform2fv(edges, edgesOfBands);
         glUniform4fv(lights, lightsOfBands);
