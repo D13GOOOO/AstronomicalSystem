@@ -21,6 +21,7 @@ import astronomicalsystem.app.presenter.Skin;
 import astronomicalsystem.app.presenter.Skins;
 import astronomicalsystem.app.presenter.KeyboardPresenter;
 import astronomicalsystem.app.presenter.TimeFlowPresenter;
+import astronomicalsystem.app.presenter.RingsPresenter;
 import astronomicalsystem.app.presenter.SkyPresenter;
 import astronomicalsystem.app.presenter.TrajectoriesPresenter;
 import astronomicalsystem.app.sky.Stars;
@@ -41,6 +42,7 @@ import astronomicalsystem.app.view.GlFont;
 import astronomicalsystem.app.view.GlGlows;
 import astronomicalsystem.app.view.GlLabels;
 import astronomicalsystem.app.view.GlPaths;
+import astronomicalsystem.app.view.GlRings;
 import astronomicalsystem.app.view.GlText;
 import astronomicalsystem.app.view.GlTextures;
 import astronomicalsystem.app.view.GlfwWindow;
@@ -137,6 +139,8 @@ public final class Main {
             MapSource.ofTrek("moon", TREK + "Moon/EQ/LRO_WAC_Mosaic_Global_303ppd_v02", EIGHT_BY_FOUR_TILES),
             MapSource.ofTrek("vesta", TREK + "Vesta/EQ/Vesta_Dawn_FC_HAMO_Mosaic_Global_74ppd",
                     EIGHT_BY_FOUR_TILES));
+    // Water ice with a little dust: a pale sand
+    private static final Colour RING_COLOUR = new Colour(0.86, 0.78, 0.64);
     // The sky is made up, the same at every run
     private static final long SKY_SEED = 1610L;
     private static final int STARS = 4000;
@@ -205,6 +209,7 @@ public final class Main {
         // The scene, the paths and the font need the OpenGL context of the window
         try (GlfwWindow window = GlfwWindow.open(TITLE, WIDTH, HEIGHT); GlTextures textures = GlTextures.create();
              GlDiscs scene = GlDiscs.create(textures);
+             GlRings rings = GlRings.create();
              GlPaths paths = GlPaths.create(); GlGlows glows = GlGlows.create(); GlGlows sky = GlGlows.create();
              GlFont font = GlFont.create()) {
             GlText headUpDisplay = new GlText(font, Corner.TOP_LEFT);
@@ -225,6 +230,10 @@ public final class Main {
             simulation.addObserver(bodies);
             timeline.addObserver(bodies.timeObserver());
             camera.addObserver(bodies.cameraObserver());
+            RingsPresenter ringed = new RingsPresenter(rings, camera.camera(), STYLES, SolarSystem.rings(),
+                    RING_COLOUR);
+            simulation.addObserver(ringed);
+            camera.addObserver(ringed.cameraObserver());
             LabelsPresenter labels = new LabelsPresenter(names, camera.camera(), STYLES, UNNAMED);
             simulation.addObserver(labels);
             camera.addObserver(labels.cameraObserver());
@@ -257,8 +266,8 @@ public final class Main {
             follower.notifyObservers();
             camera.notifyObservers();
             // The maps that have arrived are handed over before anything is drawn
-            Layers picture = new Layers(List.of(deliveries, sky, paths, scene, glows, names, headUpDisplay, focus,
-                    controlsHelp, provenance));
+            Layers picture = new Layers(List.of(deliveries, sky, paths, scene, rings, glows, names, headUpDisplay,
+                    focus, controlsHelp, provenance));
             new MainLoop(window, new SystemClock(), timeline, picture).run();
         }
     }
