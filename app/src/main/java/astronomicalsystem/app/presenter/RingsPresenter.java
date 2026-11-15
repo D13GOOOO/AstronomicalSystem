@@ -60,11 +60,15 @@ public class RingsPresenter extends ProjectedBodiesPresenter<RingSystem> {
         // The line of sight is the z-axis of the image: its cosine with the axis is the z of the axis
         double towardsViewer = Math.abs(axis.z());
         double towardsLight = Math.abs(axis.dot(towardsTheLight));
+        // The viewer and the light are on the same side of the rings when the axis points towards
+        // both, or away from both
+        boolean litSideSeen = axis.z() * axis.dot(towardsTheLight) > 0.0;
         double radius = body.radius().astronomicalUnits();
         List<RingSystem.Band> bands = ringsOfTheBody.bands().stream()
                 .map(band -> new RingSystem.Band(band.inner().astronomicalUnits() / radius,
                         band.outer().astronomicalUnits() / radius,
-                        lit(EXPOSURE * band.reflected(towardsViewer, towardsLight)),
+                        lit(EXPOSURE * (litSideSeen ? band.reflected(towardsViewer, towardsLight)
+                                : band.transmitted(towardsViewer, towardsLight))),
                         band.opacity(towardsViewer)))
                 .toList();
         return new RingSystem(centre, diameter, axis, towardsTheLight, bands);
