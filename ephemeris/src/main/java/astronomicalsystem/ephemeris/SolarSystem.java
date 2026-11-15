@@ -6,6 +6,8 @@ import astronomicalsystem.core.body.Mass;
 import astronomicalsystem.core.body.Radius;
 import astronomicalsystem.core.orbit.Eccentricity;
 import astronomicalsystem.core.orbit.OrbitalElements;
+import astronomicalsystem.core.rings.RingBand;
+import astronomicalsystem.core.rings.Rings;
 import astronomicalsystem.core.rotation.Spin;
 import astronomicalsystem.core.time.JulianDate;
 import astronomicalsystem.ephemeris.horizons.Horizons;
@@ -78,6 +80,14 @@ public final class SolarSystem {
     // Right ascension and declination of the north pole, prime meridian at J2000 and its rate, in
     // degrees and degrees per day, without the slow and the periodic terms of the report: the poles
     // move by hundredths of a degree in a century
+    // The main rings of Saturn, from the inside: the C ring, the B ring, the Cassini Division and
+    // the A ring. Edges from the NASA Saturnian Rings Fact Sheet; each optical depth is one for the
+    // whole band, within the range the fact sheet gives for it
+    private static final List<RingBand> SATURN_RINGS = List.of(
+            ringBand(74_658.0, 92_000.0, 0.1),
+            ringBand(92_000.0, 117_580.0, 1.5),
+            ringBand(117_580.0, 122_170.0, 0.05),
+            ringBand(122_170.0, 136_775.0, 0.5));
     private static final Map<BodyProperties, RotationalElements> ROTATIONS = Map.of(
             SUN, new RotationalElements(286.13, 63.87, 84.176, 14.1844000),
             MERCURY, new RotationalElements(281.0097, 61.4143, 329.5469, 6.1385025),
@@ -127,6 +137,13 @@ public final class SolarSystem {
                 .collect(Collectors.toMap(rotation -> rotation.getKey().name(), rotation -> rotation.getValue().spin()));
     }
 
+    /**
+     * @return the rings of the planets that have bright ones, by the names of the planets
+     */
+    public static @NotNull Map<BodyName, Rings> rings() {
+        return Map.of(SATURN.name(), new Rings(ROTATIONS.get(SATURN).spin().pole(), SATURN_RINGS));
+    }
+
     private static @NotNull BodyProperties planet(@NotNull String name, double gmKm3PerS2, double meanRadiusKm) {
         return new BodyProperties(new BodyName(name), BodyKind.PLANET, new Mass(gmKm3PerS2 / SUN_GM_KM3_PER_S2),
                 radius(meanRadiusKm));
@@ -134,6 +151,10 @@ public final class SolarSystem {
 
     private static @NotNull HorizonsTarget target(@NotNull BodyProperties body, @NotNull String command) {
         return new HorizonsTarget(body, new HorizonsCommand(command));
+    }
+
+    private static @NotNull RingBand ringBand(double innerKilometres, double outerKilometres, double opticalDepth) {
+        return new RingBand(radius(innerKilometres), radius(outerKilometres), opticalDepth);
     }
 
     private static @NotNull Radius radius(double kilometres) {

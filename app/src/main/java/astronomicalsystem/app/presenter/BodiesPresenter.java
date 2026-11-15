@@ -9,13 +9,11 @@ import astronomicalsystem.app.view.SceneView;
 import astronomicalsystem.app.view.Surface;
 import astronomicalsystem.core.body.Body;
 import astronomicalsystem.core.body.BodyKind;
-import astronomicalsystem.core.math.Vector3;
 import astronomicalsystem.core.observer.Observer;
 import astronomicalsystem.core.rotation.Axes;
 import astronomicalsystem.core.time.JulianDate;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -71,19 +69,11 @@ public class BodiesPresenter extends ProjectedBodiesPresenter<Disc> {
         return new Surface.Mapped(skin.texture(), inTheImage(axes.x()), inTheImage(axes.y()), inTheImage(axes.z()));
     }
 
-    // Lit by the most massive body that shines, the brightest star; by its own light if none does
+    // Lit by the brightest star; by its own light if no body shines
     private @NotNull Lighting lightingOf(@NotNull Body body) {
-        return bodies().stream()
-                .filter(other -> styleOf(other).shines())
-                .max(Comparator.comparingDouble(other -> other.mass().solarMasses()))
-                .map(star -> litFrom(star.position().minus(body.position())))
+        return towardsTheLightOf(body)
+                .<Lighting>map(light -> new Lighting.LitFrom(light.x(), light.y(), light.z()))
                 .orElse(Lighting.OWN_LIGHT);
-    }
-
-    // A unit vector in space stays one in the frame of the image, which only turns it
-    private @NotNull Lighting litFrom(@NotNull Vector3 towardsTheLight) {
-        Vector3 inTheImage = inTheImage(towardsTheLight.normalized());
-        return new Lighting.LitFrom(inTheImage.x(), inTheImage.y(), inTheImage.z());
     }
 
     @Override
