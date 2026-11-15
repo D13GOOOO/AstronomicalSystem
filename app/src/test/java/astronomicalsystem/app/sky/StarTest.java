@@ -4,6 +4,7 @@ import astronomicalsystem.core.math.Vector3;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class StarTest {
 
@@ -16,5 +17,12 @@ class StarTest {
         Star SUT = new Star(TWO_UNITS_TOWARDS_THE_POLE, FAINTEST);
 
         assertThat(SUT.direction()).isEqualTo(TOWARDS_THE_POLE);
+    }
+
+    @Test
+    void aStarWithoutADirectionIsRejected() {
+        assertThatThrownBy(() -> new Star(Vector3.ZERO, FAINTEST))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("A star needs a direction");
     }
 }
