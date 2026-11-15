@@ -1,6 +1,7 @@
 package astronomicalsystem.app.view;
 
 import org.jetbrains.annotations.NotNull;
+import org.lwjgl.opengl.GL11;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
@@ -91,7 +92,7 @@ public final class GlTextures implements TexturesView, AutoCloseable {
 
     @Override
     public void close() {
-        textures.values().forEach(texture -> glDeleteTextures(texture));
+        textures.values().forEach(GL11::glDeleteTextures);
         textures.clear();
     }
 

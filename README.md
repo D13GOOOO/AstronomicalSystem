@@ -27,7 +27,7 @@ or shatter according to published scaling laws for planetary collisions.
   a copy of the simulation ahead of time.
 - **Impacts with physical outcomes.** Collisions are detected along the whole time step, not just
   at its end, so nothing tunnels through a planet. Slow encounters merge; faster ones follow the
-  scaling laws of Leinhardt and Stewart: a largest remnant plus fragments that conserve mass,
+  scaling laws of Leinhardt and Stewart: the largest remnant plus fragments that conserve mass,
   momentum and centre of mass.
 - **An impact you can watch.** When the followed body is hit, time slows down by itself and the
   impact unfolds: a fireball sized by the energy of the collision that cools from white to red, and
@@ -73,16 +73,16 @@ Everything below the window is written in this repository. The only runtime depe
 | --- | --- | --- |
 | Gravity | Direct pairwise summation, using Newton's third law to halve the work; `G = k²`, the Gaussian constant, in AU³ M☉⁻¹ day⁻² | [8] |
 | Integration | Velocity Verlet (kick-drift-kick): symplectic, time-reversible, second order, one force evaluation per step. The energy error stays bounded over long runs instead of drifting | [1] |
-| Initial state | Barycentric ecliptic J2000 state vectors from JPL Horizons, with the masses of the planetary systems from DE440 and the IAU 2015 nominal radii | [2] [3] [4] |
-| Fallback orbits | Keplerian elements of the major planets propagated by the mean motion; Kepler's equation solved by Newton's method from Danby's starting value, which converges for very eccentric orbits too | [5] [6] |
+| Initial state | Barycentric ecliptic J2000 state vectors from JPL Horizons, with the masses of the planetary systems from DE440 and the IAU 2015 nominal radii | [2], [3], [4] |
+| Fallback orbits | Keplerian elements of the major planets propagated by the mean motion; Kepler's equation solved by Newton's method from Danby's starting value, which converges for very eccentric orbits too | [5], [6] |
 | Collision detection | Continuous: over a step each pair of spheres sweeps a segment, and the first contact is the smaller root of `\|w\|²s² + 2(d·w)s + \|d\|² − R² = 0`, evaluated in a cancellation-free form | [7] |
 | Impact speed | From the conservation of energy and angular momentum of the two bodies at the start of the step, not from end-of-step velocities | — |
-| Collision outcome | Perfect merging below the mutual escape speed; above it, the universal law for the mass of the largest remnant, with the catastrophic disruption threshold `Q*RD = c* (4/5) π ρ₁ G R²` corrected for the mass ratio, and the super-catastrophic power law | [9] [10] |
-| Fragments | Rank-size power law for the masses; ejection just above the escape speed, faster for smaller fragments (`v ∝ m^(−1/6)`); positions and velocities chosen so that mass, momentum and centre of mass are conserved exactly | [9] [10] [11] |
+| Collision outcome | Perfect merging below the mutual escape speed; above it, the universal law for the mass of the largest remnant, with the catastrophic disruption threshold `Q*RD = c* (4/5) π ρ₁ G R²` corrected for the mass ratio, and the super-catastrophic power law | [9], [10] |
+| Fragments | Rank-size power law for the masses; ejection just above the escape speed, faster for smaller fragments (`v ∝ m^(−1/6)`); positions and velocities chosen so that mass, momentum and centre of mass are conserved exactly | [9], [10], [11] |
 | Directions of ejecta | A Fibonacci spiral on a spherical cap: equal-area rings turned by the golden angle | [12] |
 | Fireball and plume | Radius scaled as the cube root of the impact energy over the gravitational binding energy `(3/5) G M² / R`; embers integrated by leapfrog in the gravity of the body | — |
 | Rotation | IAU pole (right ascension, declination) and prime meridian `W = W₀ + Ẇ d`, turned from the equatorial to the ecliptic frame; the orientation at a date is a rotation of the prime meridian about the pole by Rodrigues' formula | [14] |
-| Rings | A plane-parallel layer of optical depth `τ`. Opacity along a ray: `1 − e^(−τ/μ)` (Beer–Lambert). Single isotropic scattering: reflected `μ₀/(μ+μ₀) · (1 − e^(−τ(1/μ+1/μ₀)))`, diffusely transmitted `μ₀/(μ−μ₀) · (e^(−τ/μ) − e^(−τ/μ₀))`, with `μ`, `μ₀` the cosines of the viewing and illumination angles | [15] [16] |
+| Rings | A plane-parallel layer of optical depth `τ`. Opacity along a ray: `1 − e^(−τ/μ)` (Beer–Lambert). Single isotropic scattering: reflected `μ₀/(μ+μ₀) · (1 − e^(−τ(1/μ+1/μ₀)))`, diffusely transmitted `μ₀/(μ−μ₀) · (e^(−τ/μ) − e^(−τ/μ₀))`, with `μ`, `μ₀` the cosines of the viewing and illumination angles | [15], [16] |
 | Star field | Directions uniform on the sphere by Archimedes' hat-box theorem (uniform height, uniform azimuth); fluxes drawn from `N(>S) ∝ S^(−3/2)`, the counts of equal stars filling Euclidean space uniformly, by inverse transform sampling | — |
 | Shading | Lambert's cosine law for reflected light; linear limb darkening `I(μ) = 1 − u(1 − μ)` with `u = 0.6` for the Sun | [13] |
 | Time scales | Julian dates in TDB; UTC obtained with the leap seconds in force since 2017 | — |
