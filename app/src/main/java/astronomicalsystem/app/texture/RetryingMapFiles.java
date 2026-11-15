@@ -23,6 +23,14 @@ public final class RetryingMapFiles implements MapFiles {
 
     @Override
     public byte @NotNull [] fetch(@NotNull URI address) {
+        for (int attempt = 1; attempt < attempts; attempt++) {
+            try {
+                return origin.fetch(address);
+            } catch (MapUnavailableException failed) {
+                // Nothing to do: the file is asked for again
+            }
+        }
+        // The last attempt: if it fails too, whoever asked is told
         return origin.fetch(address);
     }
 }
