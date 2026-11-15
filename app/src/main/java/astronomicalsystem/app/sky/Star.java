@@ -1,5 +1,6 @@
 package astronomicalsystem.app.sky;
 
+import astronomicalsystem.core.math.Quantities;
 import astronomicalsystem.core.math.Vector3;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,6 +20,7 @@ public record Star(@NotNull Vector3 direction, double flux) {
         if (direction.lengthSquared() == 0.0) {
             throw new IllegalArgumentException("A star needs a direction");
         }
+        Quantities.requirePositiveFinite(flux, "Flux of a star");
         direction = direction.normalized();
     }
 }
