@@ -58,6 +58,14 @@ class RingBandTest {
         assertThat(SUT.transmitted(towardsViewer, towardsLight)).isCloseTo(brightness, within(TOLERANCE));
     }
 
+    // Where the two slants are the same the formula divides 0 by 0, and its limit holds:
+    // tau / mu exp(-tau / mu), which is ln 2 / 2 for both of these
+    @ParameterizedTest
+    @ValueSource(doubles = {1.0, 0.5})
+    void theUnlitSideSeenAsSlantedAsItIsLitHasTheBrightnessOfTheLimit(double cosine) {
+        assertThat(SUT.transmitted(cosine, cosine)).isCloseTo(HALVING / 2.0, within(TOLERANCE));
+    }
+
     // Also seen along the band, where the two cosines are both 0
     @ParameterizedTest
     @ValueSource(doubles = {1.0, 0.5, 0.0})
