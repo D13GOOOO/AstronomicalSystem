@@ -22,6 +22,11 @@ void main() {
     float radius = length(onTheRings);
     // How much the radius changes from this pixel to the next
     float pixel = fwidth(radius);
+    // Inside the outline of the sphere the rings, which go round it, are either in front of it or
+    // behind it: behind where they are beyond its centre
+    if (dot(onTheImage, onTheImage) < 1.0 && onTheRings.z < 0.0) {
+        discard;
+    }
     vec4 shown = vec4(0.0);
     for (int band = 0; band < bandCount; band++) {
         // How much of the pixel the band covers: all of it inside, fading across a pixel at each edge
