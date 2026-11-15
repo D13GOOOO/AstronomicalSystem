@@ -1,11 +1,13 @@
 package astronomicalsystem.core.rings;
 
 import astronomicalsystem.core.body.Radius;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
 
 class RingBandTest {
@@ -19,6 +21,13 @@ class RingBandTest {
     private static final double ALONG_THE_BAND = 0.0;
 
     private final RingBand SUT = new RingBand(INNER, OUTER, HALVING);
+
+    @Test
+    void aBandWithoutWidthIsRejected() {
+        assertThatThrownBy(() -> new RingBand(INNER, INNER, HALVING))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("The outer edge of a ring band must be beyond the inner one");
+    }
 
     // A slanted ray crosses 1 / cosine times as many particles: it is halved that many times
     @ParameterizedTest
