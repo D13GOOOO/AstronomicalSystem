@@ -16,6 +16,9 @@ public record Star(@NotNull Vector3 direction, double flux) {
      * @param direction towards the star, of any length
      */
     public Star {
+        if (direction.lengthSquared() == 0.0) {
+            throw new IllegalArgumentException("A star needs a direction");
+        }
         direction = direction.normalized();
     }
 }
