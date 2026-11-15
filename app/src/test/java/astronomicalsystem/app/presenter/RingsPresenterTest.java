@@ -19,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -124,6 +125,18 @@ class RingsPresenterTest {
         assertThat(ringsShown()).usingRecursiveComparison(CLOSE_ENOUGH).isEqualTo(List.of(
                 new RingSystem(SATURN_IN_CLIP_SPACE, FORTY_PIXELS, TOWARDS_THE_VIEWER, TOWARDS_THE_VIEWER,
                         List.of(new RingSystem.Band(TWO_RADII, THREE_RADII, THREE_QUARTERS_OF_SAND, HALF_HIDDEN)))));
+    }
+
+    @Test
+    void theRingsShownDoNotChangeWhenTheMapTheyWereGivenInDoes() {
+        givenTheCameraSees(SATURN_AWAY_FROM_THE_VIEWER);
+        Map<BodyName, Rings> rings = new HashMap<>(Map.of(SATURN_NAME, FACING_THE_VIEWER));
+        RingsPresenter keeper = new RingsPresenter(view, projection, STYLES, rings, SAND);
+        rings.clear();
+
+        keeper.update(simulation, List.of(SUN, SATURN_AWAY_FROM_THE_VIEWER));
+
+        assertThat(ringsShown()).hasSize(1);
     }
 
     @Test
