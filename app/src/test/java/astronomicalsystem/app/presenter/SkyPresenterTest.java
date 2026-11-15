@@ -32,6 +32,9 @@ class SkyPresenterTest {
     private static final double THIRTY_TWO_TIMES_THE_FAINTEST = 32.0;
     private static final Colour FULL_LIGHT = new Colour(1.0, 1.0, 1.0);
     private static final double SIX_PIXELS = 6.0;
+    private static final Vector3 TOWARDS_THE_STAR_BEHIND = new Vector3(0.0, -1.0, 0.0);
+    private static final Vector3 WHERE_THE_STAR_BEHIND_IS = new Vector3(0.0, -1e9, 0.0);
+    private static final ClipPoint BEHIND_THE_CAMERA = new ClipPoint(-2e8, 4e8, -1e9, -8e8);
 
     private final GlowsView view = mock();
     private final Projection camera = mock();
@@ -56,5 +59,17 @@ class SkyPresenterTest {
         SUT.update(cameraRig, camera);
 
         verify(view).show(List.of(new Glow(STAR_IN_THE_BACKGROUND, SIX_PIXELS, FULL_LIGHT)));
+    }
+
+    @Test
+    void theStarsBehindTheCameraAreNotShown() {
+        when(camera.clipPoint(WHERE_THE_STAR_IS)).thenReturn(STAR_IN_CLIP_SPACE);
+        when(camera.clipPoint(WHERE_THE_STAR_BEHIND_IS)).thenReturn(BEHIND_THE_CAMERA);
+        SkyPresenter SUT = new SkyPresenter(view, List.of(new Star(TOWARDS_THE_STAR_BEHIND, FOUR_TIMES_THE_FAINTEST),
+                new Star(TOWARDS_THE_STAR, FOUR_TIMES_THE_FAINTEST)));
+
+        SUT.update(cameraRig, camera);
+
+        verify(view).show(List.of(new Glow(STAR_IN_THE_BACKGROUND, THREE_PIXELS, HALF_LIGHT)));
     }
 }
