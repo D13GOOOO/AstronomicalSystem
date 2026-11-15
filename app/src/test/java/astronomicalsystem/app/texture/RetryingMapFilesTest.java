@@ -31,6 +31,16 @@ class RetryingMapFilesTest {
     }
 
     @Test
+    void theLastAttemptMayBeTheGoodOne() {
+        MapUnavailableException unreachable = new MapUnavailableException("The map server cannot be reached");
+        when(origin.fetch(ADDRESS)).thenThrow(unreachable).thenThrow(unreachable).thenReturn(MAP);
+
+        byte[] file = SUT.fetch(ADDRESS);
+
+        assertThat(file).isEqualTo(MAP);
+    }
+
+    @Test
     void aFileThatCannotBeHadIsGivenUpAfterTheAttempts() {
         when(origin.fetch(ADDRESS)).thenThrow(new MapUnavailableException("The map server cannot be reached"));
 
