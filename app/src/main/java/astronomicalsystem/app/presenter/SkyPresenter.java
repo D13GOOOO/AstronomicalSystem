@@ -25,6 +25,7 @@ public class SkyPresenter implements Observer<Projection> {
     private static final double POINT_OF_LIGHT = 3.0;
     // How bright the faintest star is drawn, 1 being the brightest the image can show
     private static final double LIGHT_OF_THE_FAINTEST = 0.125;
+    private static final double FULL_LIGHT = 1.0;
 
     private final GlowsView view;
     private final List<Star> stars;
@@ -42,7 +43,11 @@ public class SkyPresenter implements Observer<Projection> {
     private static @NotNull Glow glowOf(@NotNull Star star, @NotNull Projection camera) {
         ClipPoint seen = camera.clipPoint(star.direction().times(DISTANCE_OF_THE_STARS));
         double light = LIGHT_OF_THE_FAINTEST * star.flux();
-        return new Glow(new ClipPoint(seen.x(), seen.y(), DEPTH_OF_THE_SKY, seen.w()), POINT_OF_LIGHT,
-                new Colour(light, light, light));
+        double shown = Math.min(FULL_LIGHT, light);
+        // The light that a point cannot show is spread around it, as on a photograph: the light of
+        // each pixel times the area stays in proportion to the flux
+        double diameter = POINT_OF_LIGHT * Math.sqrt(light / shown);
+        return new Glow(new ClipPoint(seen.x(), seen.y(), DEPTH_OF_THE_SKY, seen.w()), diameter,
+                new Colour(shown, shown, shown));
     }
 }
