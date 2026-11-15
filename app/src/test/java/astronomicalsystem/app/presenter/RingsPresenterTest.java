@@ -69,6 +69,15 @@ class RingsPresenterTest {
     // Through the band, perpendicularly in and out, comes ln 2 / 2 of the most it can send back
     private static final Colour SAND_SEEN_THROUGH = new Colour(0.8 * HALVING, 0.4 * HALVING, 0.2 * HALVING);
 
+    // A pole sixty degrees from the line of sight, with the Sun straight above the rings: seen so
+    // slanted the band sends back 7/12 of the most it can, more than the half that shows its colour
+    private static final Vector3 SIXTY_DEGREES_FROM_THE_VIEWER = new Vector3(Math.sqrt(3.0) / 2.0, 0.0, 0.5);
+    private static final Rings SLANTED = new Rings(SIXTY_DEGREES_FROM_THE_VIEWER,
+            List.of(new RingBand(new Radius(0.25), new Radius(0.375), HALVING)));
+    private static final Body SATURN_UNDER_THE_SUN = new Body(SATURN_NAME, BodyKind.PLANET, new Mass(3e-4),
+            new Radius(0.125), SIXTY_DEGREES_FROM_THE_VIEWER.times(-4.0), AT_REST);
+    private static final double THREE_QUARTERS_HIDDEN = 0.75;
+
     private final RingsView view = mock();
     private final Projection projection = mock();
     private final Observable<List<Body>> simulation = mock();
@@ -102,6 +111,19 @@ class RingsPresenterTest {
         assertThat(ringsShown()).usingRecursiveComparison(CLOSE_ENOUGH).isEqualTo(List.of(
                 new RingSystem(SATURN_IN_CLIP_SPACE, FORTY_PIXELS, TOWARDS_THE_VIEWER, AWAY_FROM_THE_VIEWER,
                         List.of(new RingSystem.Band(TWO_RADII, THREE_RADII, SAND_SEEN_THROUGH, HALF_HIDDEN)))));
+    }
+
+    @Test
+    void aBandIsNeverShownBrighterThanItsColour() {
+        givenTheCameraSees(SATURN_UNDER_THE_SUN);
+        RingsPresenter slanted = new RingsPresenter(view, projection, STYLES, Map.of(SATURN_NAME, SLANTED), SAND);
+
+        slanted.update(simulation, List.of(SUN, SATURN_UNDER_THE_SUN));
+
+        assertThat(ringsShown()).usingRecursiveComparison(CLOSE_ENOUGH).isEqualTo(List.of(
+                new RingSystem(SATURN_IN_CLIP_SPACE, FORTY_PIXELS, SIXTY_DEGREES_FROM_THE_VIEWER,
+                        SIXTY_DEGREES_FROM_THE_VIEWER,
+                        List.of(new RingSystem.Band(TWO_RADII, THREE_RADII, SAND, THREE_QUARTERS_HIDDEN)))));
     }
 
     private void givenTheCameraSees(Body saturn) {
