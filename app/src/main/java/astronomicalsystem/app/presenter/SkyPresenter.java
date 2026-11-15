@@ -32,7 +32,7 @@ public class SkyPresenter implements Observer<Projection> {
 
     public SkyPresenter(@NotNull GlowsView view, @NotNull List<Star> stars) {
         this.view = view;
-        this.stars = stars;
+        this.stars = List.copyOf(stars);
     }
 
     @Override
