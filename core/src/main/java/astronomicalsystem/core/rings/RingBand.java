@@ -57,6 +57,10 @@ public record RingBand(@NotNull Radius inner, @NotNull Radius outer, double opti
      * @return the brightness, in the same units as that of the lit side
      */
     public double transmitted(double towardsViewer, double towardsLight) {
-        return 0.0;
+        // Light scattered at a depth t has crossed t / mu0 on the way in and crosses the rest of
+        // the band, (tau - t) / mu, on the way out: the integral over the depths of the band
+        double throughToViewer = Math.exp(-opticalDepth / towardsViewer);
+        double throughFromLight = Math.exp(-opticalDepth / towardsLight);
+        return towardsLight / (towardsViewer - towardsLight) * (throughToViewer - throughFromLight);
     }
 }
