@@ -14,6 +14,12 @@ import org.jetbrains.annotations.NotNull;
  */
 public record RingBand(@NotNull Radius inner, @NotNull Radius outer, double opticalDepth) {
 
+    public RingBand {
+        if (outer.astronomicalUnits() <= inner.astronomicalUnits()) {
+            throw new IllegalArgumentException("The outer edge of a ring band must be beyond the inner one");
+        }
+    }
+
     /**
      * @param cosine of the angle between a ray of light and the perpendicular to the band, from 0
      *               for a ray along the band to 1; precondition: within these
