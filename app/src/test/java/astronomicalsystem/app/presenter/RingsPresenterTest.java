@@ -113,6 +113,19 @@ class RingsPresenterTest {
                         List.of(new RingSystem.Band(TWO_RADII, THREE_RADII, SAND_SEEN_THROUGH, HALF_HIDDEN)))));
     }
 
+    // Without a star the bodies show their own colour all over: so do the rings, as if the light
+    // came from where the viewer is
+    @Test
+    void theRingsOfAPlanetWithoutAStarAreLitFromWhereTheViewerIs() {
+        givenTheCameraSees(SATURN_BEFORE_THE_SUN);
+
+        SUT.update(simulation, List.of(SATURN_BEFORE_THE_SUN));
+
+        assertThat(ringsShown()).usingRecursiveComparison(CLOSE_ENOUGH).isEqualTo(List.of(
+                new RingSystem(SATURN_IN_CLIP_SPACE, FORTY_PIXELS, TOWARDS_THE_VIEWER, TOWARDS_THE_VIEWER,
+                        List.of(new RingSystem.Band(TWO_RADII, THREE_RADII, THREE_QUARTERS_OF_SAND, HALF_HIDDEN)))));
+    }
+
     @Test
     void aBandIsNeverShownBrighterThanItsColour() {
         givenTheCameraSees(SATURN_UNDER_THE_SUN);
