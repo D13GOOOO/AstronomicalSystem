@@ -24,6 +24,7 @@ public class RingsPresenter extends ProjectedBodiesPresenter<RingSystem> {
     // Seen from where the light comes from, a band that lets nothing through sends back half of
     // the most a band can: there it is shown in its full colour
     private static final double EXPOSURE = 2.0;
+    private static final double FULL_COLOUR = 1.0;
 
     private final RingsView view;
     private final Map<BodyName, Rings> rings;
@@ -67,8 +68,9 @@ public class RingsPresenter extends ProjectedBodiesPresenter<RingSystem> {
         List<RingSystem.Band> bands = ringsOfTheBody.bands().stream()
                 .map(band -> new RingSystem.Band(band.inner().astronomicalUnits() / radius,
                         band.outer().astronomicalUnits() / radius,
-                        lit(EXPOSURE * (litSideSeen ? band.reflected(towardsViewer, towardsLight)
-                                : band.transmitted(towardsViewer, towardsLight))),
+                        lit(Math.min(FULL_COLOUR, EXPOSURE * (litSideSeen
+                                ? band.reflected(towardsViewer, towardsLight)
+                                : band.transmitted(towardsViewer, towardsLight)))),
                         band.opacity(towardsViewer)))
                 .toList();
         return new RingSystem(centre, diameter, axis, towardsTheLight, bands);
