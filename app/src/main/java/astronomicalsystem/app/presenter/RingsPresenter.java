@@ -25,6 +25,8 @@ public class RingsPresenter extends ProjectedBodiesPresenter<RingSystem> {
     // the most a band can: there it is shown in its full colour
     private static final double EXPOSURE = 2.0;
     private static final double FULL_COLOUR = 1.0;
+    // In the frame of the image; where the light comes from when no body shines
+    private static final Vector3 TOWARDS_THE_VIEWER = new Vector3(0.0, 0.0, 1.0);
 
     private final RingsView view;
     private final Map<BodyName, Rings> rings;
@@ -57,7 +59,7 @@ public class RingsPresenter extends ProjectedBodiesPresenter<RingSystem> {
                                          double diameter) {
         Rings ringsOfTheBody = rings.get(body.name());
         Vector3 axis = inTheImage(ringsOfTheBody.pole());
-        Vector3 towardsTheLight = towardsTheLightOf(body).orElseThrow();
+        Vector3 towardsTheLight = towardsTheLightOf(body).orElse(TOWARDS_THE_VIEWER);
         // The line of sight is the z-axis of the image: its cosine with the axis is the z of the axis
         double towardsViewer = Math.abs(axis.z());
         double towardsLight = Math.abs(axis.dot(towardsTheLight));
