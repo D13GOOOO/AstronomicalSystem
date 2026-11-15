@@ -57,6 +57,10 @@ public record RingBand(@NotNull Radius inner, @NotNull Radius outer, double opti
      * @return the brightness, in the same units as that of the lit side
      */
     public double transmitted(double towardsViewer, double towardsLight) {
+        // No light falls on the band; seen along the band too, the limit below would not be a number
+        if (towardsLight == 0.0) {
+            return 0.0;
+        }
         // Light scattered at a depth t has crossed t / mu0 on the way in and crosses the rest of
         // the band, (tau - t) / mu, on the way out: the integral over the depths of the band
         if (towardsViewer == towardsLight) {
