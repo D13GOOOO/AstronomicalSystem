@@ -10,6 +10,7 @@ import astronomicalsystem.core.math.Vector3;
 import astronomicalsystem.core.observer.Observable;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.mockito.Mockito.mock;
@@ -59,6 +60,18 @@ class SkyPresenterTest {
         SUT.update(cameraRig, camera);
 
         verify(view).show(List.of(new Glow(STAR_IN_THE_BACKGROUND, SIX_PIXELS, FULL_LIGHT)));
+    }
+
+    @Test
+    void theSkyDoesNotChangeWhenTheListItWasMadeFromDoes() {
+        when(camera.clipPoint(WHERE_THE_STAR_IS)).thenReturn(STAR_IN_CLIP_SPACE);
+        List<Star> stars = new ArrayList<>(List.of(new Star(TOWARDS_THE_STAR, FOUR_TIMES_THE_FAINTEST)));
+        SkyPresenter SUT = new SkyPresenter(view, stars);
+        stars.clear();
+
+        SUT.update(cameraRig, camera);
+
+        verify(view).show(List.of(new Glow(STAR_IN_THE_BACKGROUND, THREE_PIXELS, HALF_LIGHT)));
     }
 
     @Test
