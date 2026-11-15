@@ -18,10 +18,17 @@ import astronomicalsystem.app.presenter.FocusPresenter;
 import astronomicalsystem.app.presenter.LabelsPresenter;
 import astronomicalsystem.app.presenter.ProvenancePresenter;
 import astronomicalsystem.app.presenter.Skin;
+import astronomicalsystem.app.presenter.Skins;
 import astronomicalsystem.app.presenter.KeyboardPresenter;
 import astronomicalsystem.app.presenter.TimeFlowPresenter;
 import astronomicalsystem.app.presenter.TrajectoriesPresenter;
 import astronomicalsystem.app.texture.BundledMaps;
+import astronomicalsystem.app.texture.CachedMapFiles;
+import astronomicalsystem.app.texture.HttpMapFiles;
+import astronomicalsystem.app.texture.MapDeliveries;
+import astronomicalsystem.app.texture.MapDownloads;
+import astronomicalsystem.app.texture.MapSource;
+import astronomicalsystem.app.texture.RetryingMapFiles;
 import astronomicalsystem.app.time.ObservableTimeline;
 import astronomicalsystem.app.time.SystemClock;
 import astronomicalsystem.app.time.TimeWarp;
@@ -58,11 +65,15 @@ import astronomicalsystem.ephemeris.horizons.HorizonsClient;
 import astronomicalsystem.ephemeris.horizons.HorizonsParser;
 import astronomicalsystem.ephemeris.horizons.JdkHttpTransport;
 
+import java.net.URI;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 /**
@@ -99,9 +110,40 @@ public final class Main {
             BodyKind.COMET, new BodyStyle(new Colour(0.6, 1.0, 0.95), 4.0, false),
             BodyKind.ASTEROID, new BodyStyle(new Colour(0.85, 0.7, 0.55), 4.0, false),
             BodyKind.DEBRIS, new BodyStyle(new Colour(0.6, 0.5, 0.4), 3.0, false));
-    // The maps that come with the application, and the bodies they are wrapped around
-    private static final Map<String, String> MAPS = Map.of("Sun", "sun", "Venus", "venus", "Jupiter", "jupiter",
-            "Saturn", "saturn", "Uranus", "uranus", "Neptune", "neptune");
+    // The bodies wrapped in a map of their own, and the name of the map
+    private static final Map<String, String> MAPS = Map.of("Sun", "sun", "Mercury", "mercury", "Venus", "venus",
+            "Earth", "earth", "Mars", "mars", "Jupiter", "jupiter", "Saturn", "saturn", "Uranus", "uranus",
+            "Neptune", "neptune");
+    // The maps that come with the application: no public service has them
+    private static final List<String> BUNDLED_MAPS = List.of("sun", "venus", "jupiter", "saturn", "uranus", "neptune");
+    // The maps that NASA serves, fetched in the background at the first start and kept on disk: the
+    // Earth in one image of 4096 x 2048 pixels from GIBS, the others in tiles of 256 pixels from the
+    // Solar System Treks, 16 x 8 of them (4096 x 2048) or 8 x 4 (2048 x 1024)
+    private static final String TREK = "https://trek.nasa.gov/tiles/";
+    private static final int SIXTEEN_BY_EIGHT_TILES = 3;
+    private static final int EIGHT_BY_FOUR_TILES = 2;
+    private static final List<MapSource> NASA_MAPS = List.of(
+            new MapSource("earth", 1, List.of(URI.create("https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi"
+                    + "?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=BlueMarble_ShadedRelief_Bathymetry&STYLES="
+                    + "&FORMAT=image/jpeg&SRS=EPSG:4326&BBOX=-180,-90,180,90&WIDTH=4096&HEIGHT=2048"))),
+            MapSource.ofTrek("mercury",
+                    TREK + "Mercury/EQ/Mercury_MESSENGER_MDIS_Basemap_MD3Color_Mosaic_Global_665m",
+                    SIXTEEN_BY_EIGHT_TILES),
+            MapSource.ofTrek("mars", TREK + "Mars/EQ/Mars_Viking_MDIM21_ClrMosaic_global_232m",
+                    SIXTEEN_BY_EIGHT_TILES),
+            MapSource.ofTrek("moon", TREK + "Moon/EQ/LRO_WAC_Mosaic_Global_303ppd_v02", EIGHT_BY_FOUR_TILES),
+            MapSource.ofTrek("vesta", TREK + "Vesta/EQ/Vesta_Dawn_FC_HAMO_Mosaic_Global_74ppd",
+                    EIGHT_BY_FOUR_TILES));
+    private static final Duration MAP_TIMEOUT = Duration.ofSeconds(30);
+    private static final int MAP_ATTEMPTS = 3;
+    private static final int MAP_THREADS = 4;
+    private static final Path MAP_CACHE = Path.of(System.getProperty("user.home"), ".astronomicalsystem", "maps");
+    // Bodies not known by name look like a body of their kind: a protoplanet like the Moon, asteroids
+    // and debris like Vesta; nobody knows how they turn, so they do not
+    private static final Spin STILL = new Spin(new Vector3(0.0, 0.0, 1.0), new Vector3(1.0, 0.0, 0.0),
+            new JulianDate(2451545.0), 0.0);
+    private static final Map<BodyKind, Skin> KIND_SKINS = Map.of(BodyKind.PLANET, new Skin("moon", STILL),
+            BodyKind.ASTEROID, new Skin("vesta", STILL), BodyKind.DEBRIS, new Skin("vesta", STILL));
     // Debris comes in dozens of fragments, whose names would cover each other
     private static final Set<BodyKind> UNNAMED = Set.of(BodyKind.DEBRIS);
     // The colours of the bodies at half their brightness: the paths stay behind the discs
@@ -124,10 +166,19 @@ public final class Main {
     }
 
     // Every mapped body with its map and the way it turns, from the catalogue
-    private static Map<BodyName, Skin> skins() {
+    private static Skins skins() {
         Map<BodyName, Spin> spins = SolarSystem.spins();
-        return MAPS.entrySet().stream().collect(Collectors.toMap(map -> new BodyName(map.getKey()),
-                map -> new Skin(map.getValue(), spins.get(new BodyName(map.getKey())))));
+        return new Skins(MAPS.entrySet().stream().collect(Collectors.toMap(map -> new BodyName(map.getKey()),
+                map -> new Skin(map.getValue(), spins.get(new BodyName(map.getKey()))))), KIND_SKINS);
+    }
+
+    // Threads that do not keep the application open when its window is closed
+    private static Executor mapThreads() {
+        return Executors.newFixedThreadPool(MAP_THREADS, download -> {
+            Thread thread = new Thread(download, "maps");
+            thread.setDaemon(true);
+            return thread;
+        });
     }
 
     public static void main(String[] args) {
@@ -157,7 +208,12 @@ public final class Main {
             ObservableCameraRig camera = new ObservableCameraRig(BARYCENTRE, FIRST_VIEW, LENS,
                     new Viewport(WIDTH, HEIGHT));
             BundledMaps maps = new BundledMaps(textures);
-            MAPS.values().forEach(maps::load);
+            BUNDLED_MAPS.forEach(maps::load);
+            MapDeliveries deliveries = new MapDeliveries(textures);
+            MapDownloads downloads = new MapDownloads(
+                    new CachedMapFiles(new RetryingMapFiles(new HttpMapFiles(MAP_TIMEOUT), MAP_ATTEMPTS), MAP_CACHE),
+                    deliveries, mapThreads());
+            NASA_MAPS.forEach(downloads::request);
             BodiesPresenter bodies = new BodiesPresenter(scene, camera.camera(), STYLES, skins(), now);
             simulation.addObserver(bodies);
             timeline.addObserver(bodies.timeObserver());
@@ -191,8 +247,9 @@ public final class Main {
             simulation.notifyObservers();
             timeline.notifyObservers();
             follower.notifyObservers();
-            Layers picture = new Layers(List.of(paths, scene, glows, names, headUpDisplay, focus, controlsHelp,
-                    provenance));
+            // The maps that have arrived are handed over before anything is drawn
+            Layers picture = new Layers(List.of(deliveries, paths, scene, glows, names, headUpDisplay, focus,
+                    controlsHelp, provenance));
             new MainLoop(window, new SystemClock(), timeline, picture).run();
         }
     }

@@ -53,7 +53,7 @@ class BodiesPresenterSkinTest {
     // At the start of 2026 the prime meridian is along x and the north pole along z; a quarter turn
     // a day
     private static final Spin SPIN = new Spin(Z_AXIS, X_AXIS, START_OF_2026, Math.PI / 2.0);
-    private static final Map<BodyName, Skin> SKINS = Map.of(EARTH.name(), new Skin("earth", SPIN));
+    private static final Skins SKINS = new Skins(Map.of(EARTH.name(), new Skin("earth", SPIN)), Map.of());
     // The camera looks along the x-axis of space from its positive side, with z up: the prime
     // meridian faces the viewer, the east is to the right
     private static final Vector3 TOWARDS_THE_VIEWER = new Vector3(0.0, 0.0, 1.0);

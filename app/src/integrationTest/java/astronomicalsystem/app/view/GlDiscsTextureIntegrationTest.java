@@ -56,6 +56,7 @@ class GlDiscsTextureIntegrationTest {
     private static final int SIXTEEN_PIXELS = 16;
     private static final int SIX_PIXELS = 6;
     private static final int TEN_PIXELS = 10;
+    private static final int FOUR_COLUMNS = 4;
     private static final String RED = "red";
     private static final String GREEN = "green";
     private static final String BLUE = "blue";
@@ -100,6 +101,32 @@ class GlDiscsTextureIntegrationTest {
         assertThat(hueAt(centre[0] + SIXTEEN_PIXELS, centre[1] + SIX_PIXELS)).isEqualTo(BLUE);
         assertThat(hueAt(centre[0] - SIXTEEN_PIXELS, centre[1] + SIX_PIXELS)).isEqualTo(RED);
         assertThat(hueAt(centre[0], centre[1] - TEN_PIXELS)).isEqualTo(GREEN);
+    }
+
+    // Four tiles by two: the northern row red, red, blue, blue from the west, the southern row green
+    @Test
+    void aMapInTilesIsPutTogetherRowAfterRowFromTheNorthWest() throws IOException {
+        byte[] red = tile("red");
+        byte[] blue = tile("blue");
+        byte[] green = tile("green");
+        textures.loadMosaic("tiles", FOUR_COLUMNS, List.of(red, red, blue, blue, green, green, green, green));
+        Surface tiled = new Surface.Mapped("tiles", TOWARDS_THE_VIEWER, TO_THE_RIGHT, UP);
+        SUT.show(List.of(new Disc(MIDDLE_OF_THE_IMAGE, FORTY_PIXELS, WHITE, Lighting.OWN_LIGHT, tiled)));
+        clearToBlack();
+
+        SUT.draw();
+
+        int[] centre = centreOfTheImage();
+        assertThat(glGetError()).isEqualTo(GL_NO_ERROR);
+        assertThat(hueAt(centre[0] + SIXTEEN_PIXELS, centre[1] + SIX_PIXELS)).isEqualTo(BLUE);
+        assertThat(hueAt(centre[0] - SIXTEEN_PIXELS, centre[1] + SIX_PIXELS)).isEqualTo(RED);
+        assertThat(hueAt(centre[0], centre[1] - TEN_PIXELS)).isEqualTo(GREEN);
+    }
+
+    private byte[] tile(String colour) throws IOException {
+        try (InputStream file = getClass().getResourceAsStream("/textures/" + colour + ".png")) {
+            return Objects.requireNonNull(file).readAllBytes();
+        }
     }
 
     // The view was never given a map with that name
