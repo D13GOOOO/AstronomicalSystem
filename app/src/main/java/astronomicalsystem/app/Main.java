@@ -73,9 +73,10 @@ import astronomicalsystem.ephemeris.horizons.JdkHttpTransport;
 
 import java.net.URI;
 import java.nio.file.Path;
-import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.InstantSource;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -266,7 +267,7 @@ public final class Main {
             // The last layer, so that a screenshot shows everything else
             GlScreenshot screenshot = new GlScreenshot();
             new KeyboardPresenter(window, timeline, follower, new Launcher(simulation, follower, camera),
-                    new ScreenshotPresenter(screenshot, PICTURES, Clock.systemDefaultZone()));
+                    new ScreenshotPresenter(screenshot, PICTURES, InstantSource.system(), ZoneId.systemDefault()));
             new ControlsHelpPresenter(controlsHelp);
             new ProvenancePresenter(provenance, initialState.provenance());
             simulation.notifyObservers();
