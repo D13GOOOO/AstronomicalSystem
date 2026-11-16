@@ -10,14 +10,15 @@ import astronomicalsystem.core.impact.Impactor;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Lets the user change the flow of simulated time, choose what the camera follows and throw
- * impactors at it from the keyboard.
+ * Lets the user change the flow of simulated time, choose what the camera follows, throw
+ * impactors at it and take screenshots from the keyboard.
  */
 public class KeyboardPresenter implements KeyboardHandler {
 
     private final TimeControls time;
     private final FollowControls follow;
     private final LaunchControls launch;
+    private final ScreenshotControls screenshot;
 
     public KeyboardPresenter(@NotNull KeyboardView view, @NotNull TimeControls time,
                              @NotNull FollowControls follow, @NotNull LaunchControls launch,
@@ -25,6 +26,7 @@ public class KeyboardPresenter implements KeyboardHandler {
         this.time = time;
         this.follow = follow;
         this.launch = launch;
+        this.screenshot = screenshot;
         view.addHandlers(this);
     }
 
@@ -39,6 +41,7 @@ public class KeyboardPresenter implements KeyboardHandler {
             case '1' -> launch.launch(Impactor.ASTEROID);
             case '2' -> launch.launch(Impactor.PLANETESIMAL);
             case '3' -> launch.launch(Impactor.PROTOPLANET);
+            case 'p', 'P' -> screenshot.takeScreenshot();
         }
     }
 }
