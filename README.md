@@ -136,7 +136,7 @@ Some decisions that shape the code:
 
 ## Download
 
-Every [release](https://github.com/D13GOOOO/AstronomicalSystem/releases) from 2.1.1 on carries the
+Every [release](https://github.com/D13GOOOO/AstronomicalSystem/releases) from 2.2.0 on carries the
 application for Windows and Linux (x64) and for macOS (Apple silicon) with its own Java runtime:
 nothing else to install, only a graphics card with OpenGL 3.3. Unpack the archive and start
 `AstronomicalSystem.exe` on Windows, `bin/AstronomicalSystem` on Linux, `AstronomicalSystem.app` on
