@@ -9,6 +9,8 @@ positions of the planets today, taken from NASA JPL Horizons, integrates Newtoni
 symplectic scheme, and lets you throw asteroids and protoplanets at the planets to watch them merge
 or shatter according to published scaling laws for planetary collisions.
 
+![A protoplanet strikes the night side of the Earth: time slows down by itself, the fireball cools from white to orange and the plume of embers spreads out](docs/images/impact.gif)
+
 ![The Earth wrapped in NASA's Blue Marble, lit by the Sun and tilted on its axis](docs/images/earth.png)
 
 ![Saturn and its rings, seen from their unlit side, with the shadow of the planet across them](docs/images/saturn.png)
