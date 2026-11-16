@@ -5,7 +5,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import java.nio.file.Path;
-import java.time.Clock;
+import java.time.InstantSource;
 import java.time.Instant;
 import java.time.ZoneId;
 
@@ -26,7 +26,7 @@ class ScreenshotPresenterTest {
             2026-11-16T17:05:03Z,     UTC,         AstronomicalSystem-2026-11-16-17-05-03-000.png
             """)
     void aScreenshotGoesToAFileNamedAfterTheLocalTime(Instant now, ZoneId zone, String name) {
-        ScreenshotPresenter SUT = new ScreenshotPresenter(view, PICTURES, Clock.fixed(now, zone));
+        ScreenshotPresenter SUT = new ScreenshotPresenter(view, PICTURES, InstantSource.fixed(now), zone);
 
         SUT.takeScreenshot();
 

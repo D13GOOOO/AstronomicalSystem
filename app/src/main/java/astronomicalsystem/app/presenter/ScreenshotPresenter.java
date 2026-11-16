@@ -5,8 +5,9 @@ import astronomicalsystem.app.view.ScreenshotView;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
-import java.time.Clock;
+import java.time.InstantSource;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
 /**
@@ -20,12 +21,15 @@ public class ScreenshotPresenter implements ScreenshotControls {
 
     private final ScreenshotView view;
     private final Path folder;
-    private final Clock clock;
+    private final InstantSource time;
+    private final ZoneId zone;
 
-    public ScreenshotPresenter(@NotNull ScreenshotView view, @NotNull Path folder, @NotNull Clock clock) {
+    public ScreenshotPresenter(@NotNull ScreenshotView view, @NotNull Path folder, @NotNull InstantSource time,
+                               @NotNull ZoneId zone) {
         this.view = view;
         this.folder = folder;
-        this.clock = clock;
+        this.time = time;
+        this.zone = zone;
     }
 
     @Override
@@ -34,6 +38,6 @@ public class ScreenshotPresenter implements ScreenshotControls {
     }
 
     private @NotNull String fileName() {
-        return FILE_NAME.format(LocalDateTime.now(clock));
+        return FILE_NAME.format(LocalDateTime.ofInstant(time.instant(), zone));
     }
 }
