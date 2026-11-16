@@ -145,7 +145,7 @@ application is developed and tested on Windows.
 The project is developed test-first and the history shows it: every commit is one step of the
 cycle and says which one (`RED:` a failing test, `GREEN:` the code that makes it pass, `REFACTOR:`
 a change of structure with the bar green), features are branches of git flow, and releases are
-tagged.
+tagged and described in the [changelog](CHANGELOG.md).
 
 - **679 automated tests**: 646 unit tests and 33 integration tests.
 - **100% line and branch coverage** of `core`, `ephemeris` and of the models and presenters of `app`
