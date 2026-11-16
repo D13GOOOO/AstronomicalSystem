@@ -84,6 +84,8 @@ public final class GlScreenshot implements ScreenshotView, Drawable {
 
     private static void write(byte @NotNull [] picture, @NotNull Path file) {
         try {
+            // The absolute path of a file always has a parent
+            Files.createDirectories(file.toAbsolutePath().getParent());
             Files.write(file, picture);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
