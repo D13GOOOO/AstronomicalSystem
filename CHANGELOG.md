@@ -9,6 +9,8 @@ OpenGL rewrite step by step; `1.x` is the former JavaFX application.
 
 ### Added
 
+- Key `P` saves a screenshot of the whole window, head-up display included, as a PNG in
+  `Pictures/Astronomical System` of the home folder.
 - This changelog.
 - Continuous integration on GitHub Actions: every push runs the unit and integration tests on
   Linux with JDK 21, the OpenGL ones on Mesa's software renderer, and publishes the coverage on
