@@ -34,3 +34,10 @@ tasks.named('test') {
     useJUnitPlatform()
     finalizedBy tasks.named('jacocoTestReport')
 }
+
+// HTML to read, XML for the coverage service of the continuous integration
+tasks.named('jacocoTestReport') {
+    reports {
+        xml.required = true
+    }
+}
