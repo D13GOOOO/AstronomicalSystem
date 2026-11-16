@@ -258,7 +258,8 @@ public final class Main {
             simulation.collisionNews().addObserver(new SlowMotion(follower, timeline));
             new CameraControlsPresenter(window, camera);
             timeline.addObserver(new TimeFlowPresenter(headUpDisplay));
-            new KeyboardPresenter(window, timeline, follower, new Launcher(simulation, follower, camera));
+            new KeyboardPresenter(window, timeline, follower, new Launcher(simulation, follower, camera), () -> {
+            });
             new ControlsHelpPresenter(controlsHelp);
             new ProvenancePresenter(provenance, initialState.provenance());
             simulation.notifyObservers();

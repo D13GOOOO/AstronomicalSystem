@@ -2,6 +2,7 @@ package astronomicalsystem.app.presenter;
 
 import astronomicalsystem.app.follow.FollowControls;
 import astronomicalsystem.app.impact.LaunchControls;
+import astronomicalsystem.app.screenshot.ScreenshotControls;
 import astronomicalsystem.app.time.TimeControls;
 import astronomicalsystem.app.view.KeyboardView;
 import astronomicalsystem.core.impact.Impactor;
@@ -25,7 +26,8 @@ class KeyboardPresenterTest {
     private final TimeControls time = mock();
     private final FollowControls follow = mock();
     private final LaunchControls launch = mock();
-    private final KeyboardPresenter SUT = new KeyboardPresenter(view, time, follow, launch);
+    private final ScreenshotControls screenshot = mock();
+    private final KeyboardPresenter SUT = new KeyboardPresenter(view, time, follow, launch, screenshot);
 
     @Test
     void thePresenterHandlesTheKeyboardOfItsView() {
@@ -83,13 +85,23 @@ class KeyboardPresenterTest {
         verifyNoInteractions(time, follow);
     }
 
+    // P for picture, with or without the shift key
+    @ParameterizedTest
+    @ValueSource(ints = {'p', 'P'})
+    void theLetterPTakesAScreenshot(int codePoint) {
+        SUT.characterTyped(codePoint);
+
+        verify(screenshot).takeScreenshot();
+        verifyNoInteractions(time, follow, launch);
+    }
+
     @ParameterizedTest
     // Also a letter outside ASCII: e with an acute accent
     @ValueSource(ints = {'a', '0', '_', 'é'})
     void anyOtherCharacterLeavesTimeAndCameraAlone(int codePoint) {
         SUT.characterTyped(codePoint);
 
-        verifyNoInteractions(time, follow, launch);
+        verifyNoInteractions(time, follow, launch, screenshot);
     }
 
     private static Named<Integer> character(char typed) {

@@ -2,6 +2,7 @@ package astronomicalsystem.app.presenter;
 
 import astronomicalsystem.app.follow.FollowControls;
 import astronomicalsystem.app.impact.LaunchControls;
+import astronomicalsystem.app.screenshot.ScreenshotControls;
 import astronomicalsystem.app.time.TimeControls;
 import astronomicalsystem.app.view.KeyboardHandler;
 import astronomicalsystem.app.view.KeyboardView;
@@ -19,7 +20,8 @@ public class KeyboardPresenter implements KeyboardHandler {
     private final LaunchControls launch;
 
     public KeyboardPresenter(@NotNull KeyboardView view, @NotNull TimeControls time,
-                             @NotNull FollowControls follow, @NotNull LaunchControls launch) {
+                             @NotNull FollowControls follow, @NotNull LaunchControls launch,
+                             @NotNull ScreenshotControls screenshot) {
         this.time = time;
         this.follow = follow;
         this.launch = launch;
