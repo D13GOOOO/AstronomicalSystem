@@ -6,13 +6,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * Tells the user how to move the camera, change the flow of time and launch impactors.
+ * Tells the user how to move the camera, change the flow of time, launch impactors and take
+ * screenshots.
  */
 public class ControlsHelpPresenter {
 
     // The controls of CameraControlsPresenter and KeyboardPresenter
     private static final List<String> CONTROLS = List.of(
-            "Drag: turn  Wheel: zoom  +/-: faster/slower  Space: pause  ,/.: follow  1/2/3: impactor");
+            "Drag: turn  Wheel: zoom  +/-: faster/slower  Space: pause  ,/.: follow  1/2/3: impactor  P: picture");
 
     public ControlsHelpPresenter(@NotNull TextView view) {
         view.show(CONTROLS);

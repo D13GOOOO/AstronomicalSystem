@@ -130,6 +130,7 @@ Some decisions that shape the code:
 | Space | Pause |
 | `.` / `,` | Follow the next / previous body |
 | `1` / `2` / `3` | Launch an asteroid, a planetesimal or a protoplanet at the followed body |
+| `P` | Save a screenshot to `Pictures/Astronomical System` in the home folder |
 
 ## Download
 

@@ -22,6 +22,7 @@ import astronomicalsystem.app.presenter.Skins;
 import astronomicalsystem.app.presenter.KeyboardPresenter;
 import astronomicalsystem.app.presenter.TimeFlowPresenter;
 import astronomicalsystem.app.presenter.RingsPresenter;
+import astronomicalsystem.app.presenter.ScreenshotPresenter;
 import astronomicalsystem.app.presenter.SkyPresenter;
 import astronomicalsystem.app.presenter.TrajectoriesPresenter;
 import astronomicalsystem.app.sky.Stars;
@@ -43,6 +44,7 @@ import astronomicalsystem.app.view.GlGlows;
 import astronomicalsystem.app.view.GlLabels;
 import astronomicalsystem.app.view.GlPaths;
 import astronomicalsystem.app.view.GlRings;
+import astronomicalsystem.app.view.GlScreenshot;
 import astronomicalsystem.app.view.GlText;
 import astronomicalsystem.app.view.GlTextures;
 import astronomicalsystem.app.view.GlfwWindow;
@@ -71,6 +73,7 @@ import astronomicalsystem.ephemeris.horizons.JdkHttpTransport;
 
 import java.net.URI;
 import java.nio.file.Path;
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -148,6 +151,8 @@ public final class Main {
     private static final int MAP_ATTEMPTS = 3;
     private static final int MAP_THREADS = 4;
     private static final Path MAP_CACHE = Path.of(System.getProperty("user.home"), ".astronomicalsystem", "maps");
+    // Screenshots go with the user's other pictures
+    private static final Path PICTURES = Path.of(System.getProperty("user.home"), "Pictures", "Astronomical System");
     // Bodies not known by name look like a body of their kind: a protoplanet like the Moon, asteroids
     // and debris like Vesta; nobody knows how they turn, so they do not
     private static final Spin STILL = new Spin(new Vector3(0.0, 0.0, 1.0), new Vector3(1.0, 0.0, 0.0),
@@ -258,7 +263,10 @@ public final class Main {
             simulation.collisionNews().addObserver(new SlowMotion(follower, timeline));
             new CameraControlsPresenter(window, camera);
             timeline.addObserver(new TimeFlowPresenter(headUpDisplay));
-            new KeyboardPresenter(window, timeline, follower, new Launcher(simulation, follower, camera));
+            // The last layer, so that a screenshot shows everything else
+            GlScreenshot screenshot = new GlScreenshot();
+            new KeyboardPresenter(window, timeline, follower, new Launcher(simulation, follower, camera),
+                    new ScreenshotPresenter(screenshot, PICTURES, Clock.systemDefaultZone()));
             new ControlsHelpPresenter(controlsHelp);
             new ProvenancePresenter(provenance, initialState.provenance());
             simulation.notifyObservers();
@@ -267,7 +275,7 @@ public final class Main {
             camera.notifyObservers();
             // The maps that have arrived are handed over before anything is drawn
             Layers picture = new Layers(List.of(deliveries, sky, paths, scene, rings, glows, names, headUpDisplay,
-                    focus, controlsHelp, provenance));
+                    focus, controlsHelp, provenance, screenshot));
             new MainLoop(window, new SystemClock(), timeline, picture).run();
         }
     }
