@@ -54,3 +54,16 @@ testing {
 tasks.named('check') {
     dependsOn testing.suites.integrationTest
 }
+
+// The OpenGL adapters are exercised only by the integration tests: their coverage is reported apart
+def integrationTestCoverage = tasks.register('jacocoIntegrationTestReport', JacocoReport) {
+    executionData tasks.named('integrationTest').get()
+    sourceSets sourceSets.main
+    reports {
+        xml.required = true
+    }
+}
+
+tasks.named('integrationTest') {
+    finalizedBy integrationTestCoverage
+}
