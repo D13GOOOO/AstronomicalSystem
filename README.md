@@ -134,9 +134,18 @@ Some decisions that shape the code:
 ## Download
 
 Every [release](https://github.com/D13GOOOO/AstronomicalSystem/releases) from 2.1.1 on carries the
-application for Windows and Linux (x64) with its own Java runtime: nothing else to install, only a
-graphics card with OpenGL 3.3. Unpack the archive and start `AstronomicalSystem.exe` on Windows,
-`bin/AstronomicalSystem` on Linux.
+application for Windows and Linux (x64) and for macOS (Apple silicon) with its own Java runtime:
+nothing else to install, only a graphics card with OpenGL 3.3. Unpack the archive and start
+`AstronomicalSystem.exe` on Windows, `bin/AstronomicalSystem` on Linux, `AstronomicalSystem.app` on
+macOS.
+
+The application is not signed by a registered developer, so macOS blocks it at the first start.
+Allow it once from *System Settings → Privacy & Security → Open Anyway*, or remove the quarantine
+from a terminal:
+
+```bash
+xattr -dr com.apple.quarantine AstronomicalSystem.app
+```
 
 ## Build and run
 
@@ -148,9 +157,11 @@ Requires a JDK 21 or newer and a graphics card with OpenGL 3.3. Gradle comes wit
 ./gradlew :app:jpackageArchive  # the application with its runtime, for this platform
 ```
 
-On Windows use `gradlew.bat`. The build resolves the natives for Windows, Linux and macOS. The
-application is developed on Windows, and GitHub Actions builds and tests every push on Linux with
-JDK 21, drawing the OpenGL tests with Mesa's software renderer under a virtual display.
+On Windows use `gradlew.bat`. The build resolves the natives for Windows, Linux and macOS, and on
+macOS starts the JVM with `-XstartOnFirstThread`, since GLFW must run on the first thread there.
+The application is developed on Windows, and GitHub Actions builds and tests every push on Linux
+with JDK 21, drawing the OpenGL tests with Mesa's software renderer under a virtual display; on
+macOS it runs the unit tests and starts the packaged application.
 
 ## Testing and process
 
