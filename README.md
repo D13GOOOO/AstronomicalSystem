@@ -136,7 +136,7 @@ Some decisions that shape the code:
 
 ## Download
 
-Every [release](https://github.com/D13GOOOO/AstronomicalSystem/releases) from 2.1.1 on carries the
+Every [release](https://github.com/D13GOOOO/AstronomicalSystem/releases) from 2.2.0 on carries the
 application for Windows and Linux (x64) and for macOS (Apple silicon) with its own Java runtime:
 nothing else to install, only a graphics card with OpenGL 3.3. Unpack the archive and start
 `AstronomicalSystem.exe` on Windows, `bin/AstronomicalSystem` on Linux, `AstronomicalSystem.app` on
@@ -174,7 +174,7 @@ cycle and says which one (`RED:` a failing test, `GREEN:` the code that makes it
 a change of structure with the bar green), features are branches of git flow, and releases are
 tagged and described in the [changelog](CHANGELOG.md).
 
-- **679 automated tests**: 646 unit tests and 33 integration tests.
+- **689 automated tests**: 652 unit tests and 37 integration tests.
 - **100% line and branch coverage** of `core`, `ephemeris` and of the models and presenters of `app`
   (JaCoCo). A test that passes at its first run is trusted only after a temporary mutation of the
   code has shown that it can fail. The OpenGL adapters are covered by the integration tests; the
