@@ -1,5 +1,8 @@
 # Astronomical System
 
+[![build](https://github.com/D13GOOOO/AstronomicalSystem/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/D13GOOOO/AstronomicalSystem/actions/workflows/build.yml)
+[![coverage](https://codecov.io/gh/D13GOOOO/AstronomicalSystem/branch/main/graph/badge.svg)](https://codecov.io/gh/D13GOOOO/AstronomicalSystem)
+
 A real-time N-body simulator of the solar system, written from the ground up in **Java** on
 **OpenGL 3.3 core**: no game engine, no scene graph, no math library. It starts from the real
 positions of the planets today, taken from NASA JPL Horizons, integrates Newtonian gravity with a
@@ -137,8 +140,9 @@ Requires a JDK 21 or newer and a graphics card with OpenGL 3.3. Gradle comes wit
 ./gradlew check        # unit and integration tests of every module
 ```
 
-On Windows use `gradlew.bat`. The build resolves the natives for Windows, Linux and macOS; the
-application is developed and tested on Windows.
+On Windows use `gradlew.bat`. The build resolves the natives for Windows, Linux and macOS. The
+application is developed on Windows, and GitHub Actions builds and tests every push on Linux with
+JDK 21, drawing the OpenGL tests with Mesa's software renderer under a virtual display.
 
 ## Testing and process
 
@@ -150,7 +154,8 @@ tagged and described in the [changelog](CHANGELOG.md).
 - **679 automated tests**: 646 unit tests and 33 integration tests.
 - **100% line and branch coverage** of `core`, `ephemeris` and of the models and presenters of `app`
   (JaCoCo). A test that passes at its first run is trusted only after a temporary mutation of the
-  code has shown that it can fail.
+  code has shown that it can fail. The OpenGL adapters are covered by the integration tests; the
+  coverage of both suites is published on [Codecov](https://codecov.io/gh/D13GOOOO/AstronomicalSystem).
 - **Acceptance tests with real physics**: the orbit of the Earth, the Keplerian catalogue against
   real Horizons responses, impactors at 20 km/s crossing eleven planetary radii per step, a giant
   impact that conserves the momentum of the whole system.
