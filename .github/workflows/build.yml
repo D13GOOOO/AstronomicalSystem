@@ -70,8 +70,10 @@ jobs:
       - name: Unit tests and the package of the application
         run: ./gradlew test :app:jpackageArchive
 
-      # Unpacked as a user would, so that the archive is checked too; still running after half a
-      # minute means it opened its window and draws
+      # Unpacked as a user would, so that the archive is checked too. Still running after half a
+      # minute means it opened its window and draws. The virtual machines of GitHub have no
+      # accelerated OpenGL, which GLFW always asks for on macOS: there the application can only
+      # get as far as its window, after GLFW has accepted the first thread. Any other end fails
       - name: The packaged application starts
         run: |
           mkdir unpacked
@@ -80,5 +82,10 @@ jobs:
           application=$!
           sleep 30
           cat run.log
-          kill -0 "$application"
-          kill "$application"
+          if kill -0 "$application" 2> /dev/null; then
+            kill "$application"
+          elif grep -q "Failed to find a suitable pixel format" run.log; then
+            echo "::warning::No OpenGL on this runner: the application started on the first thread and stopped at its window"
+          else
+            exit 1
+          fi

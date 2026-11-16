@@ -161,7 +161,8 @@ On Windows use `gradlew.bat`. The build resolves the natives for Windows, Linux 
 macOS starts the JVM with `-XstartOnFirstThread`, since GLFW must run on the first thread there.
 The application is developed on Windows, and GitHub Actions builds and tests every push on Linux
 with JDK 21, drawing the OpenGL tests with Mesa's software renderer under a virtual display; on
-macOS it runs the unit tests and starts the packaged application.
+macOS it runs the unit tests and starts the packaged application as far as its window, since the
+virtual machines of GitHub have no OpenGL.
 
 ## Testing and process
 
