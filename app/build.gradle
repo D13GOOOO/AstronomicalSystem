@@ -67,3 +67,50 @@ def integrationTestCoverage = tasks.register('jacocoIntegrationTestReport', Jaco
 tasks.named('integrationTest') {
     finalizedBy integrationTestCoverage
 }
+
+// A self-contained application for the platform of the build: jpackage puts a Java runtime next to
+// the jars, so that nothing needs to be installed. It accepts only numeric versions (2.1.1)
+def packageVersion = version.toString().replaceFirst(/-.*/, '')
+def packageInput = layout.buildDirectory.dir('install/app/lib')
+def packageOutput = layout.buildDirectory.dir('jpackage')
+
+tasks.register('jpackage', Exec) {
+    group = 'distribution'
+    description = 'Builds an application image with its own Java runtime for this platform.'
+    dependsOn tasks.named('installDist')
+    inputs.dir packageInput
+    outputs.dir packageOutput
+    // jpackage refuses to write over an image it made before
+    doFirst {
+        delete packageOutput
+    }
+    executable = file("${System.getProperty('java.home')}/bin/jpackage")
+    args '--type', 'app-image',
+            '--name', 'AstronomicalSystem',
+            '--app-version', packageVersion,
+            '--input', packageInput.get().asFile,
+            '--main-jar', tasks.named('jar').get().archiveFileName.get(),
+            '--main-class', application.mainClass.get(),
+            '--java-options', nativeAccess,
+            '--dest', packageOutput.get().asFile
+}
+
+// The image in one archive for the release page, named after the version and the platform: a zip
+// on Windows, elsewhere a gzipped tar, which keeps the launcher executable
+def osName = System.getProperty('os.name').toLowerCase()
+def system = osName.startsWith('windows') ? 'windows' : osName.startsWith('mac') ? 'macos' : 'linux'
+def processor = [amd64: 'x64', x86_64: 'x64', aarch64: 'arm64'].get(System.getProperty('os.arch'), System.getProperty('os.arch'))
+def onWindows = system == 'windows'
+
+tasks.register('jpackageArchive', onWindows ? Zip : Tar) { archive ->
+    group = 'distribution'
+    description = 'Packs the application image into one archive for the release page.'
+    from tasks.named('jpackage')
+    destinationDirectory = layout.buildDirectory.dir('distributions')
+    archiveFileName = "AstronomicalSystem-${version}-${system}-${processor}.${onWindows ? 'zip' : 'tar.gz'}"
+    // Gradle would make every file 644 for reproducible archives: the launcher must stay executable
+    useFileSystemPermissions()
+    if (archive instanceof Tar) {
+        archive.compression = Compression.GZIP
+    }
+}

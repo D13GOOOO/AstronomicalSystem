@@ -131,13 +131,21 @@ Some decisions that shape the code:
 | `.` / `,` | Follow the next / previous body |
 | `1` / `2` / `3` | Launch an asteroid, a planetesimal or a protoplanet at the followed body |
 
+## Download
+
+Every [release](https://github.com/D13GOOOO/AstronomicalSystem/releases) from 2.1.1 on carries the
+application for Windows and Linux (x64) with its own Java runtime: nothing else to install, only a
+graphics card with OpenGL 3.3. Unpack the archive and start `AstronomicalSystem.exe` on Windows,
+`bin/AstronomicalSystem` on Linux.
+
 ## Build and run
 
 Requires a JDK 21 or newer and a graphics card with OpenGL 3.3. Gradle comes with the wrapper.
 
 ```bash
-./gradlew :app:run     # start the application
-./gradlew check        # unit and integration tests of every module
+./gradlew :app:run              # start the application
+./gradlew check                 # unit and integration tests of every module
+./gradlew :app:jpackageArchive  # the application with its runtime, for this platform
 ```
 
 On Windows use `gradlew.bat`. The build resolves the natives for Windows, Linux and macOS. The

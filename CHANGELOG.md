@@ -14,6 +14,8 @@ OpenGL rewrite step by step; `1.x` is the former JavaFX application.
   Linux with JDK 21, the OpenGL ones on Mesa's software renderer, and publishes the coverage on
   Codecov; badges of build and coverage in the README.
 - Coverage of the integration tests, which exercise the OpenGL adapters.
+- The application for Windows and Linux with its own Java runtime, attached to every release by
+  GitHub Actions; the notes of a release come from its section of this changelog.
 
 ### Fixed
 

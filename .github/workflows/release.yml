@@ -1,0 +1,81 @@
+name: release
+
+# A version tag (2.1.1, 2.2.0-alpha.1) builds the application for each platform and attaches it to
+# the GitHub release of the tag; started by hand, it only builds, and the archives stay on the run
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    strategy:
+      matrix:
+        os: [windows-2025, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+
+      # The runtime that jpackage puts in the image
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Application image and its archive
+        run: ./gradlew :app:jpackageArchive
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: package-${{ matrix.os }}
+          path: app/build/distributions/AstronomicalSystem-*
+          if-no-files-found: error
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: package
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+
+      # The archives carry the version of the build: a tag on a build still marked -SNAPSHOT, or
+      # on another version, stops here
+      - name: The archives are of the tagged version
+        run: |
+          ls dist
+          test -f "dist/AstronomicalSystem-$TAG-windows-x64.zip"
+          test -f "dist/AstronomicalSystem-$TAG-linux-x64.tar.gz"
+
+      # The notes of the release are its section of the changelog
+      - name: Notes from the changelog
+        run: |
+          awk -v heading="## [$TAG]" 'index($0, heading) == 1 { inside = 1; next } /^## \[/ { inside = 0 } inside' CHANGELOG.md > notes.md
+          test -s notes.md
+          cat notes.md
+
+      - name: Release with the archives
+        run: |
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release upload "$TAG" dist/* --clobber
+          else
+            prerelease=""
+            case "$TAG" in *-*) prerelease="--prerelease" ;; esac
+            gh release create "$TAG" dist/* --verify-tag --title "$TAG" --notes-file notes.md $prerelease
+          fi
