@@ -15,7 +15,8 @@ jobs:
   package:
     strategy:
       matrix:
-        os: [windows-2025, ubuntu-24.04]
+        # macos-15 is Apple silicon
+        os: [windows-2025, ubuntu-24.04, macos-15]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
@@ -62,6 +63,7 @@ jobs:
           ls dist
           test -f "dist/AstronomicalSystem-$TAG-windows-x64.zip"
           test -f "dist/AstronomicalSystem-$TAG-linux-x64.tar.gz"
+          test -f "dist/AstronomicalSystem-$TAG-macos-arm64.tar.gz"
 
       # The notes of the release are its section of the changelog
       - name: Notes from the changelog
