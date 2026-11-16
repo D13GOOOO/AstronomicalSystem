@@ -8,6 +8,7 @@ import org.junit.jupiter.api.io.TempDir;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -63,6 +64,19 @@ class GlScreenshotIntegrationTest {
         assertThat(picture.getHeight()).isEqualTo(image[1]);
         assertThat(colourAt(picture, 0, 0)).containsExactly(RED);
         assertThat(colourAt(picture, 0, image[1] - 1)).containsExactly(BLUE);
+    }
+
+    @Test
+    void aCaptureIsWrittenWithOneFrameOnly() throws IOException {
+        Path file = folder.resolve("frame.png");
+        SUT.capture(file);
+        drawRedOverBlue();
+        SUT.draw();
+        Files.delete(file);
+
+        SUT.draw();
+
+        assertThat(file).doesNotExist();
     }
 
     // Blue below, red in the upper half
