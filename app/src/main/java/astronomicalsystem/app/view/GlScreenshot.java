@@ -6,7 +6,6 @@ import org.lwjgl.system.MemoryUtil;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -82,13 +81,15 @@ public final class GlScreenshot implements ScreenshotView, Drawable {
         return png.toByteArray();
     }
 
+    // A picture that cannot be written is told on the error stream: an exception would end the
+    // frame, and with it the application
     private static void write(byte @NotNull [] picture, @NotNull Path file) {
         try {
             // The absolute path of a file always has a parent
             Files.createDirectories(file.toAbsolutePath().getParent());
             Files.write(file, picture);
         } catch (IOException e) {
-            throw new UncheckedIOException(e);
+            System.err.println("The screenshot cannot be written to " + file + ": " + e);
         }
     }
 }
