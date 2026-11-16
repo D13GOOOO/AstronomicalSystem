@@ -94,3 +94,23 @@ tasks.register('jpackage', Exec) {
             '--java-options', nativeAccess,
             '--dest', packageOutput.get().asFile
 }
+
+// The image in one archive for the release page, named after the version and the platform: a zip
+// on Windows, elsewhere a gzipped tar, which keeps the launcher executable
+def osName = System.getProperty('os.name').toLowerCase()
+def system = osName.startsWith('windows') ? 'windows' : osName.startsWith('mac') ? 'macos' : 'linux'
+def processor = [amd64: 'x64', x86_64: 'x64', aarch64: 'arm64'].get(System.getProperty('os.arch'), System.getProperty('os.arch'))
+def onWindows = system == 'windows'
+
+tasks.register('jpackageArchive', onWindows ? Zip : Tar) { archive ->
+    group = 'distribution'
+    description = 'Packs the application image into one archive for the release page.'
+    from tasks.named('jpackage')
+    destinationDirectory = layout.buildDirectory.dir('distributions')
+    archiveFileName = "AstronomicalSystem-${version}-${system}-${processor}.${onWindows ? 'zip' : 'tar.gz'}"
+    // Gradle would make every file 644 for reproducible archives: the launcher must stay executable
+    useFileSystemPermissions()
+    if (archive instanceof Tar) {
+        archive.compression = Compression.GZIP
+    }
+}
