@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
 import static org.lwjgl.opengl.GL11.GL_SCISSOR_TEST;
 import static org.lwjgl.opengl.GL11.GL_VIEWPORT;
@@ -87,6 +88,20 @@ class GlScreenshotIntegrationTest {
         drawRedOverBlue();
 
         SUT.draw();
+
+        assertThat(file).isRegularFile();
+    }
+
+    // A failed picture must not stop the frame, which would close the application
+    @Test
+    void aPictureThatCannotBeWrittenLeavesTheOthersAndTheFrameAlone() throws IOException {
+        Path notAFolder = Files.createFile(folder.resolve("taken"));
+        Path file = folder.resolve("frame.png");
+        SUT.capture(notAFolder.resolve("frame.png"));
+        SUT.capture(file);
+        drawRedOverBlue();
+
+        assertThatCode(SUT::draw).doesNotThrowAnyException();
 
         assertThat(file).isRegularFile();
     }
