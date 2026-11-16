@@ -52,3 +52,40 @@ jobs:
           disable_search: true
           # The unit tests of every module and the integration tests of the application
           files: core/build/reports/jacoco/test/jacocoTestReport.xml,ephemeris/build/reports/jacoco/test/jacocoTestReport.xml,app/build/reports/jacoco/test/jacocoTestReport.xml,app/build/reports/jacoco/jacocoIntegrationTestReport/jacocoIntegrationTestReport.xml
+
+  # On macOS GLFW wants the first thread of the process, and the integration tests have never been
+  # set up for it: they run on Linux only, and on macOS the packaged application is started instead
+  macos:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Unit tests and the package of the application
+        run: ./gradlew test :app:jpackageArchive
+
+      # Unpacked as a user would, so that the archive is checked too. Still running after half a
+      # minute means it opened its window and draws. The virtual machines of GitHub have no
+      # accelerated OpenGL, which GLFW always asks for on macOS: there the application can only
+      # get as far as its window, after GLFW has accepted the first thread. Any other end fails
+      - name: The packaged application starts
+        run: |
+          mkdir unpacked
+          tar -xzf app/build/distributions/AstronomicalSystem-*-macos-arm64.tar.gz -C unpacked
+          unpacked/AstronomicalSystem.app/Contents/MacOS/AstronomicalSystem > run.log 2>&1 &
+          application=$!
+          sleep 30
+          cat run.log
+          if kill -0 "$application" 2> /dev/null; then
+            kill "$application"
+          elif grep -q "Failed to find a suitable pixel format" run.log; then
+            echo "::warning::No OpenGL on this runner: the application started on the first thread and stopped at its window"
+          else
+            exit 1
+          fi

@@ -19,12 +19,20 @@ dependencies {
     }
 }
 
+// The platform of the build, which is also the platform of the packaged application
+def osName = System.getProperty('os.name').toLowerCase()
+def system = osName.startsWith('windows') ? 'windows' : osName.startsWith('mac') ? 'macos' : 'linux'
+def processor = [amd64: 'x64', x86_64: 'x64', aarch64: 'arm64'].get(System.getProperty('os.arch'), System.getProperty('os.arch'))
+
 // LWJGL loads its native libraries through JNI, a restricted operation since JDK 24
 def nativeAccess = '--enable-native-access=ALL-UNNAMED'
+// On macOS, GLFW must run on the first thread of the process, which the JVM leaves to the system
+// unless told otherwise
+def launchOptions = [nativeAccess] + (system == 'macos' ? ['-XstartOnFirstThread'] : [])
 
 application {
     mainClass = 'astronomicalsystem.app.Main'
-    applicationDefaultJvmArgs = [nativeAccess]
+    applicationDefaultJvmArgs = launchOptions
 }
 
 // Tests that need a display and a graphics card: they open real windows
@@ -91,15 +99,12 @@ tasks.register('jpackage', Exec) {
             '--input', packageInput.get().asFile,
             '--main-jar', tasks.named('jar').get().archiveFileName.get(),
             '--main-class', application.mainClass.get(),
-            '--java-options', nativeAccess,
             '--dest', packageOutput.get().asFile
+    args launchOptions.collectMany { option -> ['--java-options', option] }
 }
 
 // The image in one archive for the release page, named after the version and the platform: a zip
 // on Windows, elsewhere a gzipped tar, which keeps the launcher executable
-def osName = System.getProperty('os.name').toLowerCase()
-def system = osName.startsWith('windows') ? 'windows' : osName.startsWith('mac') ? 'macos' : 'linux'
-def processor = [amd64: 'x64', x86_64: 'x64', aarch64: 'arm64'].get(System.getProperty('os.arch'), System.getProperty('os.arch'))
 def onWindows = system == 'windows'
 
 tasks.register('jpackageArchive', onWindows ? Zip : Tar) { archive ->
