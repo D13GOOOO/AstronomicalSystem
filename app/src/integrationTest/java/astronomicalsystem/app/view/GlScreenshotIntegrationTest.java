@@ -79,6 +79,18 @@ class GlScreenshotIntegrationTest {
         assertThat(file).doesNotExist();
     }
 
+    // The pictures folder does not exist before the first screenshot
+    @Test
+    void theFolderOfThePictureIsCreated() {
+        Path file = folder.resolve("pictures").resolve("frame.png");
+        SUT.capture(file);
+        drawRedOverBlue();
+
+        SUT.draw();
+
+        assertThat(file).isRegularFile();
+    }
+
     // Blue below, red in the upper half
     private static void drawRedOverBlue() {
         int[] image = sizeOfTheImage();
