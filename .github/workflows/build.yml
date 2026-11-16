@@ -1,0 +1,54 @@
+name: build
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+# A newer push to the same branch makes the older run useless
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      # The oldest JDK the README promises
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      # The integration tests open real windows: a virtual display, and Mesa's llvmpipe to draw
+      # in software (OpenGL 4.5 core, so the 3.3 core profile of the application is available)
+      - name: Install a virtual display and software OpenGL
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb libgl1-mesa-dri
+
+      - name: Unit and integration tests
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+        run: xvfb-run --auto-servernum --server-args='-screen 0 1280x1024x24' ./gradlew check
+
+      - name: Test reports
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-reports
+          path: '*/build/reports/tests/'
+
+      - name: Coverage
+        uses: codecov/codecov-action@v7
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          disable_search: true
+          # The unit tests of every module and the integration tests of the application
+          files: core/build/reports/jacoco/test/jacocoTestReport.xml,ephemeris/build/reports/jacoco/test/jacocoTestReport.xml,app/build/reports/jacoco/test/jacocoTestReport.xml,app/build/reports/jacoco/jacocoIntegrationTestReport/jacocoIntegrationTestReport.xml

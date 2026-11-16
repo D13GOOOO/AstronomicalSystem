@@ -10,11 +10,16 @@ OpenGL rewrite step by step; `1.x` is the former JavaFX application.
 ### Added
 
 - This changelog.
+- Continuous integration on GitHub Actions: every push runs the unit and integration tests on
+  Linux with JDK 21, the OpenGL ones on Mesa's software renderer, and publishes the coverage on
+  Codecov; badges of build and coverage in the README.
+- Coverage of the integration tests, which exercise the OpenGL adapters.
 
 ### Fixed
 
 - The README counts the 679 tests of release 2.1.0 (646 unit, 33 integration) instead of 573.
 - The build carries the version in preparation instead of `2.0-SNAPSHOT`.
+- The Gradle wrapper is executable on Linux and macOS.
 
 ## [2.1.0] - 2026-11-15
 
